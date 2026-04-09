@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline AI Sandbox Setup — Minimal Hardware</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Courier New',monospace;background:#0d1117;color:#c9d1d9;font-size:13px;line-height:1.7}
+.pbtn{position:fixed;top:12px;right:12px;background:#238636;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;z-index:999;font-weight:700}
+@media print{.pbtn,.topnav{display:none}body{background:#fff;color:#000}.blk{background:#f6f8fa!important;border-color:#d0d7de!important}.cmd{color:#0550ae!important}.cmt{color:#6e7781!important}.str{color:#0a3069!important}.kw{color:#cf222e!important}.var{color:#953800!important}}
+.wrap{max-width:900px;margin:0 auto}
+
+/* HEADER */
+.hdr{background:#161b22;border-bottom:2px solid #238636;padding:24px 32px 20px;text-align:center}
+.hdr h1{font-size:20px;font-weight:800;color:#3fb950;margin-bottom:6px;letter-spacing:1px}
+.hdr p{font-size:11px;color:#8b949e;margin-bottom:14px}
+.hw-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pill{padding:3px 12px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid}
+
+/* TOP NAV */
+.topnav{background:#0d1117;border-bottom:1px solid #21262d;padding:8px 24px;display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.topnav a{font-size:10px;color:#58a6ff;text-decoration:none;padding:3px 9px;border-radius:10px;border:1px solid #21262d}
+.topnav a:hover{background:#21262d}
+
+/* PHASE */
+.phase{padding:20px 28px 8px}
+.phase-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #21262d}
+.phase-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.phase-title{font-size:15px;font-weight:800;font-family:system-ui,sans-serif}
+.phase-sub{font-size:10px;color:#8b949e;margin-top:1px;font-family:system-ui,sans-serif}
+
+/* CODE BLOCK */
+.blk{background:#0d1117;border:1px solid #30363d;border-radius:8px;margin:10px 0;overflow:hidden}
+.blk-hdr{background:#161b22;border-bottom:1px solid #30363d;padding:6px 14px;display:flex;align-items:center;gap:8px}
+.blk-title{font-size:10px;font-weight:700;color:#8b949e;font-family:system-ui,sans-serif;flex:1}
+.copy-btn{background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:4px;padding:2px 8px;font-size:9px;cursor:pointer;font-family:system-ui,sans-serif}
+.copy-btn:hover{background:#21262d;color:#c9d1d9}
+.blk-body{padding:14px 16px;font-size:12px;line-height:2.1;overflow-x:auto;white-space:pre}
+.cmd{color:#3fb950}
+.cmt{color:#6e7781;font-style:italic}
+.str{color:#79c0ff}
+.kw{color:#ff7b72}
+.var{color:#ffa657}
+.sec{color:#e3b341}
+
+/* INLINE ALERT */
+.al{border-radius:6px;padding:10px 14px;margin:8px 0;font-size:12px;line-height:1.8;font-family:system-ui,sans-serif}
+.alg{background:rgba(63,185,80,.08);border-left:3px solid #3fb950;color:#3fb950}
+.alb{background:rgba(88,166,255,.08);border-left:3px solid #58a6ff;color:#79c0ff}
+.ala{background:rgba(210,153,34,.08);border-left:3px solid #d29922;color:#e3b341}
+.alr{background:rgba(248,81,73,.08);border-left:3px solid #f85149;color:#ff7b72}
+
+/* HW SPEC TABLE */
+.hw-table{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin:12px 0}
+.hw-row{display:grid;grid-template-columns:160px 1fr 1fr 1fr;border-bottom:1px solid #21262d}
+.hw-row:last-child{border-bottom:none}
+.hw-cell{padding:10px 14px;font-size:11px;font-family:system-ui,sans-serif}
+.hw-cell:not(:last-child){border-right:1px solid #21262d}
+.hw-hdr .hw-cell{background:#21262d;font-weight:700;color:#e6edf3;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+
+/* STEP ROW */
+.steps{padding:0 28px 16px}
+.step{display:flex;gap:0;position:relative;margin-bottom:0}
+.step:not(:last-child) .vl{position:absolute;left:15px;top:34px;bottom:-8px;width:2px;background:#21262d}
+.sl{width:32px;flex-shrink:0;padding-top:2px}
+.sn{width:30px;height:30px;border-radius:50%;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:1;flex-shrink:0;font-family:system-ui,sans-serif}
+.sb{flex:1;padding:0 0 18px 12px}
+.st{font-size:13px;font-weight:700;color:#e6edf3;margin-bottom:4px;font-family:system-ui,sans-serif}
+.sd{font-size:12px;color:#8b949e;line-height:1.8;margin-bottom:6px;font-family:system-ui,sans-serif}
+
+/* DIVIDER */
+.div{border:none;border-top:1px solid #21262d;margin:0}
+.footer{text-align:center;padding:20px;font-size:10px;color:#484f58;background:#0d1117;border-top:1px solid #21262d;font-family:system-ui,sans-serif}
+</style>
+</head>
+<body>
+<button class="pbtn" onclick="window.print()">🖨️ Save PDF</button>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div style="font-size:32px;margin-bottom:8px">🧪</div>
+  <h1>[ OFFLINE AI SANDBOX SETUP ]</h1>
+  <p>Minimal CPU/RAM • No internet • Copy-paste commands • Linux Admin AI running in ~30 minutes</p>
+  <div class="hw-pills">
+    <span class="pill" style="color:#3fb950;border-color:#238636">✅ 8GB RAM Minimum</span>
+    <span class="pill" style="color:#58a6ff;border-color:#1f6feb">CPU-Only OK</span>
+    <span class="pill" style="color:#e3b341;border-color:#9e6a03">Ubuntu 22.04 / Rocky 9</span>
+    <span class="pill" style="color:#a371f7;border-color:#6e40c9">Phi3 Mini 3.8B Model</span>
+    <span class="pill" style="color:#3fb950;border-color:#238636">~5–10 tok/sec CPU</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="topnav">
+  <span style="color:#8b949e;font-size:10px;align-self:center">→</span>
+  <a href="#hw">Hardware</a>
+  <a href="#phase0">Phase 0: Prep</a>
+  <a href="#phase1">Phase 1: Ollama</a>
+  <a href="#phase2">Phase 2: Model</a>
+  <a href="#phase3">Phase 3: WebUI</a>
+  <a href="#phase4">Phase 4: Tune</a>
+  <a href="#phase5">Phase 5: Test</a>
+  <a href="#offline">Offline Transfer</a>
+  <a href="#tips">Optimize Tips</a>
+</div>
+
+<!-- HW SECTION -->
+<div id="hw">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(210,153,34,.15)">🖥️</div>
+    <div>
+      <div class="phase-title" style="color:#e3b341">Minimum Hardware for Sandbox</div>
+      <div class="phase-sub">Confirmed working configurations — pick your tier</div>
+    </div>
+  </div>
+
+  <div class="hw-table">
+    <div class="hw-row hw-hdr">
+      <div class="hw-cell">Spec</div>
+      <div class="hw-cell">🔴 Bare Minimum</div>
+      <div class="hw-cell">🟡 Recommended Sandbox</div>
+      <div class="hw-cell">🟢 Comfortable</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">RAM</div>
+      <div class="hw-cell" style="color:#ff7b72">8 GB DDR4</div>
+      <div class="hw-cell" style="color:#e3b341">16 GB DDR4</div>
+      <div class="hw-cell" style="color:#3fb950">32 GB DDR4</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">CPU</div>
+      <div class="hw-cell" style="color:#ff7b72">2 cores / AVX2</div>
+      <div class="hw-cell" style="color:#e3b341">4 cores / AVX2</div>
+      <div class="hw-cell" style="color:#3fb950">8+ cores</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">Disk</div>
+      <div class="hw-cell" style="color:#ff7b72">20 GB free</div>
+      <div class="hw-cell" style="color:#e3b341">50 GB SSD</div>
+      <div class="hw-cell" style="color:#3fb950">100 GB SSD</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">GPU</div>
+      <div class="hw-cell" style="color:#8b949e">Not needed</div>
+      <div class="hw-cell" style="color:#8b949e">Not needed</div>
+      <div class="hw-cell" style="color:#e3b341">Optional boost</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">AI Model</div>
+      <div class="hw-cell" style="color:#ff7b72">phi3:mini (2.2GB)</div>
+      <div class="hw-cell" style="color:#e3b341">mistral:7b (4.1GB)</div>
+      <div class="hw-cell" style="color:#3fb950">llama3.3:8b (4.9GB)</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">Speed</div>
+      <div class="hw-cell" style="color:#ff7b72">3–5 tok/sec</div>
+      <div class="hw-cell" style="color:#e3b341">5–10 tok/sec</div>
+      <div class="hw-cell" style="color:#3fb950">10–15 tok/sec</div>
+    </div>
+    <div class="hw-row">
+      <div class="hw-cell" style="color:#8b949e;font-weight:700">OS</div>
+      <div class="hw-cell" style="color:#c9d1d9" colspan="3">Ubuntu 22.04 LTS / 24.04 LTS / Rocky Linux 9 / RHEL 9</div>
+    </div>
+  </div>
+
+  <div class="al ala">⚠️ <strong>Check AVX2 support first</strong> — Ollama requires it. Run: <code style="background:#0d1117;padding:1px 5px;border-radius:3px">grep -o 'avx2' /proc/cpuinfo | head -1</code> — if it prints "avx2" you're good. Most CPUs after 2013 support it.</div>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 0 -->
+<div id="phase0">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(139,148,158,.1)">🔧</div>
+    <div>
+      <div class="phase-title" style="color:#8b949e">Phase 0 — Pre-flight System Check</div>
+      <div class="phase-sub">Run these first on your sandbox server — takes 2 minutes</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#21262d;color:#8b949e">0</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Check system resources & compatibility</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — run on your sandbox server</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">#!/bin/bash</span>
+<span class="cmt"># ── SANDBOX PRE-FLIGHT CHECK ──────────────────────────────────</span>
+
+<span class="cmd">echo</span> <span class="str">"=== CPU Info ==="</span>
+<span class="cmd">lscpu</span> | grep -E <span class="str">"Model name|CPU\(s\)|Thread|MHz"</span>
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== AVX2 Check (must print avx2) ==="</span>
+<span class="cmd">grep</span> -o <span class="str">'avx2'</span> /proc/cpuinfo | head -1
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== RAM Available ==="</span>
+<span class="cmd">free</span> -h
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== Disk Space ==="</span>
+<span class="cmd">df</span> -h /
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== OS Version ==="</span>
+<span class="cmd">cat</span> /etc/os-release | grep -E <span class="str">"^NAME|^VERSION"</span>
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== Docker installed? ==="</span>
+<span class="cmd">docker</span> --version 2>/dev/null || <span class="cmd">echo</span> <span class="str">"Docker not installed"</span>
+
+<span class="cmd">echo</span> <span class="str">""</span>
+<span class="cmd">echo</span> <span class="str">"=== NVIDIA GPU? ==="</span>
+<span class="cmd">nvidia-smi</span> 2>/dev/null || <span class="cmd">echo</span> <span class="str">"No NVIDIA GPU — CPU-only mode"</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 1 -->
+<div id="phase1">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(63,185,80,.12)">⚙️</div>
+    <div>
+      <div class="phase-title" style="color:#3fb950">Phase 1 — Install Ollama</div>
+      <div class="phase-sub">Internet machine only — then transfer offline. Takes 5 minutes.</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636;color:#fff">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Method A — Direct install (if sandbox has internet temporarily)</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — run on sandbox server</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># One-line install — detects OS automatically</span>
+<span class="cmd">curl</span> -fsSL https://ollama.com/install.sh | sh
+
+<span class="cmt"># Verify install</span>
+<span class="cmd">ollama</span> --version
+<span class="cmt"># Expected: ollama version 0.6.x or higher</span>
+
+<span class="cmt"># Check service status</span>
+<span class="cmd">sudo systemctl status ollama</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636;color:#fff">2</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Method B — Offline install (no internet on sandbox)</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — run on INTERNET machine first</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">### STEP 1: On internet machine — download everything ###</span>
+<span class="cmd">mkdir</span> -p ~/ollama-offline-bundle
+
+<span class="cmt"># Download install script</span>
+<span class="cmd">curl</span> -fsSL https://ollama.com/install.sh \
+  -o ~/ollama-offline-bundle/install.sh
+
+<span class="cmt"># Download Ollama binary directly (Linux x86_64)</span>
+<span class="cmd">curl</span> -L https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64 \
+  -o ~/ollama-offline-bundle/ollama-binary
+
+<span class="cmt"># Make executable</span>
+<span class="cmd">chmod</span> +x ~/ollama-offline-bundle/ollama-binary
+
+<span class="cmt"># Copy bundle to USB drive</span>
+<span class="cmd">cp</span> -r ~/ollama-offline-bundle/ /media/usb/
+<span class="cmd">echo</span> <span class="str">"Bundle ready on USB!"</span></div>
+      </div>
+      <div class="blk" style="margin-top:6px">
+        <div class="blk-hdr"><span class="blk-title">bash — run on SANDBOX (air-gapped)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">### STEP 2: On sandbox server — install from USB ###</span>
+<span class="cmd">sudo mount</span> /dev/sdb1 /mnt/usb  <span class="cmt"># adjust sdb1 to your USB device</span>
+
+<span class="cmt"># Install Ollama binary manually</span>
+<span class="cmd">sudo cp</span> /mnt/usb/ollama-offline-bundle/ollama-binary /usr/local/bin/ollama
+<span class="cmd">sudo chmod</span> +x /usr/local/bin/ollama
+
+<span class="cmt"># Create ollama user and group</span>
+<span class="cmd">sudo useradd</span> -r -s /bin/false -U -m -d /usr/share/ollama ollama
+<span class="cmd">sudo usermod</span> -a -G ollama $USER
+
+<span class="cmt"># Create systemd service file</span>
+<span class="cmd">sudo tee</span> /etc/systemd/system/ollama.service &lt;&lt;EOF
+[Unit]
+Description=Ollama Service
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/ollama serve
+User=ollama
+Group=ollama
+Restart=always
+RestartSec=3
+Environment="HOME=/usr/share/ollama"
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+Environment="OLLAMA_NUM_PARALLEL=2"
+Environment="OLLAMA_MAX_LOADED_MODELS=1"
+
+[Install]
+WantedBy=default.target
+EOF
+
+<span class="cmd">sudo systemctl daemon-reload</span>
+<span class="cmd">sudo systemctl enable ollama</span>
+<span class="cmd">sudo systemctl start ollama</span>
+<span class="cmd">sudo systemctl status ollama</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636;color:#fff">3</div></div>
+    <div class="sb">
+      <div class="st">Configure Ollama for minimal RAM usage</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — tune for low RAM</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Edit Ollama service for minimal resource use</span>
+<span class="cmd">sudo nano</span> /etc/systemd/system/ollama.service
+
+<span class="cmt"># Add these lines under [Service] section:</span>
+<span class="sec">Environment=</span><span class="str">"OLLAMA_NUM_PARALLEL=1"</span>    <span class="cmt"># 1 request at a time (saves RAM)</span>
+<span class="sec">Environment=</span><span class="str">"OLLAMA_MAX_LOADED_MODELS=1"</span> <span class="cmt"># only 1 model in memory</span>
+<span class="sec">Environment=</span><span class="str">"OLLAMA_NUM_THREAD=4"</span>      <span class="cmt"># match your CPU cores</span>
+<span class="sec">Environment=</span><span class="str">"OLLAMA_KEEP_ALIVE=5m"</span>     <span class="cmt"># unload model after 5min idle</span>
+<span class="sec">Environment=</span><span class="str">"OLLAMA_HOST=0.0.0.0:11434"</span> <span class="cmt"># listen on all interfaces</span>
+
+<span class="cmd">sudo systemctl daemon-reload</span>
+<span class="cmd">sudo systemctl restart ollama</span></div>
+      </div>
+      <div class="al ala">⚠️ <strong>OLLAMA_NUM_THREAD</strong> — set this to your actual CPU core count. Check with: <code style="background:#0d1117;padding:1px 4px;border-radius:3px">nproc</code>. Using all cores speeds up inference significantly on CPU-only.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 2 -->
+<div id="phase2">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(163,113,247,.12)">🧠</div>
+    <div>
+      <div class="phase-title" style="color:#a371f7">Phase 2 — Download & Load AI Model</div>
+      <div class="phase-sub">Best models for minimal hardware — ranked by RAM usage</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#6e40c9;color:#fff">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Download model on internet machine → transfer to sandbox</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — on INTERNET machine — choose ONE model based on your RAM</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">## ── CHOOSE MODEL BASED ON YOUR RAM ──────────────────────────</span>
+
+<span class="cmt"># 8 GB RAM → phi3:mini (2.2 GB on disk, uses ~3 GB RAM)</span>
+<span class="cmd">ollama pull</span> phi3:mini
+
+<span class="cmt"># 16 GB RAM → mistral:7b (4.1 GB on disk, uses ~6 GB RAM) ← BEST VALUE</span>
+<span class="cmd">ollama pull</span> mistral:7b
+
+<span class="cmt"># 16 GB RAM → llama3.3:8b (4.9 GB on disk, uses ~6 GB RAM) ← BEST QUALITY</span>
+<span class="cmd">ollama pull</span> llama3.3:8b
+
+<span class="cmt"># Find where models are stored</span>
+<span class="cmd">ls</span> -lh ~/.ollama/models/blobs/
+
+<span class="cmt">## ── PACK FOR TRANSFER ────────────────────────────────────────</span>
+<span class="cmt"># Create a tar archive of all models</span>
+<span class="cmd">tar</span> -czf ~/ollama-models.tar.gz ~/.ollama/models/
+<span class="cmd">ls</span> -lh ~/ollama-models.tar.gz  <span class="cmt"># check size before copying</span>
+
+<span class="cmt"># Copy to USB drive</span>
+<span class="cmd">cp</span> ~/ollama-models.tar.gz /media/usb/</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#6e40c9;color:#fff">2</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Load model on sandbox server from USB</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — on SANDBOX server</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Mount USB</span>
+<span class="cmd">sudo mount</span> /dev/sdb1 /mnt/usb
+
+<span class="cmt"># Create ollama models directory if not exists</span>
+<span class="cmd">mkdir</span> -p ~/.ollama/models
+
+<span class="cmt"># Extract models from archive</span>
+<span class="cmd">tar</span> -xzf /mnt/usb/ollama-models.tar.gz -C ~/
+
+<span class="cmt"># Verify models are detected</span>
+<span class="cmd">ollama list</span>
+<span class="cmt"># Should show: NAME ID SIZE MODIFIED</span>
+<span class="cmt"># mistral:latest ... 4.1 GB ...</span>
+
+<span class="cmt"># Quick test — ask a Linux question</span>
+<span class="cmd">ollama run</span> mistral:7b <span class="str">"Give me the command to find files larger than 1GB on Linux"</span></div>
+      </div>
+      <div class="al alg">✅ If you get a Linux command as output — your AI is working offline!</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#6e40c9;color:#fff">3</div></div>
+    <div class="sb">
+      <div class="st">Create a custom Linux Admin Modelfile (system prompt baked in)</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — create custom Linux admin model</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Create a Modelfile that tunes the model for Linux sysadmin use</span>
+<span class="cmd">cat</span> &gt; ~/LinuxAdminModelfile &lt;&lt;'EOF'
+FROM mistral:7b
+
+<span class="cmt"># Low temperature = more precise, less creative (good for commands)</span>
+PARAMETER temperature 0.1
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+
+<span class="cmt"># Context window — 4096 is safe for 8GB RAM, use 2048 if tight</span>
+PARAMETER num_predict 512
+
+SYSTEM """
+You are an expert Linux system administrator with 15 years of experience.
+You work in an AIR-GAPPED environment with NO internet access.
+
+Rules:
+1. Always give the EXACT command, not a description
+2. Add # comments explaining what each part does
+3. Warn with ⚠️ before any destructive command (rm, dd, mkfs)
+4. Show expected output after commands where helpful
+5. For errors: state the cause first, then the fix
+6. Prefer: systemd, journalctl, ss, ip (not service, netstat, ifconfig)
+7. If unsure, say so — do NOT invent commands
+
+You help with: disk/filesystem, services, networking (internal),
+logs, users/permissions, cron, performance, security hardening,
+package management (offline/local repo), and Bash scripting.
+"""
+EOF
+
+<span class="cmt"># Build the custom model from the Modelfile</span>
+<span class="cmd">ollama create</span> linux-admin -f ~/LinuxAdminModelfile
+
+<span class="cmt"># List to confirm</span>
+<span class="cmd">ollama list</span>
+<span class="cmt"># Should show: linux-admin:latest alongside mistral:7b</span>
+
+<span class="cmt"># Test the custom model</span>
+<span class="cmd">ollama run</span> linux-admin <span class="str">"My /var is 90% full. How do I find what is using the space?"</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 3 -->
+<div id="phase3">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(88,166,255,.12)">🌐</div>
+    <div>
+      <div class="phase-title" style="color:#58a6ff">Phase 3 — Install Open WebUI (Browser Chat Interface)</div>
+      <div class="phase-sub">So your team can use it from any PC on the internal network</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#1f6feb;color:#fff">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Option A — Docker (recommended, easiest)</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — on INTERNET machine: pull & export Docker image</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Pull Open WebUI Docker image</span>
+<span class="cmd">docker pull</span> ghcr.io/open-webui/open-webui:main
+
+<span class="cmt"># Export to a tar file for offline transfer</span>
+<span class="cmd">docker save</span> ghcr.io/open-webui/open-webui:main \
+  | gzip &gt; ~/open-webui.tar.gz
+
+<span class="cmd">ls</span> -lh ~/open-webui.tar.gz  <span class="cmt"># around 1-2 GB</span>
+
+<span class="cmt"># Copy to USB</span>
+<span class="cmd">cp</span> ~/open-webui.tar.gz /media/usb/</div>
+      </div>
+      <div class="blk" style="margin-top:6px">
+        <div class="blk-hdr"><span class="blk-title">bash — on SANDBOX server: load & run</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Load Docker image from USB</span>
+<span class="cmd">docker load</span> -i /mnt/usb/open-webui.tar.gz
+
+<span class="cmt"># Run Open WebUI — connects to local Ollama</span>
+<span class="cmd">docker run</span> -d \
+  --name open-webui \
+  --restart always \
+  -p 3000:8080 \
+  -v open-webui:/app/backend/data \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+  ghcr.io/open-webui/open-webui:main
+
+<span class="cmt"># Check it started</span>
+<span class="cmd">docker ps</span>
+<span class="cmd">docker logs</span> open-webui --tail 20
+
+<span class="cmt"># Access from browser on ANY PC on your network:</span>
+<span class="cmt"># http://YOUR-SERVER-IP:3000</span>
+<span class="cmd">hostname</span> -I | awk <span class="str">'{print "Access at: http://"$1":3000"}'</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#1f6feb;color:#fff">2</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Option B — pip install (if no Docker, lightweight)</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — pip install method (needs Python 3.11+)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Install Python deps (download wheel files on internet machine first)</span>
+<span class="cmt"># On internet machine:</span>
+<span class="cmd">pip download</span> open-webui -d ~/webui-wheels/
+<span class="cmd">cp</span> -r ~/webui-wheels/ /media/usb/
+
+<span class="cmt"># On sandbox server — install from local wheels</span>
+<span class="cmd">pip install</span> open-webui \
+  --no-index \
+  --find-links=/mnt/usb/webui-wheels/
+
+<span class="cmt"># Run WebUI</span>
+<span class="cmd">DATA_DIR</span>=~/.webui \
+  <span class="cmd">OLLAMA_BASE_URL</span>=http://localhost:11434 \
+  <span class="cmd">open-webui</span> serve --port 3000 &
+
+<span class="cmt"># Make it run on boot</span>
+<span class="cmd">sudo tee</span> /etc/systemd/system/open-webui.service &lt;&lt;EOF
+[Unit]
+Description=Open WebUI
+After=ollama.service
+
+[Service]
+ExecStart=/usr/local/bin/open-webui serve --port 3000
+Environment="DATA_DIR=/home/$USER/.webui"
+Environment="OLLAMA_BASE_URL=http://localhost:11434"
+Restart=always
+User=$USER
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+<span class="cmd">sudo systemctl enable open-webui</span>
+<span class="cmd">sudo systemctl start open-webui</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#1f6feb;color:#fff">3</div></div>
+    <div class="sb">
+      <div class="st">Open WebUI first-time setup</div>
+      <div class="sd">Open browser → http://server-ip:3000 → Create admin account → Go to Admin Panel → Settings → paste the Linux Admin system prompt → Select "linux-admin" as default model.</div>
+      <div class="al alg">✅ Your team can now open a browser and chat with the AI — no installation on their PCs needed!</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 4 -->
+<div id="phase4">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(248,81,73,.12)">🎯</div>
+    <div>
+      <div class="phase-title" style="color:#ff7b72">Phase 4 — Add Terminal CLI Wrapper</div>
+      <div class="phase-sub">Ask AI directly from your terminal — type: ai "how do I check memory?"</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#b62324;color:#fff">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Install the 'ai' terminal command — one file, no dependencies</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — create /usr/local/bin/ai</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmd">sudo tee</span> /usr/local/bin/ai &lt;&lt;'SCRIPT'
+#!/bin/bash
+<span class="cmt"># ── Offline Linux Admin AI ──────────────────────────────────</span>
+<span class="cmt"># Usage: ai "your question"</span>
+<span class="cmt"># Usage: ai -m mistral:7b "your question"  (choose model)</span>
+<span class="cmt"># Usage: echo "long text" | ai "summarize this"</span>
+
+<span class="kw">MODEL</span>=<span class="str">"linux-admin:latest"</span>
+<span class="kw">OLLAMA</span>=<span class="str">"http://localhost:11434"</span>
+
+<span class="cmt"># Allow model override with -m flag</span>
+<span class="kw">if</span> [[ <span class="str">"$1"</span> == <span class="str">"-m"</span> ]]; <span class="kw">then</span>
+  MODEL=<span class="str">"$2"</span>
+  shift 2
+<span class="kw">fi</span>
+
+<span class="kw">if</span> [[ -z <span class="str">"$1"</span> ]]; <span class="kw">then</span>
+  echo <span class="str">"Usage: ai [-m model] 'your linux question'"</span>
+  echo <span class="str">"       pipe input: cat logfile | ai 'what errors are here?'"</span>
+  echo <span class="str">""</span>
+  echo <span class="str">"Available models:"</span>
+  <span class="cmd">ollama list</span>
+  exit 1
+<span class="kw">fi</span>
+
+<span class="cmt"># Check if piped input exists</span>
+<span class="kw">PIPED</span>=<span class="str">""</span>
+<span class="kw">if</span> ! tty -s; <span class="kw">then</span>
+  PIPED=$(cat)
+<span class="kw">fi</span>
+
+<span class="kw">PROMPT</span>=<span class="str">"$1"</span>
+<span class="kw">if</span> [[ -n <span class="str">"$PIPED"</span> ]]; <span class="kw">then</span>
+  PROMPT=<span class="str">"$1\n\nContext/Input:\n$PIPED"</span>
+<span class="kw">fi</span>
+
+<span class="cmt"># Call Ollama API — stream=false for clean output</span>
+<span class="kw">RESPONSE</span>=$(curl -s <span class="str">"$OLLAMA/api/generate"</span> \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">"{\"model\":\"$MODEL\",\"prompt\":\"$PROMPT\",\"stream\":false}"</span>)
+
+<span class="cmt"># Extract just the response text</span>
+echo <span class="str">"$RESPONSE"</span> | python3 -c \
+  <span class="str">"import sys,json; d=json.load(sys.stdin); print(d.get('response','Error: '+str(d)))"</span>
+SCRIPT
+
+<span class="cmd">sudo chmod</span> +x /usr/local/bin/ai
+<span class="cmd">echo</span> <span class="str">"Done! Test with: ai 'how do I check disk usage?'"</span></div>
+      </div>
+      <div class="blk" style="margin-top:6px">
+        <div class="blk-hdr"><span class="blk-title">bash — usage examples</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt"># Basic Linux questions</span>
+<span class="cmd">ai</span> <span class="str">"how do I check which process is using port 8080?"</span>
+<span class="cmd">ai</span> <span class="str">"write a bash script to rotate logs older than 7 days"</span>
+<span class="cmd">ai</span> <span class="str">"my server won't boot, it shows emergency mode, what do I do?"</span>
+
+<span class="cmt"># Pipe real system data for AI to analyze</span>
+<span class="cmd">df -h</span> | ai <span class="str">"which filesystems are getting full? suggest what to clean"</span>
+<span class="cmd">journalctl -n 50 --no-pager</span> | ai <span class="str">"summarize any errors in these logs"</span>
+<span class="cmd">ps aux --sort=-%cpu | head -20</span> | ai <span class="str">"which processes are consuming most CPU?"</span>
+<span class="cmd">cat /var/log/secure</span> | ai <span class="str">"any suspicious SSH activity in these logs?"</span>
+
+<span class="cmt"># Use a different model for a specific task</span>
+<span class="cmd">ai</span> -m mistral:7b <span class="str">"explain what this cron expression means: 0 2 * * 1-5"</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- PHASE 5 -->
+<div id="phase5">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(210,153,34,.12)">✅</div>
+    <div>
+      <div class="phase-title" style="color:#e3b341">Phase 5 — Verify Full Stack</div>
+      <div class="phase-sub">Run this checklist — everything should pass green</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#9e6a03;color:#fff">!</div></div>
+    <div class="sb">
+      <div class="st">Full system verification script</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — sandbox_verify.sh — run this to confirm everything works</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body">#!/bin/bash
+<span class="cmt"># ── SANDBOX VERIFICATION SCRIPT ──────────────────────────────</span>
+<span class="var">PASS</span>=<span class="str">"✅ PASS"</span>
+<span class="var">FAIL</span>=<span class="str">"❌ FAIL"</span>
+<span class="var">SCORE</span>=0
+
+<span class="cmd">echo</span> <span class="str">"╔══════════════════════════════════╗"</span>
+<span class="cmd">echo</span> <span class="str">"║  Offline AI Sandbox — Health Check║"</span>
+<span class="cmd">echo</span> <span class="str">"╚══════════════════════════════════╝"</span>
+
+<span class="cmt"># Test 1: Ollama service</span>
+<span class="cmd">systemctl</span> is-active --quiet ollama \
+  && { echo <span class="str">"$PASS  Ollama service running"</span>; ((SCORE++)); } \
+  || echo <span class="str">"$FAIL  Ollama service not running → sudo systemctl start ollama"</span>
+
+<span class="cmt"># Test 2: Ollama API responding</span>
+<span class="cmd">curl</span> -sf http://localhost:11434/api/tags &gt;/dev/null \
+  && { echo <span class="str">"$PASS  Ollama API reachable at :11434"</span>; ((SCORE++)); } \
+  || echo <span class="str">"$FAIL  Ollama API not reachable"</span>
+
+<span class="cmt"># Test 3: Models loaded</span>
+<span class="kw">MODEL_COUNT</span>=$(ollama list 2>/dev/null | tail -n +2 | wc -l)
+[[ $MODEL_COUNT -gt 0 ]] \
+  && { echo <span class="str">"$PASS  $MODEL_COUNT model(s) loaded: $(ollama list | tail -n +2 | awk '{print $1}' | tr '\n' ' ')"</span>; ((SCORE++)); } \
+  || echo <span class="str">"$FAIL  No models found → run: ollama pull mistral:7b"</span>
+
+<span class="cmt"># Test 4: AI response test</span>
+<span class="kw">RESP</span>=$(curl -sf http://localhost:11434/api/generate \
+  -d <span class="str">'{"model":"linux-admin","prompt":"say: SANDBOX_OK","stream":false}'</span> \
+  | python3 -c <span class="str">"import sys,json;d=json.load(sys.stdin);print(d.get('response',''))"</span> 2>/dev/null)
+[[ -n <span class="str">"$RESP"</span> ]] \
+  && { echo <span class="str">"$PASS  AI inference working → $(echo $RESP | head -c 40)..."</span>; ((SCORE++)); } \
+  || echo <span class="str">"$FAIL  AI not responding"</span>
+
+<span class="cmt"># Test 5: Open WebUI</span>
+<span class="cmd">curl</span> -sf http://localhost:3000 &gt;/dev/null \
+  && { echo <span class="str">"$PASS  Open WebUI reachable at :3000"</span>; ((SCORE++)); } \
+  || echo <span class="str">"⚠️  SKIP  Open WebUI not running (optional)"</span>
+
+<span class="cmt"># Test 6: 'ai' CLI tool</span>
+<span class="cmd">which</span> ai &gt;/dev/null 2>&1 \
+  && { echo <span class="str">"$PASS  'ai' CLI tool installed"</span>; ((SCORE++)); } \
+  || echo <span class="str">"$FAIL  'ai' CLI not found → re-run Phase 4"</span>
+
+<span class="cmt"># Test 7: No internet required</span>
+<span class="cmd">ping</span> -c1 -W1 8.8.8.8 &>/dev/null \
+  && echo <span class="str">"⚠️  WARN  Internet reachable — confirm firewall rules for production"</span> \
+  || echo <span class="str">"$PASS  No internet — fully air-gapped"</span>
+
+echo <span class="str">""</span>
+echo <span class="str">"Score: $SCORE/6 checks passed"</span>
+[[ $SCORE -ge 4 ]] && echo <span class="str">"🎉 Sandbox ready!"</span> || echo <span class="str">"⚠️  Fix failing items above"</span></div>
+      </div>
+      <div class="blk" style="margin-top:6px">
+        <div class="blk-hdr"><span class="blk-title">bash — run the verify script</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmd">chmod</span> +x sandbox_verify.sh
+<span class="cmd">./sandbox_verify.sh</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- OFFLINE UPDATE -->
+<div id="offline">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(210,153,34,.12)">📦</div>
+    <div>
+      <div class="phase-title" style="color:#e3b341">Offline Model Update Procedure</div>
+      <div class="phase-sub">How to update models without ever connecting your sandbox to internet</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#9e6a03;color:#fff">U</div></div>
+    <div class="sb">
+      <div class="st">Full offline update workflow</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — complete update procedure (USB method)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">### === ON INTERNET MACHINE (outside your secure env) === ###</span>
+
+<span class="cmt"># 1. Pull new/updated model</span>
+<span class="cmd">ollama pull</span> mistral:7b         <span class="cmt"># or whatever new model you want</span>
+
+<span class="cmt"># 2. Export model blobs</span>
+<span class="cmd">tar</span> -czf ollama-update-$(date +%Y%m%d).tar.gz ~/.ollama/models/
+
+<span class="cmt"># 3. Export updated Ollama binary (if version changed)</span>
+<span class="cmd">curl</span> -L https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64 \
+  -o ollama-binary-latest
+
+<span class="cmt"># 4. Export updated WebUI Docker image</span>
+<span class="cmd">docker pull</span> ghcr.io/open-webui/open-webui:main
+<span class="cmd">docker save</span> ghcr.io/open-webui/open-webui:main | gzip &gt; webui-latest.tar.gz
+
+<span class="cmt"># 5. Copy everything to USB</span>
+<span class="cmd">cp</span> ollama-update-*.tar.gz ollama-binary-latest webui-latest.tar.gz /media/usb/updates/
+
+<span class="cmt">### === ON SANDBOX SERVER === ###</span>
+
+<span class="cmd">sudo mount</span> /dev/sdb1 /mnt/usb
+
+<span class="cmt"># Update models</span>
+<span class="cmd">tar</span> -xzf /mnt/usb/updates/ollama-update-*.tar.gz -C ~/
+
+<span class="cmt"># Update Ollama binary</span>
+<span class="cmd">sudo systemctl stop ollama</span>
+<span class="cmd">sudo cp</span> /mnt/usb/updates/ollama-binary-latest /usr/local/bin/ollama
+<span class="cmd">sudo chmod</span> +x /usr/local/bin/ollama
+<span class="cmd">sudo systemctl start ollama</span>
+
+<span class="cmt"># Update WebUI</span>
+<span class="cmd">docker stop</span> open-webui
+<span class="cmd">docker load</span> -i /mnt/usb/updates/webui-latest.tar.gz
+<span class="cmd">docker start</span> open-webui
+
+<span class="cmt"># Verify all OK</span>
+<span class="cmd">ollama list</span>
+<span class="cmd">./sandbox_verify.sh</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- OPTIMIZE TIPS -->
+<div id="tips">
+<div class="phase">
+  <div class="phase-hdr">
+    <div class="phase-icon" style="background:rgba(63,185,80,.12)">⚡</div>
+    <div>
+      <div class="phase-title" style="color:#3fb950">Optimization Tips for Low-RAM / Low-CPU</div>
+      <div class="phase-sub">Squeeze maximum performance from minimal hardware</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636;color:#fff">★</div></div>
+    <div class="sb">
+      <div class="st">All performance tuning commands in one place</div>
+      <div class="blk">
+        <div class="blk-hdr"><span class="blk-title">bash — performance tuning for minimal hardware</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <div class="blk-body"><span class="cmt">## ── 1. USE SMALLER CONTEXT WINDOW ────────────────────────────</span>
+<span class="cmt"># Smaller context = less RAM used per request</span>
+<span class="cmt"># Edit your Modelfile: PARAMETER num_ctx 2048  (instead of 4096)</span>
+<span class="cmd">ollama create</span> linux-admin-lite -f ~/LinuxAdminModelfile  <span class="cmt"># rebuild after edit</span>
+
+<span class="cmt">## ── 2. USE AGGRESSIVE QUANTIZATION ───────────────────────────</span>
+<span class="cmt"># q4_0 = smallest, fastest, slightly less accurate</span>
+<span class="cmd">ollama pull</span> mistral:7b-instruct-q4_0  <span class="cmt"># 3.8 GB vs 4.1 GB default</span>
+
+<span class="cmt">## ── 3. SET CPU THREAD COUNT ───────────────────────────────────</span>
+<span class="cmt"># Set to actual core count (check with: nproc)</span>
+<span class="cmd">echo</span> <span class="str">'Environment="OLLAMA_NUM_THREAD=4"'</span> >> /etc/systemd/system/ollama.service
+
+<span class="cmt">## ── 4. ENABLE SWAP (emergency if OOM) ────────────────────────</span>
+<span class="cmt"># Adds 8GB swap as safety net (slow but prevents crashes)</span>
+<span class="cmd">sudo fallocate</span> -l 8G /swapfile
+<span class="cmd">sudo chmod</span> 600 /swapfile
+<span class="cmd">sudo mkswap</span> /swapfile
+<span class="cmd">sudo swapon</span> /swapfile
+<span class="cmd">echo</span> <span class="str">'/swapfile none swap sw 0 0'</span> | sudo tee -a /etc/fstab
+
+<span class="cmt">## ── 5. KILL UNUSED SERVICES ───────────────────────────────────</span>
+<span class="cmt"># Free RAM by disabling services you don't need on sandbox</span>
+<span class="cmd">sudo systemctl stop</span> snapd cups bluetooth ModemManager avahi-daemon
+<span class="cmd">sudo systemctl disable</span> snapd cups bluetooth ModemManager avahi-daemon
+
+<span class="cmt">## ── 6. MONITOR RESOURCE USE WHILE RUNNING ─────────────────────</span>
+<span class="cmd">watch</span> -n 1 <span class="str">'free -h; echo "---"; ollama ps; echo "---"; top -bn1 | head -15'</span>
+
+<span class="cmt">## ── 7. CHECK HOW MUCH RAM MODEL IS USING ──────────────────────</span>
+<span class="cmd">ollama ps</span>  <span class="cmt"># shows loaded models + RAM/VRAM usage</span>
+
+<span class="cmt">## ── 8. UNLOAD MODEL MANUALLY TO FREE RAM ──────────────────────</span>
+<span class="cmd">ollama stop</span> linux-admin  <span class="cmt"># frees RAM immediately</span>
+
+<span class="cmt">## ── 9. SWAPPINESS TUNING ──────────────────────────────────────</span>
+<span class="cmt"># Prefer RAM over swap for AI (reduces slowdowns)</span>
+<span class="cmd">sudo sysctl</span> -w vm.swappiness=10
+<span class="cmd">echo</span> <span class="str">'vm.swappiness=10'</span> | sudo tee -a /etc/sysctl.conf</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="footer">
+  🧪 Offline AI Sandbox — Minimal Hardware Setup<br>
+  Ollama + Open WebUI + Custom Linux Admin Model • No internet required • USB offline updates<br>
+  <span style="color:#3fb950">Phase 0→5 = ~30 minutes total setup time</span>
+</div>
+
+</div>
+
+<script>
+function copyCode(btn){
+  const body=btn.closest('.blk').querySelector('.blk-body');
+  const text=body.innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='copied!';
+    btn.style.color='#3fb950';
+    setTimeout(()=>{btn.textContent='copy';btn.style.color='';},2000);
+  });
+}
+</script>
+</body>
+</html>
