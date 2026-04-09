@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keyboard கற்றல் வழிகாட்டி</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Serif:wght@400;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans Tamil',sans-serif;background:#f9f7f4;color:#222;font-size:14px;line-height:1.8}
+  .print-btn{position:fixed;top:16px;right:16px;background:#3C3489;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;z-index:999;font-family:'Noto Sans Tamil',sans-serif}
+  .print-btn:hover{background:#534AB7}
+  @media print{.print-btn{display:none} body{background:#fff} .page{box-shadow:none;margin:0;border-radius:0}}
+  .page{max-width:780px;margin:0 auto;background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+
+  /* COVER */
+  .cover{background:linear-gradient(135deg,#3C3489 0%,#534AB7 60%,#7F77DD 100%);color:#fff;padding:60px 40px 50px;text-align:center}
+  .cover h1{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.3}
+  .cover h2{font-size:18px;font-weight:400;opacity:.85;margin-bottom:24px}
+  .cover .sub{font-size:13px;opacity:.7;background:rgba(255,255,255,.15);display:inline-block;padding:6px 18px;border-radius:20px}
+
+  /* SECTIONS */
+  .section{padding:36px 40px;border-bottom:1px solid #f0ede8}
+  .section:last-child{border-bottom:none}
+  .sec-title{font-size:20px;font-weight:700;color:#3C3489;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,#7F77DD,transparent)}
+  .sec-sub{font-size:12px;color:#888;margin-bottom:18px}
+  .eng{font-size:11px;color:#aaa;font-style:italic}
+
+  /* STEP BOX */
+  .step-box{background:#EEEDFE;border-left:4px solid #534AB7;border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:14px}
+  .step-num{font-size:11px;font-weight:700;color:#534AB7;letter-spacing:.5px;margin-bottom:4px}
+  .step-title{font-size:15px;font-weight:700;color:#26215C;margin-bottom:4px}
+  .step-body{font-size:13px;color:#3d3d3a;line-height:1.9}
+  .step-eng{font-size:11px;color:#888;margin-top:4px}
+
+  /* TIP BOX */
+  .tip{background:#E1F5EE;border:1px solid #9FE1CB;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px;color:#085041}
+  .tip strong{color:#0F6E56}
+  .warn{background:#FAEEDA;border:1px solid #FAC775;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px;color:#633806}
+
+  /* KEYBOARD DIAGRAM */
+  .kb-wrap{background:#f5f3ff;border-radius:14px;padding:20px;margin:20px 0;text-align:center}
+  .kb-label{font-size:12px;color:#666;margin-bottom:12px}
+  .keyboard{display:inline-flex;position:relative;gap:0}
+  .wkey{width:32px;height:90px;background:#fff;border:1.5px solid #bbb;border-radius:0 0 5px 5px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:5px;position:relative;cursor:default;font-size:9px;font-weight:600;color:#555}
+  .wkey.c-mark{border-bottom:3px solid #E24B4A}
+  .wkey.mid-c{background:#FAEEDA;border-color:#854F0B}
+  .wkey.mid-c span{color:#633806}
+  .wkey .note-ta{font-size:8px;color:#3C3489;font-weight:700;display:block;line-height:1.2}
+  .bkey{width:20px;height:56px;background:#2C2C2A;border-radius:0 0 4px 4px;border:1.5px solid #111;position:absolute;top:0;z-index:2;cursor:default;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+  .bkey span{font-size:7px;color:#ddd;line-height:1.2;text-align:center}
+  .kb-legend{display:flex;gap:16px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#555}
+  .leg-box{width:14px;height:14px;border-radius:3px;border:1px solid #ccc}
+
+  /* NOTE READING */
+  .staff-wrap{background:#fafafa;border-radius:12px;padding:20px;margin:16px 0;border:1px solid #eee}
+  .staff-title{font-size:13px;font-weight:700;color:#3C3489;margin-bottom:10px}
+  svg.staff{width:100%;max-width:680px}
+
+  /* SOLFEGE TABLE */
+  table{width:100%;border-collapse:collapse;margin:16px 0;border-radius:10px;overflow:hidden}
+  th{background:#3C3489;color:#fff;padding:10px 12px;font-size:12px;font-weight:600;text-align:left}
+  td{padding:9px 12px;font-size:13px;border-bottom:1px solid #f0ede8}
+  tr:nth-child(even) td{background:#f9f7ff}
+  tr:last-child td{border-bottom:none}
+  .note-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+
+  /* CHORD DIAGRAM */
+  .chord-row{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+  .chord-card{background:#fff;border:1px solid #e0ddf8;border-radius:12px;padding:14px;flex:1;min-width:160px}
+  .chord-name{font-size:14px;font-weight:700;color:#3C3489;margin-bottom:2px}
+  .chord-ta{font-size:12px;color:#666;margin-bottom:8px}
+  .chord-keys{display:flex;gap:4px;align-items:flex-end;height:44px}
+  .ck{border-radius:4px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700}
+  .ck.w{background:#fff;border:1.5px solid #bbb;width:22px;height:44px;color:#555}
+  .ck.b{background:#2C2C2A;width:14px;height:30px;color:#aaa;font-size:7px}
+  .ck.hi{background:#534AB7;border:2px solid #3C3489;color:#fff}
+  .chord-note{font-size:12px;color:#444;margin-top:8px}
+
+  /* PRACTICE SCHEDULE */
+  .sched{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+  .sched-card{background:#fff;border:1px solid #eee;border-radius:10px;padding:14px}
+  .sched-day{font-size:12px;font-weight:700;color:#534AB7;margin-bottom:6px}
+  .sched-item{font-size:12px;color:#444;padding:3px 0;border-bottom:1px solid #f5f5f5}
+  .sched-item:last-child{border-bottom:none}
+
+  /* PATTERN BOX */
+  .pattern-box{background:#fff0f0;border:1px solid #f0a0a0;border-radius:10px;padding:14px 18px;margin:14px 0}
+  .pattern-title{font-size:13px;font-weight:700;color:#a32d2d;margin-bottom:6px}
+  .pattern-body{font-size:13px;color:#501313;line-height:1.9}
+
+  /* PAGE BREAK */
+  .pagebreak{page-break-before:always}
+
+  /* FOOTER */
+  .footer{text-align:center;padding:24px;font-size:11px;color:#aaa;background:#fafafa}
+  .phase-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin-bottom:10px}
+  .p1{background:#EEEDFE;color:#3C3489}
+  .p2{background:#E1F5EE;color:#0F6E56}
+  .p3{background:#FAEEDA;color:#854F0B}
+  .p4{background:#FAECE7;color:#993C1D}
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ PDF ஆக சேமிக்க / Save as PDF</button>
+<div class="page">
+
+<!-- COVER -->
+<div class="cover">
+  <div style="font-size:48px;margin-bottom:16px">🎹</div>
+  <h1>Electronic Keyboard<br>கற்றல் வழிகாட்டி</h1>
+  <h2>தொடக்கநிலை பயிற்சி புத்தகம்</h2>
+  <div class="sub">Beginner's Step-by-Step Practice Guide • IT பணியாளர்களுக்கு சிறப்பாக தயாரிக்கப்பட்டது</div>
+  <div style="margin-top:24px;font-size:13px;opacity:.6">தினமும் 15 நிமிடம் பயிற்சி செய்தால் போதும்!</div>
+</div>
+
+<!-- SECTION 1: INTRO -->
+<div class="section">
+  <div class="sec-title">🎯 இந்த வழிகாட்டி பற்றி</div>
+  <div class="sec-sub">About this guide</div>
+  <p style="font-size:13px;color:#444;line-height:2;margin-bottom:14px">
+    நீங்கள் IT துறையில் பணிபுரிவதால் நேரம் மிகவும் குறைவாக இருக்கும். ஆனால் தினமும் வெறும் <strong>15 நிமிடம்</strong> மட்டும் பயிற்சி செய்தால் கூட, 3 மாதத்தில் நீங்கள் keyboard இல் பாடல்கள் வாசிக்கலாம்!
+  </p>
+  <div class="tip">
+    <strong>💡 முக்கிய யோசனை:</strong> Keyboard கற்பது நிரல் எழுதுவதைப் போன்றது — முதலில் ஒவ்வொரு படியாக debug செய்யுங்கள், பிறகு எல்லாவற்றையும் ஒன்றாக இணையுங்கள்!
+    <div class="eng">Learning keyboard is like programming — debug each hand separately, then integrate.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px">
+    <div style="background:#EEEDFE;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:24px">📅</div>
+      <div style="font-size:13px;font-weight:700;color:#3C3489;margin-top:4px">Phase 1</div>
+      <div style="font-size:11px;color:#666">1–7 நாட்கள்<br>Keys அறிதல்</div>
+    </div>
+    <div style="background:#E1F5EE;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:24px">🤲</div>
+      <div style="font-size:13px;font-weight:700;color:#0F6E56;margin-top:4px">Phase 2</div>
+      <div style="font-size:11px;color:#666">Week 2–3<br>இரு கைகள்</div>
+    </div>
+    <div style="background:#FAEEDA;border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:24px">🎵</div>
+      <div style="font-size:13px;font-weight:700;color:#854F0B;margin-top:4px">Phase 3–4</div>
+      <div style="font-size:11px;color:#666">Week 4+<br>Chords & பாடல்</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: KEYBOARD LAYOUT -->
+<div class="section pagebreak">
+  <div class="phase-tag p1">Phase 1 — நாள் 1 முதல் 7 வரை</div>
+  <div class="sec-title">🎹 Keyboard அமைப்பு புரிதல்</div>
+  <div class="sec-sub">Understanding the Keyboard Layout</div>
+
+  <div class="kb-wrap">
+    <div class="kb-label">ஒரு octave keyboard — வெள்ளை மற்றும் கறுப்பு keys (One Octave — White & Black Keys)</div>
+    <div style="position:relative;display:inline-block">
+      <!-- White keys -->
+      <div class="keyboard" id="kb">
+        <div class="wkey mid-c c-mark"><span class="note-ta">ச<br>Sa</span><span>C</span></div>
+        <div class="wkey"><span class="note-ta">ரி<br>Ri</span><span>D</span></div>
+        <div class="wkey"><span class="note-ta">க<br>Ga</span><span>E</span></div>
+        <div class="wkey c-mark" style="border-bottom-color:#888"><span class="note-ta">ம<br>Ma</span><span>F</span></div>
+        <div class="wkey"><span class="note-ta">ப<br>Pa</span><span>G</span></div>
+        <div class="wkey"><span class="note-ta">த<br>Dha</span><span>A</span></div>
+        <div class="wkey"><span class="note-ta">நி<br>Ni</span><span>B</span></div>
+        <div class="wkey c-mark"><span class="note-ta">ச<br>Sa</span><span>C</span></div>
+        <!-- Black keys positioned absolutely -->
+        <div class="bkey" style="left:22px"><span>C#<br>Db</span></div>
+        <div class="bkey" style="left:54px"><span>D#<br>Eb</span></div>
+        <div class="bkey" style="left:118px"><span>F#<br>Gb</span></div>
+        <div class="bkey" style="left:150px"><span>G#<br>Ab</span></div>
+        <div class="bkey" style="left:182px"><span>A#<br>Bb</span></div>
+      </div>
+    </div>
+    <div class="kb-legend">
+      <div class="leg-item"><div class="leg-box" style="background:#FAEEDA;border-color:#854F0B"></div>Middle C (நடு ச) — தொடக்க புள்ளி</div>
+      <div class="leg-item"><div class="leg-box" style="background:#fff;border-bottom:3px solid #E24B4A"></div>C notes — சுவர் அடையாளம்</div>
+      <div class="leg-item"><div class="leg-box" style="background:#2C2C2A"></div>Black keys — அரை சுரங்கள்</div>
+    </div>
+  </div>
+
+  <div class="pattern-box">
+    <div class="pattern-title">🔑 Pattern யுக்தி — Keys எளிதாக கண்டுபிடிக்க!</div>
+    <div class="pattern-body">
+      கறுப்பு keys எப்போதும் <strong>2 மற்றும் 3</strong> என்ற குழுக்களாக வருகின்றன:<br>
+      ▸ <strong>2 கறுப்பு keys</strong> குழுவிற்கு இடதுபுறம் = <strong>C (ச)</strong><br>
+      ▸ <strong>3 கறுப்பு keys</strong> குழுவிற்கு இடதுபுறம் = <strong>F (ம)</strong><br><br>
+      இந்த இரண்டை மனதில் வைத்தால், மற்ற எல்லா notes-ஐயும் கண்டுபிடிக்கலாம்!<br>
+      <span class="eng">Black keys come in groups of 2 and 3. C is left of group-of-2. F is left of group-of-3.</span>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>English Note</th><th>சுரம் (Suram)</th><th>உச்சரிப்பு</th><th>இந்திய சுரம்</th></tr>
+    <tr><td><span class="note-dot" style="background:#534AB7"></span><strong>C</strong></td><td>ச</td><td>Sa</td><td>ஷட்ஜம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#1D9E75"></span><strong>D</strong></td><td>ரி</td><td>Ri</td><td>ரிஷபம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#D85A30"></span><strong>E</strong></td><td>க</td><td>Ga</td><td>காந்தாரம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#D4537E"></span><strong>F</strong></td><td>ம</td><td>Ma</td><td>மத்யமம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#378ADD"></span><strong>G</strong></td><td>ப</td><td>Pa</td><td>பஞ்சமம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#639922"></span><strong>A</strong></td><td>த</td><td>Dha</td><td>தைவதம்</td></tr>
+    <tr><td><span class="note-dot" style="background:#BA7517"></span><strong>B</strong></td><td>நி</td><td>Ni</td><td>நிஷாதம்</td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>💡 நினைவு வைக்க சுலபமான வழி:</strong> "சரிகம பதநி" — ஒவ்வொரு நாளும் இதை சப்தமாக சொல்லுங்கள்!<br>
+    <span class="eng">Memory trick: Chant "Sa Ri Ga Ma Pa Dha Ni" daily — it maps to C D E F G A B.</span>
+  </div>
+</div>
+
+<!-- SECTION 3: MUSIC NOTATION -->
+<div class="section pagebreak">
+  <div class="phase-tag p1">Phase 1 — Notes படிக்கக் கற்றுக்கொள்</div>
+  <div class="sec-title">🎼 இசை குறியீடுகள் (Music Notation)</div>
+  <div class="sec-sub">How to Read Music Notes</div>
+
+  <div class="staff-wrap">
+    <div class="staff-title">Treble Clef Staff — மேல் கை (வலது கை) குறியீடுகள்</div>
+    <svg class="staff" viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Staff lines -->
+      <line x1="60" y1="50" x2="640" y2="50" stroke="#555" stroke-width="1.2"/>
+      <line x1="60" y1="70" x2="640" y2="70" stroke="#555" stroke-width="1.2"/>
+      <line x1="60" y1="90" x2="640" y2="90" stroke="#555" stroke-width="1.2"/>
+      <line x1="60" y1="110" x2="640" y2="110" stroke="#555" stroke-width="1.2"/>
+      <line x1="60" y1="130" x2="640" y2="130" stroke="#555" stroke-width="1.2"/>
+      <!-- Treble clef symbol -->
+      <text x="62" y="128" font-size="90" fill="#3C3489" font-family="serif">𝄞</text>
+      <!-- Notes: E G B D F on lines, F A C E in spaces -->
+      <!-- E4 on first line -->
+      <ellipse cx="180" cy="130" rx="11" ry="8" fill="#534AB7"/>
+      <line x1="191" y1="130" x2="191" y2="80" stroke="#534AB7" stroke-width="2"/>
+      <text x="174" y="158" font-size="11" fill="#3C3489" font-family="sans-serif">E (க)</text>
+      <text x="174" y="170" font-size="9" fill="#888" font-family="sans-serif">1st line</text>
+      <!-- G4 on second line -->
+      <ellipse cx="255" cy="110" rx="11" ry="8" fill="#1D9E75"/>
+      <line x1="266" y1="110" x2="266" y2="60" stroke="#1D9E75" stroke-width="2"/>
+      <text x="249" y="158" font-size="11" fill="#1D9E75" font-family="sans-serif">G (ப)</text>
+      <text x="249" y="170" font-size="9" fill="#888" font-family="sans-serif">2nd line</text>
+      <!-- B4 on middle line -->
+      <ellipse cx="330" cy="90" rx="11" ry="8" fill="#D85A30"/>
+      <line x1="341" y1="90" x2="341" y2="40" stroke="#D85A30" stroke-width="2"/>
+      <text x="324" y="158" font-size="11" fill="#D85A30" font-family="sans-serif">B (நி)</text>
+      <text x="324" y="170" font-size="9" fill="#888" font-family="sans-serif">3rd line</text>
+      <!-- D5 on 4th line -->
+      <ellipse cx="405" cy="70" rx="11" ry="8" fill="#D4537E"/>
+      <line x1="416" y1="70" x2="416" y2="20" stroke="#D4537E" stroke-width="2"/>
+      <text x="399" y="158" font-size="11" fill="#D4537E" font-family="sans-serif">D (ரி)</text>
+      <text x="399" y="170" font-size="9" fill="#888" font-family="sans-serif">4th line</text>
+      <!-- F5 on top line -->
+      <ellipse cx="480" cy="50" rx="11" ry="8" fill="#378ADD"/>
+      <line x1="491" y1="50" x2="491" y2="0" stroke="#378ADD" stroke-width="2"/>
+      <text x="474" y="158" font-size="11" fill="#378ADD" font-family="sans-serif">F (ம)</text>
+      <text x="474" y="170" font-size="9" fill="#888" font-family="sans-serif">5th line</text>
+      <!-- Middle C ledger line -->
+      <ellipse cx="570" cy="148" rx="11" ry="8" fill="#854F0B"/>
+      <line x1="559" y1="148" x2="583" y2="148" stroke="#854F0B" stroke-width="1.5"/>
+      <line x1="581" y1="148" x2="581" y2="98" stroke="#854F0B" stroke-width="2"/>
+      <text x="553" y="175" font-size="11" fill="#854F0B" font-family="sans-serif">C4 நடு ச</text>
+      <text x="556" y="187" font-size="9" fill="#888" font-family="sans-serif">Middle C</text>
+      <!-- Label top -->
+      <text x="60" y="18" font-size="11" fill="#888" font-family="sans-serif">Lines (கோடுகள்): Every Good Boy Does Fine → E G B D F</text>
+    </svg>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0">
+    <div class="staff-wrap">
+      <div class="staff-title">📏 Lines நினைவு வாசகம் (Lines Mnemonic)</div>
+      <div style="font-size:13px;color:#444;line-height:2.2;margin-top:8px">
+        <span style="font-size:18px">🎵</span> <strong style="color:#534AB7">E</strong> — <em>Every</em> → <strong>க</strong> (Ga)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#1D9E75">G</strong> — <em>Good</em> → <strong>ப</strong> (Pa)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#D85A30">B</strong> — <em>Boy</em> → <strong>நி</strong> (Ni)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#D4537E">D</strong> — <em>Does</em> → <strong>ரி</strong> (Ri)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#378ADD">F</strong> — <em>Fine</em> → <strong>ம</strong> (Ma)
+      </div>
+    </div>
+    <div class="staff-wrap">
+      <div class="staff-title">📐 Spaces நினைவு வாசகம் (Spaces Mnemonic)</div>
+      <div style="font-size:13px;color:#444;line-height:2.2;margin-top:8px">
+        Space notes கீழிருந்து மேலாக:<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#D4537E">F</strong> — <em>Face</em><br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#378ADD">A</strong> — ம → <strong>த</strong> (Dha)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#639922">C</strong> — ல → <strong>ச</strong> (Sa)<br>
+        <span style="font-size:18px">🎵</span> <strong style="color:#BA7517">E</strong> — ஸ் → <strong>க</strong> (Ga)<br>
+        <em style="font-size:11px;color:#888">Spaces spell "FACE" !</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="staff-wrap">
+    <div class="staff-title">🎵 Note அளவுகள் (Note Values) — இசை காலம்</div>
+    <svg class="staff" viewBox="0 0 660 120" xmlns="http://www.w3.org/2000/svg">
+      <!-- Whole note -->
+      <ellipse cx="100" cy="60" rx="18" ry="13" fill="none" stroke="#3C3489" stroke-width="2.5"/>
+      <text x="72" y="90" font-size="11" fill="#3C3489" font-family="sans-serif">முழு note</text>
+      <text x="72" y="103" font-size="10" fill="#888" font-family="sans-serif">Whole (4 beats)</text>
+      <!-- Half note -->
+      <ellipse cx="220" cy="65" rx="14" ry="10" fill="none" stroke="#1D9E75" stroke-width="2.5"/>
+      <line x1="234" y1="65" x2="234" y2="15" stroke="#1D9E75" stroke-width="2.5"/>
+      <text x="200" y="90" font-size="11" fill="#1D9E75" font-family="sans-serif">அரை note</text>
+      <text x="200" y="103" font-size="10" fill="#888" font-family="sans-serif">Half (2 beats)</text>
+      <!-- Quarter note -->
+      <ellipse cx="350" cy="65" rx="13" ry="10" fill="#D85A30"/>
+      <line x1="363" y1="65" x2="363" y2="15" stroke="#D85A30" stroke-width="2.5"/>
+      <text x="328" y="90" font-size="11" fill="#D85A30" font-family="sans-serif">கால் note</text>
+      <text x="328" y="103" font-size="10" fill="#888" font-family="sans-serif">Quarter (1 beat)</text>
+      <!-- Eighth note -->
+      <ellipse cx="480" cy="65" rx="12" ry="9" fill="#D4537E"/>
+      <line x1="492" y1="65" x2="492" y2="15" stroke="#D4537E" stroke-width="2.5"/>
+      <path d="M492 15 Q510 25 500 40" fill="none" stroke="#D4537E" stroke-width="2.5"/>
+      <text x="458" y="90" font-size="11" fill="#D4537E" font-family="sans-serif">எட்டில் ஒரு</text>
+      <text x="458" y="103" font-size="10" fill="#888" font-family="sans-serif">Eighth (½ beat)</text>
+      <!-- Count label -->
+      <text x="570" y="55" font-size="11" fill="#666" font-family="sans-serif">4:2:1:½</text>
+      <text x="565" y="70" font-size="10" fill="#aaa" font-family="sans-serif">beat ratio</text>
+    </svg>
+  </div>
+
+  <div class="tip">
+    <strong>💡 Beat எண்ணும் முறை:</strong> வாயில் "1-2-3-4, 1-2-3-4" என சொல்லிக்கொண்டே வாசிக்கவும். ஒவ்வொரு count-க்கும் ஒரு Quarter note = 1 beat.
+    <div class="eng">Count aloud: "1-2-3-4" while playing. One quarter note = one beat.</div>
+  </div>
+</div>
+
+<!-- SECTION 4: POSTURE & HANDS -->
+<div class="section pagebreak">
+  <div class="phase-tag p2">Phase 2 — Week 2–3</div>
+  <div class="sec-title">🤲 உடல் நிலை மற்றும் விரல் நிலை</div>
+  <div class="sec-sub">Posture & Finger Position</div>
+
+  <div class="step-box">
+    <div class="step-num">படி 1 — STEP 1</div>
+    <div class="step-title">உட்காரும் முறை (Sitting Posture)</div>
+    <div class="step-body">
+      நேராக உட்காருங்கள். முழங்கை keyboard உயரத்தில் இருக்கட்டும். முதுகு நேராக, தோள் தளர்வாக இருக்கட்டும்.
+      <div class="step-eng">Sit straight. Elbows at keyboard height. Back straight, shoulders relaxed.</div>
+    </div>
+  </div>
+
+  <div class="step-box">
+    <div class="step-num">படி 2 — STEP 2</div>
+    <div class="step-title">விரல் நிலை (Finger Curve)</div>
+    <div class="step-body">
+      கையை ஒரு பந்தை பிடிப்பதுபோல் வளைத்து வையுங்கள். விரல்கள் தட்டையாக இருக்கக்கூடாது. மணிக்கட்டு சற்று உயரத்தில் இருக்க வேண்டும்.
+      <div class="step-eng">Curve fingers as if holding a ball. Never flat. Wrist slightly elevated.</div>
+    </div>
+  </div>
+
+  <!-- Hand diagram SVG -->
+  <div class="staff-wrap">
+    <div class="staff-title">விரல் எண்களும் Notes-ம் (Finger Numbers & Notes)</div>
+    <svg viewBox="0 0 660 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <!-- Right hand label -->
+      <text x="160" y="20" font-size="13" font-weight="700" fill="#3C3489" text-anchor="middle" font-family="sans-serif">வலது கை (Right Hand)</text>
+      <!-- Keys for right hand -->
+      <rect x="60" y="30" width="36" height="90" rx="4" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/>
+      <rect x="100" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="140" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="180" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="220" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <text x="78" y="80" font-size="14" font-weight="700" fill="#633806" text-anchor="middle" font-family="sans-serif">C</text>
+      <text x="118" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">D</text>
+      <text x="158" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">E</text>
+      <text x="198" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">F</text>
+      <text x="238" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">G</text>
+      <!-- Finger numbers -->
+      <circle cx="78" cy="140" r="13" fill="#534AB7"/>
+      <circle cx="118" cy="140" r="13" fill="#534AB7"/>
+      <circle cx="158" cy="140" r="13" fill="#534AB7"/>
+      <circle cx="198" cy="140" r="13" fill="#534AB7"/>
+      <circle cx="238" cy="140" r="13" fill="#534AB7"/>
+      <text x="78" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">1</text>
+      <text x="118" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">2</text>
+      <text x="158" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">3</text>
+      <text x="198" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">4</text>
+      <text x="238" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">5</text>
+      <text x="78" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">கட்டை</text>
+      <text x="118" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">ஆள்காட்டி</text>
+      <text x="158" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">நடு</text>
+      <text x="198" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">மோதிர</text>
+      <text x="238" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">சுண்டு</text>
+      <!-- Left hand -->
+      <text x="500" y="20" font-size="13" font-weight="700" fill="#0F6E56" text-anchor="middle" font-family="sans-serif">இடது கை (Left Hand)</text>
+      <rect x="390" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="430" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="470" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="510" y="30" width="36" height="90" rx="4" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+      <rect x="550" y="30" width="36" height="90" rx="4" fill="#FAEEDA" stroke="#854F0B" stroke-width="1.5"/>
+      <text x="408" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">G</text>
+      <text x="448" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">F</text>
+      <text x="488" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">E</text>
+      <text x="528" y="80" font-size="14" font-weight="700" fill="#185FA5" text-anchor="middle" font-family="sans-serif">D</text>
+      <text x="568" y="80" font-size="14" font-weight="700" fill="#633806" text-anchor="middle" font-family="sans-serif">C</text>
+      <circle cx="408" cy="140" r="13" fill="#0F6E56"/>
+      <circle cx="448" cy="140" r="13" fill="#0F6E56"/>
+      <circle cx="488" cy="140" r="13" fill="#0F6E56"/>
+      <circle cx="528" cy="140" r="13" fill="#0F6E56"/>
+      <circle cx="568" cy="140" r="13" fill="#0F6E56"/>
+      <text x="408" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">1</text>
+      <text x="448" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">2</text>
+      <text x="488" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">3</text>
+      <text x="528" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">4</text>
+      <text x="568" y="145" font-size="13" fill="white" text-anchor="middle" font-family="sans-serif">5</text>
+      <text x="408" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">கட்டை</text>
+      <text x="448" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">ஆள்காட்டி</text>
+      <text x="488" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">நடு</text>
+      <text x="528" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">மோதிர</text>
+      <text x="568" y="175" font-size="10" fill="#666" text-anchor="middle" font-family="sans-serif">சுண்டு</text>
+    </svg>
+  </div>
+
+  <div class="step-box">
+    <div class="step-num">படி 3 — STEP 3</div>
+    <div class="step-title">முதல் பயிற்சி பாடல் — Mary Had a Little Lamb</div>
+    <div class="step-body">
+      வலது கை மட்டும் முதலில் பயிற்சி செய்யுங்கள்:<br>
+      <div style="margin-top:10px;background:#fff;border-radius:8px;padding:12px;font-size:13px;line-height:2.5">
+        <strong>Notes:</strong> &nbsp;
+        <span style="background:#FAEEDA;padding:3px 8px;border-radius:5px;margin:2px">E</span>
+        <span style="background:#E6F1FB;padding:3px 8px;border-radius:5px;margin:2px">D</span>
+        <span style="background:#E6F1FB;padding:3px 8px;border-radius:5px;margin:2px">C</span>
+        <span style="background:#E6F1FB;padding:3px 8px;border-radius:5px;margin:2px">D</span>
+        <span style="background:#FAEEDA;padding:3px 8px;border-radius:5px;margin:2px">E</span>
+        <span style="background:#FAEEDA;padding:3px 8px;border-radius:5px;margin:2px">E</span>
+        <span style="background:#FAEEDA;padding:3px 8px;border-radius:5px;margin:2px">E</span>
+        <br>
+        <strong>சுரம்:</strong> &nbsp;&nbsp;&nbsp;க &nbsp;&nbsp; ரி &nbsp;&nbsp; ச &nbsp;&nbsp; ரி &nbsp;&nbsp; க &nbsp;&nbsp; க &nbsp;&nbsp; க<br>
+        <strong>வரி:</strong> &nbsp;&nbsp;&nbsp;&nbsp; Ma - ry &nbsp; had &nbsp; a &nbsp; lit - tle &nbsp; lamb
+      </div>
+      <div class="step-eng">Practice right hand only first. E D C D E E E = Ma-ry had a lit-tle lamb.</div>
+    </div>
+  </div>
+
+  <div class="warn">
+    ⚠️ <strong>மிக முக்கியம்:</strong> நீங்கள் நினைப்பதை விட <strong>50% மெதுவாக</strong> வாசியுங்கள். வேகம் பிறகு தாமாகவே வரும். முதலில் accuracy முக்கியம்!<br>
+    <span style="font-size:11px;color:#854F0B">Practice at 50% of your comfortable speed. Accuracy first, speed comes naturally.</span>
+  </div>
+</div>
+
+<!-- SECTION 5: CHORDS -->
+<div class="section pagebreak">
+  <div class="phase-tag p3">Phase 3 — Week 4–6</div>
+  <div class="sec-title">🎸 அடிப்படை Chords (Basic Chords)</div>
+  <div class="sec-sub">3 chords — நூற்றுக்கணக்கான பாடல்கள்!</div>
+
+  <p style="font-size:13px;color:#444;line-height:2;margin-bottom:16px">
+    இந்த 3 chords மட்டும் கற்றுக்கொண்டால் பல தமிழ் மற்றும் ஆங்கிலப் பாடல்களை வாசிக்கலாம். வலது கை melody வாசிக்கும் போது, இடது கை இந்த chords வாசிக்கும்.
+  </p>
+
+  <div class="chord-row">
+    <!-- C Major -->
+    <div class="chord-card">
+      <div class="chord-name">C Major</div>
+      <div class="chord-ta">ச மேஜர் — இனிமையான, சந்தோஷமான ஒலி</div>
+      <div class="chord-keys">
+        <div class="ck w hi">C<br>1</div>
+        <div class="ck b"></div>
+        <div class="ck w">D</div>
+        <div class="ck b"></div>
+        <div class="ck w hi">E<br>3</div>
+        <div class="ck w">F</div>
+        <div class="ck b"></div>
+        <div class="ck w hi">G<br>5</div>
+      </div>
+      <div class="chord-note">C + E + G (ச + க + ப)<br>விரல்கள்: 1 - 3 - 5</div>
+    </div>
+    <!-- F Major -->
+    <div class="chord-card">
+      <div class="chord-name">F Major</div>
+      <div class="chord-ta">ம மேஜர் — நிம்மதியான, அமைதியான ஒலி</div>
+      <div class="chord-keys">
+        <div class="ck w hi">F<br>1</div>
+        <div class="ck b"></div>
+        <div class="ck w hi">G</div>
+        <div class="ck b"></div>
+        <div class="ck w hi">A<br>3</div>
+        <div class="ck b"></div>
+        <div class="ck w">B</div>
+        <div class="ck w hi">C<br>5</div>
+      </div>
+      <div class="chord-note">F + A + C (ம + த + ச)<br>விரல்கள்: 1 - 2 - 5</div>
+    </div>
+    <!-- G Major -->
+    <div class="chord-card">
+      <div class="chord-name">G Major</div>
+      <div class="chord-ta">ப மேஜர் — வலிமையான, உற்சாகமான ஒலி</div>
+      <div class="chord-keys">
+        <div class="ck w hi">G<br>1</div>
+        <div class="ck b"></div>
+        <div class="ck w">A</div>
+        <div class="ck b">A#</div>
+        <div class="ck w hi">B<br>3</div>
+        <div class="ck w">C</div>
+        <div class="ck b"></div>
+        <div class="ck w hi">D<br>5</div>
+      </div>
+      <div class="chord-note">G + B + D (ப + நி + ரி)<br>விரல்கள்: 1 - 3 - 5</div>
+    </div>
+  </div>
+
+  <!-- Chord transition practice -->
+  <div class="staff-wrap">
+    <div class="staff-title">🔁 Chord மாற்றும் பயிற்சி (Chord Transition Practice)</div>
+    <svg viewBox="0 0 660 80" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="20" width="100" height="40" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+      <text x="70" y="38" font-size="13" font-weight="700" fill="#3C3489" text-anchor="middle" font-family="sans-serif">C Major</text>
+      <text x="70" y="54" font-size="10" fill="#534AB7" text-anchor="middle" font-family="sans-serif">ச மேஜர்</text>
+      <path d="M122 40 L148 40" stroke="#888" stroke-width="2" marker-end="url(#arr)"/>
+      <rect x="150" y="20" width="100" height="40" rx="8" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.5"/>
+      <text x="200" y="38" font-size="13" font-weight="700" fill="#0F6E56" text-anchor="middle" font-family="sans-serif">G Major</text>
+      <text x="200" y="54" font-size="10" fill="#1D9E75" text-anchor="middle" font-family="sans-serif">ப மேஜர்</text>
+      <path d="M252 40 L278 40" stroke="#888" stroke-width="2" marker-end="url(#arr)"/>
+      <rect x="280" y="20" width="100" height="40" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+      <text x="330" y="38" font-size="13" font-weight="700" fill="#3C3489" text-anchor="middle" font-family="sans-serif">C Major</text>
+      <text x="330" y="54" font-size="10" fill="#534AB7" text-anchor="middle" font-family="sans-serif">ச மேஜர்</text>
+      <path d="M382 40 L408 40" stroke="#888" stroke-width="2" marker-end="url(#arr)"/>
+      <rect x="410" y="20" width="100" height="40" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+      <text x="460" y="38" font-size="13" font-weight="700" fill="#854F0B" text-anchor="middle" font-family="sans-serif">F Major</text>
+      <text x="460" y="54" font-size="10" fill="#BA7517" text-anchor="middle" font-family="sans-serif">ம மேஜர்</text>
+      <path d="M512 40 L538 40" stroke="#888" stroke-width="2" marker-end="url(#arr)"/>
+      <rect x="540" y="20" width="100" height="40" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+      <text x="590" y="38" font-size="13" font-weight="700" fill="#3C3489" text-anchor="middle" font-family="sans-serif">C Major</text>
+      <text x="590" y="54" font-size="10" fill="#534AB7" text-anchor="middle" font-family="sans-serif">ச மேஜர்</text>
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#888" stroke-width="1.5"/></marker></defs>
+    </svg>
+    <p style="font-size:12px;color:#666;margin-top:10px;text-align:center">இந்த pattern-ஐ loop-ஆக பயிற்சி செய்யுங்கள் — மெதுவாக, சரியாக மாறுங்கள்</p>
+  </div>
+
+  <div class="tip">
+    <strong>💡 Chord மாற்றும் யுக்தி:</strong> அடுத்த chord-க்கு மாறும் முன்பே, உங்கள் இடது கை அடுத்த நிலைக்கு தயாராக நகர வேண்டும். கண்கள் எப்போதும் "முன்னோக்கி" பார்க்க வேண்டும்!<br>
+    <span style="font-size:11px">Look ahead — your hand should move to the next chord before you need it.</span>
+  </div>
+</div>
+
+<!-- SECTION 6: PRACTICE SCHEDULE -->
+<div class="section pagebreak">
+  <div class="phase-tag p4">தினசரி பயிற்சி திட்டம்</div>
+  <div class="sec-title">📅 15 நிமிட பயிற்சி அட்டவணை</div>
+  <div class="sec-sub">Daily 15-Minute Practice Schedule</div>
+
+  <div class="sched">
+    <div class="sched-card">
+      <div class="sched-day">🌅 நாள் 1–7 (Week 1)</div>
+      <div class="sched-item">⏱ 5 நி: Keys பெயர் சொல்லி தட்டுதல்</div>
+      <div class="sched-item">⏱ 5 நி: C, D, E, F, G — வலது கை</div>
+      <div class="sched-item">⏱ 5 நி: Middle C கண்டுபிடிக்கும் பயிற்சி</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-day">🌤 நாள் 8–14 (Week 2)</div>
+      <div class="sched-item">⏱ 5 நி: C scale — வலது கை மட்டும்</div>
+      <div class="sched-item">⏱ 5 நி: C scale — இடது கை மட்டும்</div>
+      <div class="sched-item">⏱ 5 நி: Mary Had a Little Lamb</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-day">☀️ நாள் 15–21 (Week 3)</div>
+      <div class="sched-item">⏱ 5 நி: இரு கை சேர்த்து scale</div>
+      <div class="sched-item">⏱ 5 நி: C major chord பயிற்சி</div>
+      <div class="sched-item">⏱ 5 நி: எளிதான பாடல் முயற்சி</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-day">🎵 நாள் 22–30 (Week 4)</div>
+      <div class="sched-item">⏱ 5 நி: C, F, G chords மாற்றல்</div>
+      <div class="sched-item">⏱ 5 நி: பாடல் இரு கை சேர்த்து</div>
+      <div class="sched-item">⏱ 5 நி: புதிய note கற்றல்</div>
+    </div>
+  </div>
+
+  <div class="staff-wrap" style="margin-top:20px">
+    <div class="staff-title">🎵 C Major Scale — முழு பயிற்சி குறியீடு</div>
+    <svg viewBox="0 0 660 130" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <!-- Staff lines -->
+      <line x1="50" y1="30" x2="640" y2="30" stroke="#bbb" stroke-width="1"/>
+      <line x1="50" y1="48" x2="640" y2="48" stroke="#bbb" stroke-width="1"/>
+      <line x1="50" y1="66" x2="640" y2="66" stroke="#bbb" stroke-width="1"/>
+      <line x1="50" y1="84" x2="640" y2="84" stroke="#bbb" stroke-width="1"/>
+      <line x1="50" y1="102" x2="640" y2="102" stroke="#bbb" stroke-width="1"/>
+      <!-- Treble clef -->
+      <text x="50" y="100" font-size="68" fill="#3C3489" font-family="serif">𝄞</text>
+      <!-- C4 - ledger line below -->
+      <ellipse cx="130" cy="111" rx="11" ry="8" fill="#534AB7"/>
+      <line x1="119" y1="111" x2="143" y2="111" stroke="#534AB7" stroke-width="1.5"/>
+      <line x1="141" y1="111" x2="141" y2="70" stroke="#534AB7" stroke-width="2"/>
+      <text x="130" y="127" font-size="9" fill="#3C3489" text-anchor="middle" font-family="sans-serif">C ச</text>
+      <!-- D4 -->
+      <ellipse cx="200" cy="102" rx="11" ry="8" fill="#1D9E75"/>
+      <line x1="211" y1="102" x2="211" y2="62" stroke="#1D9E75" stroke-width="2"/>
+      <text x="200" y="127" font-size="9" fill="#1D9E75" text-anchor="middle" font-family="sans-serif">D ரி</text>
+      <!-- E4 -->
+      <ellipse cx="270" cy="93" rx="11" ry="8" fill="#D85A30"/>
+      <line x1="281" y1="93" x2="281" y2="53" stroke="#D85A30" stroke-width="2"/>
+      <text x="270" y="127" font-size="9" fill="#D85A30" text-anchor="middle" font-family="sans-serif">E க</text>
+      <!-- F4 -->
+      <ellipse cx="340" cy="84" rx="11" ry="8" fill="#D4537E"/>
+      <line x1="351" y1="84" x2="351" y2="44" stroke="#D4537E" stroke-width="2"/>
+      <text x="340" y="127" font-size="9" fill="#D4537E" text-anchor="middle" font-family="sans-serif">F ம</text>
+      <!-- G4 -->
+      <ellipse cx="410" cy="75" rx="11" ry="8" fill="#378ADD"/>
+      <line x1="421" y1="75" x2="421" y2="35" stroke="#378ADD" stroke-width="2"/>
+      <text x="410" y="127" font-size="9" fill="#378ADD" text-anchor="middle" font-family="sans-serif">G ப</text>
+      <!-- A4 -->
+      <ellipse cx="480" cy="66" rx="11" ry="8" fill="#639922"/>
+      <line x1="491" y1="66" x2="491" y2="26" stroke="#639922" stroke-width="2"/>
+      <text x="480" y="127" font-size="9" fill="#639922" text-anchor="middle" font-family="sans-serif">A த</text>
+      <!-- B4 -->
+      <ellipse cx="550" cy="57" rx="11" ry="8" fill="#BA7517"/>
+      <line x1="561" y1="57" x2="561" y2="17" stroke="#BA7517" stroke-width="2"/>
+      <text x="550" y="127" font-size="9" fill="#BA7517" text-anchor="middle" font-family="sans-serif">B நி</text>
+      <!-- C5 -->
+      <ellipse cx="620" cy="48" rx="11" ry="8" fill="#534AB7"/>
+      <line x1="609" y1="48" x2="609" y2="88" stroke="#534AB7" stroke-width="2"/>
+      <text x="620" y="127" font-size="9" fill="#3C3489" text-anchor="middle" font-family="sans-serif">C ச</text>
+      <!-- Finger numbers above -->
+      <text x="130" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">1</text>
+      <text x="200" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">2</text>
+      <text x="270" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">3</text>
+      <text x="340" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">1</text>
+      <text x="410" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">2</text>
+      <text x="480" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">3</text>
+      <text x="550" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">4</text>
+      <text x="620" y="18" font-size="9" fill="#888" text-anchor="middle" font-family="sans-serif">5</text>
+    </svg>
+    <p style="font-size:11px;color:#888;text-align:center;margin-top:6px">மேலே உள்ள எண்கள் = விரல் எண்கள் (E=3 இல் கட்டை விரல் குறுக்காக நகரும் — Thumb crossover)</p>
+  </div>
+
+  <div class="tip">
+    <strong>📱 பயனுள்ள Apps:</strong><br>
+    • <strong>Simply Piano</strong> — Microphone மூலம் keyboard கேட்டு guide செய்யும்<br>
+    • <strong>Yousician</strong> — தமிழ் பாடல்களும் உண்டு<br>
+    • <strong>YouTube:</strong> "keyboard swarajathi tamil beginners" தேடுங்கள்
+  </div>
+</div>
+
+<!-- SECTION 7: TAMIL SONGS -->
+<div class="section">
+  <div class="phase-tag p4">Phase 4 — இலக்கு பாடல்கள்</div>
+  <div class="sec-title">🎶 எளிதான தமிழ் பாடல் Notes</div>
+  <div class="sec-sub">Easy Tamil Song Notes for Beginners</div>
+
+  <div class="step-box">
+    <div class="step-num">பாடல் 1 — SONG 1</div>
+    <div class="step-title">ஆ... ஆ... ஆனந்த ராகம் (எளிதான பகுதி)</div>
+    <div class="step-body">
+      <div style="background:#fff;border-radius:8px;padding:12px;margin-top:8px;line-height:2.8">
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">E</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">G</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">E</span>
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">D</span>
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span><br>
+        ச &nbsp;&nbsp; க &nbsp;&nbsp; ப &nbsp;&nbsp; க &nbsp;&nbsp; ச &nbsp;&nbsp; ரி &nbsp;&nbsp; ச<br>
+        <span style="font-size:11px;color:#888">Sa Ga Pa Ga Sa Ri Sa (ஒவ்வொரு note-ஐயும் சரிசமாக வாசிக்கவும்)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-box">
+    <div class="step-num">பாடல் 2 — SONG 2</div>
+    <div class="step-title">Happy Birthday (தமிழில் பயிற்சிக்கு)</div>
+    <div class="step-body">
+      <div style="background:#fff;border-radius:8px;padding:12px;margin-top:8px;line-height:2.8">
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span>
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">D</span>
+        <span style="background:#FAEEDA;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">C</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">F</span>
+        <span style="background:#E6F1FB;padding:3px 7px;border-radius:5px;margin:2px;font-size:12px">E</span>
+        <span style="font-size:11px;color:#999">(இடைவெளி)</span><br>
+        ச &nbsp;&nbsp; ச &nbsp;&nbsp; ரி &nbsp;&nbsp; ச &nbsp;&nbsp; ம &nbsp;&nbsp; க<br>
+        <span style="font-size:11px;color:#888">Hap-py Birth-day to — you</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>🎯 90 நாள் இலக்கு:</strong> உங்களுக்கு பிடித்த ஒரு தமிழ் பாடலை தேர்ந்தெடுங்கள். அதன் chords கற்றுக்கொள்ளுங்கள். 90 நாட்களில் அந்த பாடல் வாசிப்பீர்கள்!<br>
+    <span style="font-size:11px">Pick one Tamil song you love. Learn its chords. Play it in 90 days — guaranteed with 15 min/day.</span>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div style="font-size:20px;margin-bottom:8px">🎹</div>
+  <div>தினமும் 15 நிமிடம் • Daily 15 Minutes • Never miss a day!</div>
+  <div style="margin-top:6px;color:#ccc">இந்த guide-ஐ print எடுத்து keyboard அருகில் வையுங்கள் • Print and keep near your keyboard</div>
+</div>
+
+</div>
+</body>
+</html>

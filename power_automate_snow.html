@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNOW P1/P2 Alert — Power Automate Setup</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:14px;line-height:1.7}
+.print-btn{position:fixed;top:14px;right:14px;background:#0067b8;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;z-index:999;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+@media print{.print-btn,.sticky-nav{display:none}body{background:#fff}.card{box-shadow:none}}
+.wrap{max-width:860px;margin:0 auto;background:#fff;box-shadow:0 2px 24px rgba(0,0,0,.1)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#003d73 0%,#0067b8 55%,#2196f3 100%);color:#fff;padding:48px 40px 36px;text-align:center}
+.hero h1{font-size:24px;font-weight:800;line-height:1.3;margin-bottom:8px}
+.hero p{font-size:13px;opacity:.85;margin-bottom:20px}
+.hero-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hb{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:4px 14px;border-radius:16px;font-size:11px;font-weight:600}
+
+/* STICKY NAV */
+.sticky-nav{background:#fff;border-bottom:2px solid #e8f0fe;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sticky-nav a{font-size:11px;color:#0067b8;text-decoration:none;padding:4px 10px;border-radius:12px;border:1px solid #d0e4f5;white-space:nowrap}
+.sticky-nav a:hover{background:#e3f0ff}
+
+/* ALERT BOX */
+.alert{border-radius:10px;padding:14px 18px;margin:16px 32px;font-size:13px;line-height:1.8}
+.alert-red{background:#fff0f0;border-left:4px solid #d32f2f;color:#7f0000}
+.alert-amber{background:#fff8e1;border-left:4px solid #f9a825;color:#6d4c00}
+.alert-green{background:#e8f5e9;border-left:4px solid #388e3c;color:#1b5e20}
+.alert-blue{background:#e3f2fd;border-left:4px solid #1976d2;color:#0d2e57}
+
+/* SECTION */
+.sec{padding:28px 32px 8px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sec-num{width:34px;height:34px;border-radius:50%;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-title{font-size:17px;font-weight:800}
+.sec-sub{font-size:11px;color:#888;margin-top:2px}
+
+/* STEP CARD */
+.steps{padding:0 32px 24px;display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:0;position:relative}
+.step:not(:last-child) .vline{position:absolute;left:17px;top:38px;bottom:-12px;width:2px;background:#e0e7ff;z-index:0}
+.sl{width:36px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding-top:1px}
+.snum{width:34px;height:34px;border-radius:50%;color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:1;flex-shrink:0}
+.sbody{flex:1;padding:0 0 22px 14px}
+.stitle{font-size:14px;font-weight:700;margin-bottom:5px}
+.sdesc{font-size:13px;color:#444;line-height:1.85}
+
+/* MOCK SCREEN */
+.mock{border:1.5px solid #dde3f0;border-radius:10px;overflow:hidden;margin:10px 0;background:#fff;font-size:12px}
+.mock-bar{background:#f4f6fb;border-bottom:1px solid #e0e7f0;padding:7px 12px;display:flex;align-items:center;gap:6px}
+.mdot{width:9px;height:9px;border-radius:50%}
+.murl{background:#fff;border:1px solid #ddd;border-radius:4px;padding:2px 10px;font-size:10px;color:#555;flex:1;font-family:monospace}
+.mbody{padding:14px 18px}
+.mh{font-size:11px;font-weight:700;color:#0067b8;margin-bottom:10px}
+
+/* FORM */
+.fld{margin-bottom:9px}
+.fld label{display:block;font-size:10px;font-weight:700;color:#555;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+.inp{border:1.5px solid #ccd6f6;border-radius:6px;padding:7px 10px;font-size:12px;width:100%;color:#222;background:#f9faff}
+.inp.ok{background:#e8f5e9;border-color:#43a047;color:#1b5e20;font-weight:600}
+.inp.warn{background:#fff8e1;border-color:#f9a825;color:#6d4c00;font-weight:600}
+.inp.key{background:#e8f0fe;border-color:#3f51b5;color:#1a237e;font-weight:600;font-family:monospace;font-size:11px}
+
+/* ACTION BLOCK */
+.ablock{background:#f0f4ff;border:1px solid #c5cdf8;border-radius:9px;padding:12px 16px;margin:10px 0}
+.alabel{font-size:9px;font-weight:800;color:#3f51b5;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.aname{font-size:13px;font-weight:800;color:#1a237e;margin-bottom:8px}
+.arow{display:flex;gap:8px;margin-bottom:4px;font-size:12px;align-items:flex-start}
+.ak{color:#555;min-width:120px;font-weight:600;flex-shrink:0}
+.av{color:#1a237e;font-family:monospace;background:#dce4ff;padding:1px 7px;border-radius:4px;font-size:11px;word-break:break-all}
+
+/* FLOW DIAGRAM */
+.flowchart{display:flex;flex-direction:column;align-items:center;gap:0;margin:14px 0}
+.fnode{border-radius:10px;padding:10px 20px;font-size:12px;font-weight:700;text-align:center;min-width:220px;border:1.5px solid}
+.farrow{font-size:16px;color:#bbb;padding:2px 0;text-align:center}
+.flabel{font-size:10px;color:#888;text-align:center;margin-top:-4px;margin-bottom:2px}
+
+/* CODE */
+code{background:#f0f4ff;padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace;color:#1a237e}
+pre{background:#1e1e2e;color:#cdd6f4;padding:14px 16px;border-radius:8px;font-size:11px;font-family:monospace;line-height:1.8;overflow-x:auto;margin:10px 0}
+pre .key{color:#89dceb}
+pre .val{color:#a6e3a1}
+pre .cmt{color:#6c7086;font-style:italic}
+
+/* CHOICE CARDS */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 32px}
+.choice{border-radius:12px;padding:18px;border:2px solid}
+.choice h3{font-size:14px;font-weight:700;margin-bottom:6px}
+.choice p{font-size:12px;color:#555;line-height:1.7}
+.choice .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;margin-bottom:8px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th{background:#0067b8;color:#fff;padding:8px 12px;text-align:left;font-weight:700}
+td{padding:8px 12px;border-bottom:1px solid #eef0f8;vertical-align:top}
+tr:nth-child(even) td{background:#f7f9ff}
+
+/* EMAIL PREVIEW */
+.email-preview{border:1.5px solid #dde3f0;border-radius:10px;overflow:hidden;margin:10px 0}
+.email-hdr{background:#0067b8;padding:10px 16px}
+.email-hdr p{color:#fff;font-size:11px;line-height:1.8}
+.email-body{padding:16px;background:#fff;font-size:12px;line-height:2}
+.p1badge{background:#d32f2f;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+.p2badge{background:#f57c00;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+
+.divider{border:none;border-top:1.5px solid #f0f2f8;margin:0}
+.footer{text-align:center;padding:20px;font-size:11px;color:#aaa;background:#fafbff;border-top:1px solid #eee}
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Save as PDF</button>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div style="font-size:40px;margin-bottom:10px">🚨</div>
+  <h1>P1 & P2 SNOW Alert + Auto-Update<br>Power Automate — SSO Environment Setup</h1>
+  <p>Your company uses SSO — here's exactly how to connect and build your alert flow</p>
+  <div class="hero-badges">
+    <span class="hb">🔐 SSO / Entra ID Environment</span>
+    <span class="hb">🎫 P1 & P2 Priority Alerts</span>
+    <span class="hb">📧 Email + Teams Notifications</span>
+    <span class="hb">✍️ Auto Work Note Update</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="sticky-nav">
+  <span style="font-size:11px;font-weight:700;color:#555">Jump to:</span>
+  <a href="#sso-problem">SSO Problem</a>
+  <a href="#path-a">Path A: Ask Admin</a>
+  <a href="#path-b">Path B: RPA (No Admin)</a>
+  <a href="#build-flow">Build the Flow</a>
+  <a href="#auto-update">Auto-Update SNOW</a>
+  <a href="#email-preview">Email Preview</a>
+</div>
+
+<!-- SSO WARNING -->
+<div id="sso-problem">
+<div class="alert alert-red" style="margin-top:20px">
+  <strong>⚠️ SSO Environment — Why Basic Auth Doesn't Work:</strong><br>
+  Your company uses Microsoft Entra ID (Azure AD) SSO for SNOW login. This means your normal username/password can't be used in Power Automate directly — SSO accounts don't have a standalone password that connectors can use. You have two options below.
+</div>
+
+<div class="choice-grid">
+  <div class="choice" style="border-color:#1976d2;background:#e3f2fd">
+    <div class="tag" style="background:#1976d2;color:#fff">✅ Recommended — Path A</div>
+    <h3 style="color:#0d47a1">Ask SNOW Admin for a Service Account</h3>
+    <p>Request a local (non-SSO) service account from your SNOW admin. This is a standard practice and takes 1–2 days. You get full read+write access to Power Automate.</p>
+    <div style="margin-top:8px;font-size:11px;background:#fff;border-radius:6px;padding:8px;color:#333">
+      ✅ Full automation possible<br>✅ Can auto-update tickets<br>✅ Reliable & stable<br>⏱ Needs admin approval
+    </div>
+  </div>
+  <div class="choice" style="border-color:#f57c00;background:#fff8e1">
+    <div class="tag" style="background:#f57c00;color:#fff">🔄 Alternative — Path B</div>
+    <h3 style="color:#e65100">Power Automate Desktop (RPA)</h3>
+    <p>No admin needed. Installs on your PC, opens SNOW in the browser like a robot, reads and updates tickets using your SSO login automatically.</p>
+    <div style="margin-top:8px;font-size:11px;background:#fff;border-radius:6px;padding:8px;color:#333">
+      ✅ No admin approval needed<br>✅ Uses your SSO login<br>⚠️ PC must be ON and logged in<br>⚠️ Slightly slower setup
+    </div>
+  </div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- PATH A -->
+<div id="path-a">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:#1976d2">A</div>
+    <div>
+      <div class="sec-title" style="color:#0d47a1">Path A — Request a Service Account from SNOW Admin</div>
+      <div class="sec-sub">Send this email to your SNOW admin → get credentials → connect Power Automate</div>
+    </div>
+  </div>
+</div>
+
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#1976d2">1</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#0d47a1">Send this email to your SNOW Admin</div>
+      <div class="sdesc">Copy and send this exact email. Keep it simple — this is a very standard request.</div>
+      <div class="email-preview" style="margin-top:10px">
+        <div style="background:#f4f6fb;border-bottom:1px solid #dde;padding:10px 16px;font-size:11px;color:#444">
+          <div><strong>To:</strong> your-snow-admin@company.com</div>
+          <div><strong>Subject:</strong> Request: Local Service Account for Power Automate Integration</div>
+        </div>
+        <div class="email-body" style="font-size:12px;line-height:2">
+          Hi [Admin Name],<br><br>
+          I'd like to set up a Power Automate flow to monitor my assigned ServiceNow incidents (P1/P2 alerts). Since our SNOW uses SSO, I need a <strong>local service account</strong> with Basic Authentication to use with the Power Automate ServiceNow connector.<br><br>
+          Could you please create a local SNOW user account with:<br>
+          • <strong>Role:</strong> itil (read incidents + add work notes)<br>
+          • <strong>Username:</strong> svc_powerautomate_[myname] (or any naming you prefer)<br>
+          • <strong>Tables needed:</strong> incident (read), incident (update work_notes field only)<br><br>
+          This account will only be used by my personal Power Automate flow to read my assigned tickets and post acknowledgement notes. No admin access needed.<br><br>
+          Please share the username and password securely. Thank you!<br><br>
+          Regards,<br>
+          [Your Name]
+        </div>
+      </div>
+      <div class="alert alert-green" style="margin:8px 0">
+        ✅ <strong>Why this works:</strong> SNOW supports both SSO (for human login) and Basic Auth (for integrations) simultaneously. A local account bypasses SSO entirely.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#1976d2">2</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#0d47a1">Once you receive the service account credentials</div>
+      <div class="sdesc">You'll get a username like <code>svc_powerautomate_john</code> and a password. Now go to Power Automate and create the connection.</div>
+      <div class="mock">
+        <div class="mock-bar"><div class="mdot" style="background:#ff5f57"></div><div class="mdot" style="background:#febc2e"></div><div class="mdot" style="background:#28c840"></div><div class="murl">make.powerautomate.com → Connections → + New → ServiceNow</div></div>
+        <div class="mbody">
+          <div class="mh">🔌 ServiceNow — Create Connection</div>
+          <div class="fld"><label>Authentication Type</label><div class="inp ok">Basic Authentication ← select this</div></div>
+          <div class="fld"><label>Instance Name ⚠️ No https:// and no .service-now.com</label><div class="inp warn">yourcompany ← just the subdomain</div></div>
+          <div class="fld"><label>Username</label><div class="inp key">svc_powerautomate_john ← service account</div></div>
+          <div class="fld"><label>Password</label><div class="inp key">•••••••••• ← service account password</div></div>
+          <div style="margin-top:10px"><div style="display:inline-block;background:#1976d2;color:#fff;border-radius:6px;padding:7px 20px;font-size:13px;font-weight:700">Create connection →</div></div>
+        </div>
+      </div>
+      <div class="alert alert-amber">⚠️ <strong>Instance field:</strong> If your SNOW URL is <code>https://acmecorp.service-now.com</code>, enter only <code>acmecorp</code> — nothing else. No https, no slashes, no .com.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#1976d2">3</div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#0d47a1">Connection confirmed — now skip to "Build the Flow" section below ↓</div>
+      <div class="sdesc">Once you see a green ✅ Connected status, your SNOW connection is ready. Jump to the "Build the Flow" section to create your P1/P2 alert.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- PATH B -->
+<div id="path-b">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:#f57c00">B</div>
+    <div>
+      <div class="sec-title" style="color:#e65100">Path B — Power Automate Desktop (No Admin Needed)</div>
+      <div class="sec-sub">Uses your SSO login — installs on your PC — works like a robot clicking SNOW browser</div>
+    </div>
+  </div>
+</div>
+
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#f57c00">1</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#e65100">Download & Install Power Automate Desktop</div>
+      <div class="sdesc">It's completely free. Go to this URL and download:</div>
+      <div class="mock" style="margin-top:8px">
+        <div class="mock-bar"><div class="mdot" style="background:#ff5f57"></div><div class="mdot" style="background:#febc2e"></div><div class="mdot" style="background:#28c840"></div><div class="murl">flow.microsoft.com/desktop/</div></div>
+        <div class="mbody">
+          <div style="display:flex;align-items:center;gap:14px;padding:10px;background:#f9fafb;border-radius:8px">
+            <div style="font-size:32px">⚡</div>
+            <div>
+              <div style="font-weight:700;font-size:13px">Power Automate Desktop</div>
+              <div style="font-size:11px;color:#666;margin-top:3px">Free • Windows 10/11 • 200MB</div>
+              <div style="margin-top:6px;display:inline-block;background:#f57c00;color:#fff;border-radius:5px;padding:5px 14px;font-size:12px;font-weight:700">⬇ Download for Windows</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#666">After install → sign in with your <strong>work Microsoft 365 account</strong> (same as Teams/Outlook)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#f57c00">2</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#e65100">Create a new Desktop Flow — Record SNOW Actions</div>
+      <div class="sdesc">Open Power Automate Desktop → Click <strong>"New flow"</strong> → Name it <strong>"SNOW Check My P1P2 Tickets"</strong> → Click <strong>"Record"</strong> button at the top.</div>
+      <div class="mock" style="margin-top:8px">
+        <div class="mock-bar"><div class="mdot" style="background:#ff5f57"></div><div class="mdot" style="background:#febc2e"></div><div class="mdot" style="background:#28c840"></div><div class="murl">Power Automate Desktop — Flow Editor</div></div>
+        <div class="mbody">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <div style="background:#f57c00;color:#fff;border-radius:5px;padding:6px 14px;font-size:12px;font-weight:700">⏺ Record</div>
+            <div style="background:#f4f6fb;border:1px solid #ddd;border-radius:5px;padding:6px 14px;font-size:12px;color:#444">▶ Run</div>
+            <div style="background:#f4f6fb;border:1px solid #ddd;border-radius:5px;padding:6px 14px;font-size:12px;color:#444">⏸ Stop</div>
+          </div>
+          <div style="background:#1e1e2e;color:#cdd6f4;padding:12px;border-radius:6px;font-size:11px;font-family:monospace;line-height:2">
+            <span style="color:#6c7086"># After clicking Record, do these actions in your browser:</span><br>
+            <span style="color:#89dceb">1.</span> Open SNOW in browser (SSO auto-logs you in)<br>
+            <span style="color:#89dceb">2.</span> Go to Incidents → My Work<br>
+            <span style="color:#89dceb">3.</span> Filter by Priority = P1 or P2<br>
+            <span style="color:#89dceb">4.</span> Power Automate records every click<br>
+            <span style="color:#89dceb">5.</span> Click Stop Recording when done
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-blue" style="margin-top:8px">
+        💡 <strong>Tip:</strong> After recording, Power Automate Desktop generates the automation steps automatically. You can then add an "If ticket found → send email" logic using the built-in actions panel on the left.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#f57c00">3</div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#e65100">Schedule the Desktop Flow to run automatically</div>
+      <div class="sdesc">In Power Automate (cloud) at make.powerautomate.com → Create a Scheduled flow → Add action: <strong>"Run a flow built with Power Automate Desktop"</strong> → Select your recorded flow → Set schedule to every 30 minutes.</div>
+      <div class="alert alert-amber">⚠️ <strong>Important limitation:</strong> Your PC must be switched ON and you must be logged into Windows for the desktop flow to run. If your PC is off, the flow waits until next run. This is the main trade-off vs Path A.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- BUILD THE FLOW -->
+<div id="build-flow">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:#7719aa">3</div>
+    <div>
+      <div class="sec-title" style="color:#5a1180">Build the P1 & P2 Alert Flow (Path A — Cloud Flow)</div>
+      <div class="sec-sub">Step-by-step in make.powerautomate.com — complete flow with all settings</div>
+    </div>
+  </div>
+</div>
+
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">1</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">Create a Scheduled Cloud Flow</div>
+      <div class="sdesc">Go to make.powerautomate.com → <strong>Create → Scheduled cloud flow</strong></div>
+      <div class="mock" style="margin-top:8px">
+        <div class="mock-bar"><div class="mdot" style="background:#ff5f57"></div><div class="mdot" style="background:#febc2e"></div><div class="mdot" style="background:#28c840"></div><div class="murl">make.powerautomate.com/create</div></div>
+        <div class="mbody">
+          <div class="fld"><label>Flow Name</label><div class="inp ok">SNOW — P1 P2 Alert My Incidents</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div class="fld"><label>Repeat Every</label><div class="inp ok">15</div></div>
+            <div class="fld"><label>Interval</label><div class="inp ok">Minute</div></div>
+            <div class="fld"><label>Start</label><div class="inp">Today</div></div>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:#666">💡 15 minutes for P1/P2 is better than 30 — high priority needs faster alerting</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">2</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">Add Action: ServiceNow — List Records (P1 tickets)</div>
+      <div class="sdesc">Click <strong>+ New step</strong> → search <strong>ServiceNow</strong> → select <strong>List Records</strong></div>
+      <div class="ablock">
+        <div class="alabel">Action 1 — ServiceNow</div>
+        <div class="aname">📋 List Records — P1 Incidents</div>
+        <div class="arow"><span class="ak">Connection:</span><span class="av">ServiceNow (yourcompany) ✓</span></div>
+        <div class="arow"><span class="ak">Table Name:</span><span class="av">Incident [incident]</span></div>
+        <div class="arow"><span class="ak">Filter Query:</span><span class="av">assigned_to.user_name=YOUR_SNOW_USERNAME^priority=1^state!=6^state!=7</span></div>
+        <div class="arow"><span class="ak">Limit:</span><span class="av">10</span></div>
+      </div>
+      <div class="alert alert-amber" style="margin-top:6px">
+        ⚠️ Replace <code>YOUR_SNOW_USERNAME</code> with your actual SNOW login username (e.g. <code>john.smith</code>). To find it: log into SNOW → click your avatar top-right → Profile → copy the "User ID" field.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">3</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">Add Action: ServiceNow — List Records (P2 tickets)</div>
+      <div class="sdesc">Click <strong>+ New step</strong> → ServiceNow → List Records again (for P2 separately)</div>
+      <div class="ablock">
+        <div class="alabel">Action 2 — ServiceNow</div>
+        <div class="aname">📋 List Records — P2 Incidents</div>
+        <div class="arow"><span class="ak">Connection:</span><span class="av">ServiceNow (yourcompany) ✓</span></div>
+        <div class="arow"><span class="ak">Table Name:</span><span class="av">Incident [incident]</span></div>
+        <div class="arow"><span class="ak">Filter Query:</span><span class="av">assigned_to.user_name=YOUR_SNOW_USERNAME^priority=2^state!=6^state!=7</span></div>
+        <div class="arow"><span class="ak">Limit:</span><span class="av">10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">4</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">Add a Condition: Were any P1 or P2 tickets found?</div>
+      <div class="sdesc">Click <strong>+ New step</strong> → search <strong>Condition</strong> (Control) → Set it up to check if results exist</div>
+      <div class="ablock">
+        <div class="alabel">Condition (Control)</div>
+        <div class="aname">🔀 If P1 OR P2 tickets exist</div>
+        <div class="arow"><span class="ak">Check:</span><span class="av">length(body('List_Records_P1')?['result'])</span></div>
+        <div class="arow"><span class="ak">Operator:</span><span class="av">is greater than</span></div>
+        <div class="arow"><span class="ak">Value:</span><span class="av">0</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#444">OR add second condition row:</div>
+        <div class="arow" style="margin-top:4px"><span class="ak">Check:</span><span class="av">length(body('List_Records_P2')?['result'])</span></div>
+        <div class="arow"><span class="ak">Operator:</span><span class="av">is greater than</span></div>
+        <div class="arow"><span class="ak">Value:</span><span class="av">0</span></div>
+        <div style="margin-top:6px;font-size:11px;color:#3f51b5">⚡ Change the AND dropdown to <strong>OR</strong> between the two conditions</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div style="background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:8px;padding:10px;font-size:12px">
+          <strong style="color:#2e7d32">✅ YES branch</strong><br>
+          Tickets found → Send alert email + Teams message + Auto-update
+        </div>
+        <div style="background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:12px">
+          <strong style="color:#888">❌ NO branch</strong><br>
+          No P1/P2 tickets → Do nothing, flow ends quietly
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">5</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">In YES branch: Send Email Alert (Outlook)</div>
+      <div class="sdesc">Inside the <strong>YES</strong> branch → <strong>+ Add action</strong> → search <strong>"Send an email (V2)"</strong></div>
+      <div class="ablock">
+        <div class="alabel">Action 3 — Office 365 Outlook</div>
+        <div class="aname">📧 Send an email (V2)</div>
+        <div class="arow"><span class="ak">To:</span><span class="av">yourname@company.com</span></div>
+        <div class="arow"><span class="ak">Subject:</span><span class="av">🚨 SNOW ALERT — P1/P2 Incident Assigned To You</span></div>
+        <div class="arow"><span class="ak">Body:</span><span class="av">See below — use HTML body with dynamic content</span></div>
+        <div class="arow"><span class="ak">Is HTML:</span><span class="av">Yes (toggle on)</span></div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#555;font-weight:700">Paste this in the Body field (click &lt;/&gt; HTML mode):</div>
+      <pre>&lt;<span class="key">h2</span> style=<span class="val">"color:#d32f2f"</span>&gt;🚨 SNOW Priority Alert&lt;/<span class="key">h2</span>&gt;
+&lt;<span class="key">p</span>&gt;You have &lt;<span class="key">b</span>&gt;P1/P2 incidents&lt;/<span class="key">b</span>&gt; assigned to you.&lt;/<span class="key">p</span>&gt;
+&lt;<span class="key">h3</span> style=<span class="val">"color:#b71c1c"</span>&gt;🔴 P1 — Critical&lt;/<span class="key">h3</span>&gt;
+<span class="cmt"><!-- Dynamic content: insert 'result' from List_Records_P1 here --></span>
+@{body('List_Records_P1')?['result']}
+&lt;<span class="key">h3</span> style=<span class="val">"color:#e65100"</span>&gt;🟠 P2 — High&lt;/<span class="key">h3</span>&gt;
+@{body('List_Records_P2')?['result']}
+&lt;<span class="key">p</span>&gt;&lt;<span class="key">a</span> href=<span class="val">"https://yourcompany.service-now.com"</span>&gt;Open ServiceNow →&lt;/<span class="key">a</span>&gt;&lt;/<span class="key">p</span>&gt;</pre>
+      <div class="alert alert-blue">💡 <strong>Better approach for Body:</strong> After typing in the body field, click <strong>"Add dynamic content"</strong> button that appears below the field → insert <code>Number</code>, <code>Short description</code>, <code>Priority</code> fields from the SNOW results. This makes each ticket show as a proper line.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#7719aa">6</div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#5a1180">In YES branch: Send Teams notification (optional but useful)</div>
+      <div class="sdesc">Still inside YES branch → <strong>+ Add action</strong> → search <strong>"Post message in a chat or channel"</strong> (Microsoft Teams)</div>
+      <div class="ablock">
+        <div class="alabel">Action 4 — Microsoft Teams (optional)</div>
+        <div class="aname">💬 Post message in a chat</div>
+        <div class="arow"><span class="ak">Post as:</span><span class="av">Flow bot</span></div>
+        <div class="arow"><span class="ak">Post in:</span><span class="av">Chat with myself</span></div>
+        <div class="arow"><span class="ak">Message:</span><span class="av">🚨 You have P1/P2 incidents assigned! Check your email or open SNOW now.</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- AUTO UPDATE -->
+<div id="auto-update">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num" style="background:#c43500">4</div>
+    <div>
+      <div class="sec-title" style="color:#a02c00">Auto-Update SNOW Ticket (Work Note Acknowledgement)</div>
+      <div class="sec-sub">Automatically write "Acknowledged" in the ticket when it's first assigned to you</div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-amber" style="margin:0 32px 16px">
+  ⚠️ <strong>Auto-update requires Path A (service account with write access).</strong> Path B (RPA) can also do this but requires more recording steps. The service account needs the <code>itil</code> role at minimum to write work notes.
+</div>
+
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#c43500">1</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#a02c00">Add "Apply to each" loop — loop through each P1 ticket</div>
+      <div class="sdesc">Inside the YES branch, after the email step → <strong>+ Add action</strong> → search <strong>"Apply to each"</strong> (Control). This loops through every P1 ticket found.</div>
+      <div class="ablock">
+        <div class="alabel">Control — Loop</div>
+        <div class="aname">🔁 Apply to each — P1 tickets</div>
+        <div class="arow"><span class="ak">Select output from:</span><span class="av">body('List_Records_P1')?['result']</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#555">👆 Click "Select an output from previous steps" and pick <strong>result</strong> from List Records P1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#c43500">2</div><div class="vline"></div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#a02c00">Inside the loop: Update Record in SNOW</div>
+      <div class="sdesc">Inside the Apply to each loop → <strong>+ Add action</strong> → ServiceNow → <strong>"Update Record"</strong></div>
+      <div class="ablock">
+        <div class="alabel">Action — ServiceNow</div>
+        <div class="aname">✍️ Update Record — Add Work Note</div>
+        <div class="arow"><span class="ak">Connection:</span><span class="av">ServiceNow (yourcompany) ✓</span></div>
+        <div class="arow"><span class="ak">Table Name:</span><span class="av">Incident [incident]</span></div>
+        <div class="arow"><span class="ak">System ID:</span><span class="av">items('Apply_to_each')?['sys_id'] ← dynamic</span></div>
+        <div class="arow"><span class="ak">work_notes:</span><span class="av">Acknowledged by [Your Name] via Power Automate. Will review and update shortly. - Auto message @{utcNow()}</span></div>
+      </div>
+      <div class="alert alert-blue" style="margin-top:8px">
+        💡 <strong>System ID field:</strong> Click "Add dynamic content" → find <code>sys_id</code> from the Apply to each loop. This is the unique ID of each ticket — Power Automate uses it to know which ticket to update.
+      </div>
+      <div class="alert alert-green" style="margin-top:6px">
+        ✅ <strong>Result:</strong> Each P1/P2 ticket assigned to you will automatically get a work note like: <em>"Acknowledged by John Smith via Power Automate. Will review and update shortly. - Auto message 2026-04-09T08:30:00Z"</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="snum" style="background:#c43500">3</div></div>
+    <div class="sbody">
+      <div class="stitle" style="color:#a02c00">Repeat the loop for P2 tickets</div>
+      <div class="sdesc">Add another <strong>Apply to each</strong> loop below the first one, this time using <code>body('List_Records_P2')?['result']</code> as input. Paste the same Update Record action inside it.</div>
+      <div class="alert alert-amber">
+        ⚠️ <strong>Avoid duplicate notes:</strong> The flow runs every 15 minutes. If a ticket stays assigned for hours, it will get many "Acknowledged" notes. To prevent this, add a condition inside the loop: only update if <code>work_notes</code> does NOT already contain "Acknowledged". Ask Claude to help write that condition if needed!
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- EMAIL PREVIEW -->
+<div id="email-preview" style="padding:24px 32px">
+  <div style="font-size:16px;font-weight:800;margin-bottom:14px;color:#333">📧 What the Alert Email Will Look Like</div>
+  <div class="email-preview">
+    <div class="email-hdr">
+      <p><strong>From:</strong> Power Automate &lt;no-reply@powerautomate.microsoft.com&gt;</p>
+      <p><strong>To:</strong> yourname@company.com</p>
+      <p><strong>Subject:</strong> 🚨 SNOW ALERT — P1/P2 Incident Assigned To You</p>
+      <p><strong>Received:</strong> Today, 09:15 AM (auto-sent by flow)</p>
+    </div>
+    <div class="email-body">
+      <h2 style="font-size:16px;color:#d32f2f;margin-bottom:10px">🚨 SNOW Priority Alert</h2>
+      <p style="margin-bottom:12px">You have <strong>P1/P2 incidents assigned to you</strong> in ServiceNow. Please review immediately.</p>
+      <div style="background:#fff0f0;border:1px solid #ffcdd2;border-radius:8px;padding:12px;margin-bottom:10px">
+        <h3 style="font-size:13px;color:#b71c1c;margin-bottom:8px">🔴 P1 — Critical</h3>
+        <div style="font-size:12px;line-height:2.2">
+          <span class="p1badge">P1</span> &nbsp;<strong>INC0078421</strong> — Production server down, all users affected<br>
+          <span style="color:#666">Opened: 09:02 AM &nbsp;|&nbsp; SLA: 1 hour remaining</span>
+        </div>
+      </div>
+      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;margin-bottom:12px">
+        <h3 style="font-size:13px;color:#e65100;margin-bottom:8px">🟠 P2 — High</h3>
+        <div style="font-size:12px;line-height:2.2">
+          <span class="p2badge">P2</span> &nbsp;<strong>INC0078399</strong> — VPN not connecting for 5 users<br>
+          <span style="color:#666">Opened: 08:45 AM &nbsp;|&nbsp; SLA: 3 hours remaining</span><br>
+          <span class="p2badge">P2</span> &nbsp;<strong>INC0078312</strong> — Email not syncing on mobile devices<br>
+          <span style="color:#666">Opened: 08:10 AM &nbsp;|&nbsp; SLA: 2 hours remaining</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#666">
+        This alert was auto-generated by Power Automate. &nbsp;
+        <a href="#" style="color:#0067b8;font-weight:700">→ Open ServiceNow Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CHEAT SHEET -->
+<div style="padding:20px 32px 28px">
+  <div style="font-size:15px;font-weight:800;margin-bottom:12px">📋 Quick Troubleshooting</div>
+  <table>
+    <tr><th>Problem</th><th>Cause</th><th>Fix</th></tr>
+    <tr><td>401 Unauthorized error</td><td>Wrong service account credentials</td><td>Go to Connections → Delete SNOW connection → Recreate with correct password</td></tr>
+    <tr><td>No records returned but tickets exist</td><td>Wrong username in filter query</td><td>Log into SNOW → Profile → copy exact "User ID" (not display name)</td></tr>
+    <tr><td>Update Record fails</td><td>Service account has no write access</td><td>Ask SNOW admin to add <code>itil</code> role to the service account</td></tr>
+    <tr><td>Flow runs but no email received</td><td>Condition evaluated as FALSE</td><td>Click Test → check condition output — verify result array length</td></tr>
+    <tr><td>Duplicate work notes added</td><td>Flow runs every 15 min on same ticket</td><td>Add condition: skip update if work_notes contains "Acknowledged"</td></tr>
+    <tr><td>ServiceNow connector not found</td><td>Not included in your M365 plan</td><td>Check with IT admin if Power Automate Premium is enabled for you</td></tr>
+  </table>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:#f0f4ff;border-radius:10px;padding:14px">
+      <div style="font-size:12px;font-weight:700;color:#3f51b5;margin-bottom:8px">SNOW Filter Query Examples</div>
+      <div style="font-size:11px;font-family:monospace;line-height:2.2;color:#333">
+        <code>priority=1</code> → P1 Critical<br>
+        <code>priority=2</code> → P2 High<br>
+        <code>state!=6^state!=7</code> → Exclude Resolved/Closed<br>
+        <code>state=1</code> → New only<br>
+        <code>state=2</code> → In Progress only<br>
+        <code>^ORpriority=1^ORpriority=2</code> → P1 or P2
+      </div>
+    </div>
+    <div style="background:#e8f5e9;border-radius:10px;padding:14px">
+      <div style="font-size:12px;font-weight:700;color:#2e7d32;margin-bottom:8px">Recommended Schedule</div>
+      <div style="font-size:12px;line-height:2.2;color:#333">
+        🔴 P1 tickets → every <strong>5 minutes</strong><br>
+        🟠 P2 tickets → every <strong>15 minutes</strong><br>
+        🟡 P3 tickets → every <strong>30 minutes</strong><br>
+        📊 Daily summary → <strong>9:00 AM daily</strong><br><br>
+        <span style="font-size:11px;color:#666">Create separate flows for each schedule to keep things clean</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  🚨 SNOW P1/P2 Alert — Power Automate Setup Guide for SSO Environment<br>
+  Path A (Service Account) = full automation • Path B (RPA Desktop) = no admin needed
+</div>
+
+</div>
+</body>
+</html>

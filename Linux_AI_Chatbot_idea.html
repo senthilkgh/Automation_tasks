@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline AI for Linux Admin — Full Plan</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0d1117;color:#c9d1d9;font-size:14px;line-height:1.7}
+.pbtn{position:fixed;top:14px;right:14px;background:#238636;color:#fff;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;z-index:999;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+@media print{.pbtn,.nav{display:none}body{background:#fff;color:#111}.dark-card{background:#f6f8fa!important;border-color:#d0d7de!important}.code-block{background:#f6f8fa!important;color:#24292f!important}}
+.wrap{max-width:900px;margin:0 auto}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0d1117 0%,#161b22 40%,#1c2d42 100%);border-bottom:1px solid #30363d;padding:48px 40px 36px;text-align:center}
+.hero h1{font-size:26px;font-weight:800;line-height:1.3;margin-bottom:8px;background:linear-gradient(90deg,#58a6ff,#3fb950,#58a6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:13px;color:#8b949e;margin-bottom:20px}
+.hbadges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.hb{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);color:#58a6ff;padding:4px 14px;border-radius:16px;font-size:11px;font-weight:700}
+
+/* NAV */
+.nav{background:#161b22;border-bottom:1px solid #30363d;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.nav a{font-size:11px;color:#58a6ff;text-decoration:none;padding:4px 10px;border-radius:12px;border:1px solid #30363d;white-space:nowrap}
+.nav a:hover{background:#21262d}
+.nav-label{font-size:11px;font-weight:700;color:#8b949e;margin-right:4px;align-self:center}
+
+/* SECTION */
+.sec{padding:28px 32px 16px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.sec-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sec-title{font-size:18px;font-weight:800;color:#e6edf3}
+.sec-sub{font-size:11px;color:#8b949e;margin-top:2px}
+
+/* DARK CARD */
+.dark-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px 18px;margin:10px 0}
+.card-title{font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+
+/* CODE */
+.code-block{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin:10px 0;font-family:'Courier New',monospace;font-size:12px;line-height:2;overflow-x:auto}
+.cmd{color:#3fb950}
+.cmt{color:#8b949e;font-style:italic}
+.str{color:#79c0ff}
+.kw{color:#ff7b72}
+.var{color:#ffa657}
+
+/* ALERT */
+.al{border-radius:8px;padding:12px 16px;margin:10px 0;font-size:13px;line-height:1.8}
+.al-green{background:rgba(63,185,80,.1);border-left:3px solid #3fb950;color:#3fb950}
+.al-blue{background:rgba(88,166,255,.1);border-left:3px solid #58a6ff;color:#79c0ff}
+.al-amber{background:rgba(210,153,34,.1);border-left:3px solid #d29922;color:#e3b341}
+.al-red{background:rgba(248,81,73,.1);border-left:3px solid #f85149;color:#ff7b72}
+
+/* ARCH DIAGRAM */
+.arch{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:20px;margin:14px 0}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+th{background:#21262d;color:#c9d1d9;padding:10px 12px;text-align:left;font-weight:700;border-bottom:1px solid #30363d}
+td{padding:9px 12px;border-bottom:1px solid #21262d;vertical-align:top;color:#c9d1d9}
+tr:hover td{background:#161b22}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.tg{background:rgba(63,185,80,.2);color:#3fb950}
+.tb{background:rgba(88,166,255,.2);color:#79c0ff}
+.ta{background:rgba(210,153,34,.2);color:#e3b341}
+.tr{background:rgba(248,81,73,.2);color:#ff7b72}
+
+/* STEP */
+.steps{display:flex;flex-direction:column;gap:0;padding:0 32px 20px}
+.step{display:flex;gap:0;position:relative}
+.step:not(:last-child) .vl{position:absolute;left:17px;top:38px;bottom:-10px;width:2px;background:#21262d}
+.sl{width:36px;flex-shrink:0;padding-top:2px}
+.sn{width:34px;height:34px;border-radius:50%;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;z-index:1;flex-shrink:0}
+.sb{flex:1;padding:0 0 20px 14px}
+.st{font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:5px}
+.sd{font-size:13px;color:#8b949e;line-height:1.85}
+
+/* HARDWARE CARDS */
+.hw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.hw-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px;text-align:center}
+.hw-tier{font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:6px}
+.hw-name{font-size:13px;font-weight:700;color:#e6edf3;margin-bottom:6px}
+.hw-spec{font-size:11px;color:#8b949e;line-height:1.9}
+.hw-model{font-size:11px;margin-top:8px;padding:4px 8px;border-radius:6px;font-family:monospace}
+
+/* MODEL COMPARE */
+.model-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.model-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px}
+.model-name{font-size:14px;font-weight:700;color:#58a6ff;margin-bottom:4px}
+.model-sub{font-size:11px;color:#8b949e;margin-bottom:8px}
+.model-bar{height:6px;border-radius:3px;margin:3px 0 1px;background:#21262d;overflow:hidden}
+.model-fill{height:100%;border-radius:3px}
+.model-label{display:flex;justify-content:space-between;font-size:10px;color:#8b949e}
+
+/* FLOW */
+.flow{display:flex;flex-direction:column;align-items:center;gap:0}
+.fn{border-radius:10px;padding:10px 24px;font-size:12px;font-weight:700;text-align:center;min-width:240px;border:1px solid}
+.fa{color:#30363d;font-size:16px;padding:3px 0;text-align:center}
+.fl{font-size:10px;color:#8b949e;text-align:center;margin-top:-4px;margin-bottom:2px}
+
+.divider{border:none;border-top:1px solid #21262d;margin:0}
+.footer{text-align:center;padding:24px;font-size:11px;color:#8b949e;background:#0d1117;border-top:1px solid #21262d}
+</style>
+</head>
+<body>
+<button class="pbtn" onclick="window.print()">🖨️ Save as PDF</button>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div style="font-size:40px;margin-bottom:12px">🤖</div>
+  <h1>Standalone Offline AI for Linux Administration</h1>
+  <p>Full architecture plan — no internet required — 100% air-gapped — offline model updates</p>
+  <div class="hbadges">
+    <span class="hb">🔒 100% Air-Gapped</span>
+    <span class="hb">🐧 Linux Admin Tasks</span>
+    <span class="hb">🤖 Ollama + Open WebUI</span>
+    <span class="hb">📦 Offline Updates via USB/LAN</span>
+    <span class="hb">🧠 Local LLM — No Cloud</span>
+    <span class="hb">💰 Zero Cost</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <span class="nav-label">→</span>
+  <a href="#concept">Concept</a>
+  <a href="#arch">Architecture</a>
+  <a href="#hardware">Hardware</a>
+  <a href="#models">AI Models</a>
+  <a href="#install">Installation</a>
+  <a href="#linux-tasks">Linux Tasks</a>
+  <a href="#offline-update">Offline Updates</a>
+  <a href="#security">Security</a>
+  <a href="#roadmap">Roadmap</a>
+</div>
+
+<!-- CONCEPT -->
+<div id="concept">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(88,166,255,.15)">💡</div>
+    <div>
+      <div class="sec-title">The Concept — What We're Building</div>
+      <div class="sec-sub">A private, air-gapped AI assistant that lives entirely on your internal network</div>
+    </div>
+  </div>
+  <div class="dark-card">
+    <div class="card-title">Problem → Solution</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#ff7b72;margin-bottom:8px">❌ Current Situation</div>
+        <div style="font-size:12px;color:#8b949e;line-height:2.2">
+          • No internet access in environment<br>
+          • Linux admin tasks done manually<br>
+          • No AI assistance available<br>
+          • Knowledge locked in people's heads<br>
+          • Repetitive commands, manual lookups<br>
+          • Troubleshooting takes too long
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#3fb950;margin-bottom:8px">✅ With This Solution</div>
+        <div style="font-size:12px;color:#8b949e;line-height:2.2">
+          • Local AI running 24/7 on-premise<br>
+          • Ask AI for Linux commands in plain English<br>
+          • AI explains errors, suggests fixes<br>
+          • Internal knowledge base (RAG)<br>
+          • Script generation, log analysis<br>
+          • Zero internet dependency
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="al al-blue" style="margin-top:12px">
+    <strong>🏗️ Core Stack:</strong> <strong>Ollama</strong> (AI model runtime) + <strong>Open WebUI</strong> (chat interface) + <strong>Linux system prompt</strong> (custom sysadmin persona) + <strong>RAG knowledge base</strong> (your internal docs) — all running on a dedicated Linux server, accessible to your whole team via internal network.
+  </div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- ARCHITECTURE -->
+<div id="arch">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(63,185,80,.15)">🏛️</div>
+    <div>
+      <div class="sec-title">System Architecture</div>
+      <div class="sec-sub">How all components connect — fully internal, no internet</div>
+    </div>
+  </div>
+</div>
+
+<div style="padding:0 32px 24px">
+<div class="arch">
+  <svg width="100%" viewBox="0 0 820 500" xmlns="http://www.w3.org/2000/svg" style="max-width:820px">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="#58a6ff" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+      <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+    </defs>
+
+    <!-- Internet BLOCKED -->
+    <rect x="330" y="12" width="160" height="36" rx="8" fill="#2d1b1b" stroke="#f85149" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="410" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#ff7b72" font-family="sans-serif">🚫 Internet (Blocked)</text>
+
+    <!-- AI SERVER box -->
+    <rect x="230" y="80" width="360" height="240" rx="14" fill="#0d1f12" stroke="#3fb950" stroke-width="1.5"/>
+    <text x="410" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#3fb950" font-family="sans-serif">🖥️ AI Server (Dedicated Linux Machine)</text>
+
+    <!-- Ollama -->
+    <rect x="254" y="118" width="140" height="54" rx="8" fill="#1c2d1c" stroke="#3fb950" stroke-width="1"/>
+    <text x="324" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950" font-family="sans-serif">⚙️ Ollama</text>
+    <text x="324" y="158" text-anchor="middle" font-size="10" fill="#8b949e" font-family="sans-serif">Model Runtime :11434</text>
+
+    <!-- Open WebUI -->
+    <rect x="426" y="118" width="140" height="54" rx="8" fill="#1c2a3d" stroke="#58a6ff" stroke-width="1"/>
+    <text x="496" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#58a6ff" font-family="sans-serif">🌐 Open WebUI</text>
+    <text x="496" y="158" text-anchor="middle" font-size="10" fill="#8b949e" font-family="sans-serif">Chat Interface :3000</text>
+
+    <!-- Models -->
+    <rect x="254" y="188" width="140" height="54" rx="8" fill="#1a1a2e" stroke="#a371f7" stroke-width="1"/>
+    <text x="324" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="#a371f7" font-family="sans-serif">🧠 LLM Models</text>
+    <text x="324" y="224" text-anchor="middle" font-size="10" fill="#8b949e" font-family="sans-serif">Llama4 / Mistral / Qwen</text>
+
+    <!-- RAG -->
+    <rect x="426" y="188" width="140" height="54" rx="8" fill="#2d1b08" stroke="#e3b341" stroke-width="1"/>
+    <text x="496" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="#e3b341" font-family="sans-serif">📚 RAG Knowledge</text>
+    <text x="496" y="224" text-anchor="middle" font-size="10" fill="#8b949e" font-family="sans-serif">Internal docs / runbooks</text>
+
+    <!-- systemd -->
+    <rect x="254" y="258" width="312" height="44" rx="8" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+    <text x="410" y="278" text-anchor="middle" font-size="11" font-weight="700" fill="#c9d1d9" font-family="sans-serif">🔄 systemd services — auto-start on boot</text>
+    <text x="410" y="293" text-anchor="middle" font-size="10" fill="#8b949e" font-family="sans-serif">ollama.service + open-webui.service</text>
+
+    <!-- Arrows inside -->
+    <line x1="394" y1="145" x2="426" y2="145" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="324" y1="172" x2="324" y2="188" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="496" y1="172" x2="496" y2="188" stroke="#e3b341" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Internal LAN -->
+    <rect x="0" y="360" width="260" height="120" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="130" y="384" text-anchor="middle" font-size="12" font-weight="700" fill="#c9d1d9" font-family="sans-serif">🏢 Internal Network</text>
+    <text x="60" y="412" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">💻 Admin PC 1</text>
+    <text x="200" y="412" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">💻 Admin PC 2</text>
+    <text x="130" y="450" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">🖥️ Terminal / Browser</text>
+    <text x="130" y="468" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="sans-serif">http://ai-server:3000</text>
+
+    <!-- USB Update -->
+    <rect x="560" y="360" width="240" height="120" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="680" y="384" text-anchor="middle" font-size="12" font-weight="700" fill="#c9d1d9" font-family="sans-serif">📦 Offline Updates</text>
+    <text x="680" y="410" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">🔌 USB Drive / Internal NFS</text>
+    <text x="680" y="430" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">New model → copy → load</text>
+    <text x="680" y="450" text-anchor="middle" font-size="11" fill="#8b949e" font-family="sans-serif">No internet ever needed</text>
+
+    <!-- Connect LAN to server -->
+    <line x1="260" y1="410" x2="340" y2="330" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+    <text x="295" y="375" text-anchor="middle" font-size="10" fill="#3fb950" font-family="sans-serif">LAN</text>
+
+    <!-- Connect USB to server -->
+    <line x1="560" y1="410" x2="480" y2="330" stroke="#e3b341" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+    <text x="525" y="375" text-anchor="middle" font-size="10" fill="#e3b341" font-family="sans-serif">USB/NFS</text>
+
+    <!-- Internet blocked line -->
+    <line x1="410" y1="48" x2="410" y2="78" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="430" y="68" font-size="10" fill="#ff7b72" font-family="sans-serif">🚫</text>
+
+  </svg>
+</div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- HARDWARE -->
+<div id="hardware">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(210,153,34,.15)">🖥️</div>
+    <div>
+      <div class="sec-title">Hardware Requirements</div>
+      <div class="sec-sub">Pick the tier that matches your budget and team size</div>
+    </div>
+  </div>
+</div>
+<div style="padding:0 32px 24px">
+<div class="hw-grid">
+  <div class="hw-card">
+    <div class="hw-tier" style="color:#3fb950">✅ MINIMUM VIABLE</div>
+    <div class="hw-name">CPU-Only Server</div>
+    <div class="hw-spec">
+      RAM: <strong style="color:#c9d1d9">16 GB</strong><br>
+      CPU: <strong style="color:#c9d1d9">4+ cores (AVX2)</strong><br>
+      Disk: <strong style="color:#c9d1d9">50 GB SSD</strong><br>
+      GPU: <strong style="color:#8b949e">None needed</strong><br>
+      Speed: <strong style="color:#e3b341">~8 tokens/sec</strong><br>
+      Users: <strong style="color:#c9d1d9">1–2 concurrent</strong>
+    </div>
+    <div class="hw-model" style="background:#0d1117;color:#3fb950">llama3.3:8b or mistral:7b</div>
+  </div>
+  <div class="hw-card" style="border-color:#58a6ff">
+    <div class="hw-tier" style="color:#58a6ff">⭐ RECOMMENDED</div>
+    <div class="hw-name">GPU Workstation</div>
+    <div class="hw-spec">
+      RAM: <strong style="color:#c9d1d9">32 GB</strong><br>
+      CPU: <strong style="color:#c9d1d9">8+ cores</strong><br>
+      GPU: <strong style="color:#c9d1d9">NVIDIA RTX 3060/4060 (12GB VRAM)</strong><br>
+      Disk: <strong style="color:#c9d1d9">200 GB SSD</strong><br>
+      Speed: <strong style="color:#3fb950">~40 tokens/sec</strong><br>
+      Users: <strong style="color:#c9d1d9">3–5 concurrent</strong>
+    </div>
+    <div class="hw-model" style="background:#0d1117;color:#58a6ff">qwen2.5-coder:14b or llama4:8b</div>
+  </div>
+  <div class="hw-card">
+    <div class="hw-tier" style="color:#a371f7">🚀 TEAM / ENTERPRISE</div>
+    <div class="hw-name">Dedicated GPU Server</div>
+    <div class="hw-spec">
+      RAM: <strong style="color:#c9d1d9">64+ GB</strong><br>
+      CPU: <strong style="color:#c9d1d9">16+ cores</strong><br>
+      GPU: <strong style="color:#c9d1d9">RTX 4090 24GB / A100</strong><br>
+      Disk: <strong style="color:#c9d1d9">500 GB+ NVMe</strong><br>
+      Speed: <strong style="color:#3fb950">~80 tokens/sec</strong><br>
+      Users: <strong style="color:#c9d1d9">10+ concurrent</strong>
+    </div>
+    <div class="hw-model" style="background:#0d1117;color:#a371f7">qwen2.5-coder:32b or llama4:70b</div>
+  </div>
+</div>
+<div class="al al-amber">⚠️ <strong>No GPU?</strong> Don't worry — CPU-only works fine for 1–2 users. Mistral 7B on a 16GB RAM server with a modern CPU runs well enough for Linux admin Q&A. Response may take 5–10 seconds per reply — totally acceptable for non-real-time work.
+</div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- MODELS -->
+<div id="models">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(163,113,247,.15)">🧠</div>
+    <div>
+      <div class="sec-title">Best AI Models for Linux Admin Tasks</div>
+      <div class="sec-sub">Ranked for sysadmin use — command generation, log analysis, scripting</div>
+    </div>
+  </div>
+</div>
+<div style="padding:0 32px 24px">
+<div class="model-grid">
+  <div class="model-card" style="border-color:#3fb950">
+    <div class="model-name">🥇 Llama 3.3 8B</div>
+    <div class="model-sub">Best overall for 8GB RAM systems</div>
+    <div class="model-label"><span>Linux commands</span><span>88%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:88%;background:#3fb950"></div></div>
+    <div class="model-label"><span>Script generation</span><span>82%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:82%;background:#3fb950"></div></div>
+    <div class="model-label"><span>Error explanation</span><span>90%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:90%;background:#3fb950"></div></div>
+    <div style="margin-top:8px;font-size:11px;color:#8b949e">Size: ~5GB &nbsp;|&nbsp; RAM: 8GB min &nbsp;|&nbsp; <span style="color:#3fb950">Free, MIT License</span></div>
+    <div class="code-block" style="margin-top:8px;padding:6px 10px"><span class="cmd">ollama pull llama3.3:8b</span></div>
+  </div>
+  <div class="model-card" style="border-color:#58a6ff">
+    <div class="model-name">🥇 Qwen2.5-Coder 14B</div>
+    <div class="model-sub">Best for scripting & code tasks (needs 16GB)</div>
+    <div class="model-label"><span>Linux commands</span><span>91%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:91%;background:#58a6ff"></div></div>
+    <div class="model-label"><span>Script generation</span><span>95%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:95%;background:#58a6ff"></div></div>
+    <div class="model-label"><span>Error explanation</span><span>88%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:88%;background:#58a6ff"></div></div>
+    <div style="margin-top:8px;font-size:11px;color:#8b949e">Size: ~9GB &nbsp;|&nbsp; RAM: 16GB &nbsp;|&nbsp; <span style="color:#3fb950">Apache 2.0 License</span></div>
+    <div class="code-block" style="margin-top:8px;padding:6px 10px"><span class="cmd">ollama pull qwen2.5-coder:14b</span></div>
+  </div>
+  <div class="model-card">
+    <div class="model-name">⚡ Mistral 7B</div>
+    <div class="model-sub">Fastest response — good for quick lookups</div>
+    <div class="model-label"><span>Linux commands</span><span>80%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:80%;background:#e3b341"></div></div>
+    <div class="model-label"><span>Script generation</span><span>76%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:76%;background:#e3b341"></div></div>
+    <div class="model-label"><span>Error explanation</span><span>82%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:82%;background:#e3b341"></div></div>
+    <div style="margin-top:8px;font-size:11px;color:#8b949e">Size: ~4GB &nbsp;|&nbsp; RAM: 8GB &nbsp;|&nbsp; <span style="color:#3fb950">Apache 2.0 License</span></div>
+    <div class="code-block" style="margin-top:8px;padding:6px 10px"><span class="cmd">ollama pull mistral:7b</span></div>
+  </div>
+  <div class="model-card">
+    <div class="model-name">🔬 DeepSeek-Coder 7B</div>
+    <div class="model-sub">Excellent for Bash/Python scripting automation</div>
+    <div class="model-label"><span>Linux commands</span><span>85%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:85%;background:#a371f7"></div></div>
+    <div class="model-label"><span>Script generation</span><span>93%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:93%;background:#a371f7"></div></div>
+    <div class="model-label"><span>Error explanation</span><span>79%</span></div>
+    <div class="model-bar"><div class="model-fill" style="width:79%;background:#a371f7"></div></div>
+    <div style="margin-top:8px;font-size:11px;color:#8b949e">Size: ~4GB &nbsp;|&nbsp; RAM: 8GB &nbsp;|&nbsp; <span style="color:#3fb950">MIT License</span></div>
+    <div class="code-block" style="margin-top:8px;padding:6px 10px"><span class="cmd">ollama pull deepseek-coder:6.7b</span></div>
+  </div>
+</div>
+<div class="al al-blue">💡 <strong>Recommended combo:</strong> Run <strong>Llama3.3 8B</strong> as the default general model + <strong>DeepSeek-Coder 7B</strong> as the scripting model. Open WebUI lets users switch between them in one click.
+</div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- INSTALLATION -->
+<div id="install">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(63,185,80,.15)">⚙️</div>
+    <div>
+      <div class="sec-title">Step-by-Step Installation</div>
+      <div class="sec-sub">On your dedicated Linux server (Ubuntu 22.04/24.04 or RHEL/Rocky)</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Download Ollama on an internet-connected machine (one time)</div>
+      <div class="sd">Since your target server has no internet, download on a machine that does, then transfer via USB or internal network.</div>
+      <div class="code-block">
+        <span class="cmt"># On internet machine — download Ollama installer</span><br>
+        <span class="cmd">curl -fsSL https://ollama.com/install.sh -o ollama-install.sh</span><br><br>
+        <span class="cmt"># Download the model file (e.g. Llama 3.3 8B = ~5GB)</span><br>
+        <span class="cmd">ollama pull llama3.3:8b</span><br>
+        <span class="cmt"># Models saved at: ~/.ollama/models/</span><br><br>
+        <span class="cmt"># Copy both to USB drive or internal NFS share</span><br>
+        <span class="cmd">cp -r ~/.ollama/models /media/usb/ollama-models/</span><br>
+        <span class="cmd">cp ollama-install.sh /media/usb/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">2</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Install Ollama on the air-gapped server (offline)</div>
+      <div class="code-block">
+        <span class="cmt"># On your air-gapped Linux server — plug in USB</span><br>
+        <span class="cmd">sudo mount /dev/sdb1 /mnt/usb</span><br><br>
+        <span class="cmt"># Run Ollama installer (works offline — no download needed)</span><br>
+        <span class="cmd">sudo sh /mnt/usb/ollama-install.sh</span><br><br>
+        <span class="cmt"># Copy models to Ollama models directory</span><br>
+        <span class="cmd">cp -r /mnt/usb/ollama-models/* ~/.ollama/models/</span><br><br>
+        <span class="cmt"># Verify models are detected</span><br>
+        <span class="cmd">ollama list</span><br>
+        <span class="cmt"># Should show: llama3.3:8b</span><br><br>
+        <span class="cmt"># Test it works</span><br>
+        <span class="cmd">ollama run llama3.3:8b "What is the command to check disk usage?"</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">3</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Configure Ollama as a systemd service (auto-start on boot)</div>
+      <div class="code-block">
+        <span class="cmt"># Make Ollama listen on all interfaces so team can connect</span><br>
+        <span class="cmd">sudo nano /etc/systemd/system/ollama.service</span><br><br>
+        <span class="cmt"># Add/modify these lines inside [Service]:</span><br>
+        <span class="kw">Environment</span>=<span class="str">"OLLAMA_HOST=0.0.0.0:11434"</span><br>
+        <span class="kw">Environment</span>=<span class="str">"OLLAMA_NUM_PARALLEL=4"</span><br>
+        <span class="kw">Environment</span>=<span class="str">"OLLAMA_MAX_LOADED_MODELS=2"</span><br><br>
+        <span class="cmd">sudo systemctl daemon-reload</span><br>
+        <span class="cmd">sudo systemctl enable ollama</span><br>
+        <span class="cmd">sudo systemctl start ollama</span><br>
+        <span class="cmd">sudo systemctl status ollama</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">4</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Install Open WebUI (offline via Docker or pip)</div>
+      <div class="code-block">
+        <span class="cmt"># Option A: Docker (pre-pull image on internet machine, transfer tar)</span><br>
+        <span class="cmt"># On internet machine:</span><br>
+        <span class="cmd">docker pull ghcr.io/open-webui/open-webui:main</span><br>
+        <span class="cmd">docker save ghcr.io/open-webui/open-webui:main -o open-webui.tar</span><br>
+        <span class="cmt"># Copy open-webui.tar to USB → transfer to air-gapped server</span><br><br>
+        <span class="cmt"># On air-gapped server:</span><br>
+        <span class="cmd">docker load -i /mnt/usb/open-webui.tar</span><br>
+        <span class="cmd">docker run -d \</span><br>
+        &nbsp;&nbsp;<span class="var">--name</span> open-webui \<br>
+        &nbsp;&nbsp;<span class="var">-p</span> 3000:8080 \<br>
+        &nbsp;&nbsp;<span class="var">-v</span> open-webui:/app/backend/data \<br>
+        &nbsp;&nbsp;<span class="var">-e</span> <span class="str">OLLAMA_BASE_URL=http://localhost:11434</span> \<br>
+        &nbsp;&nbsp;ghcr.io/open-webui/open-webui:main<br><br>
+        <span class="cmt"># Access from any PC on your network:</span><br>
+        <span class="cmt"># http://your-server-ip:3000</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">5</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Set up custom Linux Admin system prompt in Open WebUI</div>
+      <div class="sd">In Open WebUI → Settings → Admin Panel → System Prompt — paste this to make the AI behave as a Linux sysadmin expert:</div>
+      <div class="code-block">
+        <span class="cmt"># System Prompt — paste in Open WebUI Admin → System Prompt</span><br><br>
+        You are an expert Linux system administrator with 15+ years of experience.<br>
+        You work in an air-gapped, no-internet environment.<br><br>
+        When asked for commands:<br>
+        - Always provide the exact command with explanation<br>
+        - Add warnings for destructive operations (rm -rf, etc.)<br>
+        - Show both the command AND expected output<br>
+        - Prefer RHEL/CentOS/Rocky syntax when distro is unspecified<br>
+        - For scripts, include error handling and logging<br><br>
+        Topics you handle:<br>
+        - systemd service management<br>
+        - Disk/filesystem troubleshooting<br>
+        - Network diagnostics (no internet)<br>
+        - Log analysis (journalctl, /var/log)<br>
+        - User/permission management<br>
+        - Cron jobs and automation<br>
+        - Performance monitoring (top, vmstat, iostat)<br>
+        - Package management (yum/dnf/apt offline)
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#238636">6</div></div>
+    <div class="sb">
+      <div class="st">Verify everything works — test from a team member's PC</div>
+      <div class="code-block">
+        <span class="cmt"># From any PC on the internal network, open browser:</span><br>
+        <span class="str">http://192.168.x.x:3000</span>&nbsp;&nbsp;<span class="cmt">← replace with your server IP</span><br><br>
+        <span class="cmt"># Or test via curl from terminal:</span><br>
+        <span class="cmd">curl http://192.168.x.x:11434/api/generate \</span><br>
+        &nbsp;&nbsp;-d <span class="str">'{"model":"llama3.3:8b","prompt":"How do I check disk space in Linux?"}'</span>
+      </div>
+      <div class="al al-green" style="margin-top:8px">✅ If you get a JSON response with Linux commands — your AI is fully operational offline!
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- LINUX TASKS -->
+<div id="linux-tasks">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(88,166,255,.15)">🐧</div>
+    <div>
+      <div class="sec-title">Linux Admin Tasks the AI Can Handle</div>
+      <div class="sec-sub">Real examples — ask in plain English, get exact commands</div>
+    </div>
+  </div>
+</div>
+<div style="padding:0 32px 24px">
+<table>
+  <tr><th>Task Category</th><th>Example Question to AI</th><th>AI Output</th></tr>
+  <tr>
+    <td><span class="tag tg">Disk</span></td>
+    <td>"My /var partition is 95% full, how do I find and clean large files?"</td>
+    <td>du, find commands with sizes + safe cleanup steps</td>
+  </tr>
+  <tr>
+    <td><span class="tag tb">Services</span></td>
+    <td>"How do I restart nginx without downtime?"</td>
+    <td>systemctl reload/graceful restart commands + verification</td>
+  </tr>
+  <tr>
+    <td><span class="tag ta">Logs</span></td>
+    <td>"Find all SSH login failures in the last 24 hours"</td>
+    <td>journalctl / grep commands with exact filters</td>
+  </tr>
+  <tr>
+    <td><span class="tag tg">Performance</span></td>
+    <td>"Server CPU is 100%, how do I find the culprit process?"</td>
+    <td>top, ps, strace commands + kill procedure</td>
+  </tr>
+  <tr>
+    <td><span class="tag tb">Scripting</span></td>
+    <td>"Write a bash script to backup /etc every night at 2am with rotation"</td>
+    <td>Complete bash script with cron entry</td>
+  </tr>
+  <tr>
+    <td><span class="tag ta">Network</span></td>
+    <td>"Port 8080 is not responding, how do I diagnose?"</td>
+    <td>netstat, ss, firewalld, nc diagnostic commands</td>
+  </tr>
+  <tr>
+    <td><span class="tag tg">Users</span></td>
+    <td>"Create a new user with sudo access and SSH key only login"</td>
+    <td>useradd, sudoers, authorized_keys commands</td>
+  </tr>
+  <tr>
+    <td><span class="tag tb">Packages</span></td>
+    <td>"How do I install packages offline using a local repo?"</td>
+    <td>createrepo, yum localinstall steps</td>
+  </tr>
+  <tr>
+    <td><span class="tag ta">Security</span></td>
+    <td>"Harden SSH configuration to disable root login and password auth"</td>
+    <td>sshd_config changes + commands to apply</td>
+  </tr>
+  <tr>
+    <td><span class="tag tg">Troubleshoot</span></td>
+    <td>"System won't boot — stuck at emergency mode — what do I do?"</td>
+    <td>Step-by-step emergency shell diagnostics</td>
+  </tr>
+</table>
+
+<div class="al al-blue" style="margin-top:6px">
+  💡 <strong>Pro tip:</strong> Also upload your internal runbooks, SOPs, and config files to the Open WebUI RAG knowledge base. Then the AI answers questions based on YOUR environment's specific configurations — not just generic Linux knowledge.
+</div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- OFFLINE UPDATE -->
+<div id="offline-update">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(210,153,34,.15)">📦</div>
+    <div>
+      <div class="sec-title">Offline Update Procedures</div>
+      <div class="sec-sub">How to update AI models and software without internet — USB or LAN transfer</div>
+    </div>
+  </div>
+</div>
+<div class="steps">
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#d29922">1</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Update Method 1 — USB Drive Transfer (simplest)</div>
+      <div class="code-block">
+        <span class="cmt">### ON INTERNET MACHINE (outside your network) ###</span><br><br>
+        <span class="cmt"># Pull new/updated model</span><br>
+        <span class="cmd">ollama pull llama3.3:8b-instruct-q8_0</span>&nbsp;<span class="cmt"># newer version</span><br><br>
+        <span class="cmt"># Find where model is stored</span><br>
+        <span class="cmd">ls ~/.ollama/models/blobs/</span><br><br>
+        <span class="cmt"># Copy ENTIRE .ollama directory to USB</span><br>
+        <span class="cmd">rsync -av ~/.ollama/models/ /media/usb/ollama-models/</span><br><br>
+        <span class="cmt">### ON AIR-GAPPED SERVER ###</span><br><br>
+        <span class="cmd">sudo mount /dev/sdb1 /mnt/usb</span><br>
+        <span class="cmd">rsync -av /mnt/usb/ollama-models/ ~/.ollama/models/</span><br>
+        <span class="cmd">ollama list</span>&nbsp;<span class="cmt"># verify new model appears</span><br>
+        <span class="cmd">sudo systemctl restart ollama</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#d29922">2</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Update Method 2 — Internal NFS / SFTP Server (best for teams)</div>
+      <div class="sd">Set up a dedicated "update server" on your internal network that has occasional internet access. Admins update it, then all AI servers pull from it internally.</div>
+      <div class="code-block">
+        <span class="cmt"># On internal UPDATE SERVER — sync models from internet</span><br>
+        <span class="cmd">ollama pull llama3.3:8b</span><br>
+        <span class="cmd">cp -r ~/.ollama/models/ /srv/nfs/ai-models/</span><br><br>
+        <span class="cmt"># On AIR-GAPPED AI SERVER — mount internal NFS</span><br>
+        <span class="cmd">sudo mount update-server:/srv/nfs/ai-models /mnt/ai-update</span><br>
+        <span class="cmd">rsync -av /mnt/ai-update/ ~/.ollama/models/</span><br>
+        <span class="cmd">sudo systemctl restart ollama</span><br><br>
+        <span class="cmt"># Automate with a cron job — runs at 2am on Saturdays</span><br>
+        <span class="cmd">0 2 * * 6 rsync -av update-server:/srv/nfs/ai-models/ ~/.ollama/models/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#d29922">3</div><div class="vl"></div></div>
+    <div class="sb">
+      <div class="st">Update Open WebUI (Docker image)</div>
+      <div class="code-block">
+        <span class="cmt"># On internet machine — pull new image and export</span><br>
+        <span class="cmd">docker pull ghcr.io/open-webui/open-webui:main</span><br>
+        <span class="cmd">docker save ghcr.io/open-webui/open-webui:main | gzip > open-webui-latest.tar.gz</span><br>
+        <span class="cmt"># Transfer to USB/NFS share</span><br><br>
+        <span class="cmt"># On air-gapped server</span><br>
+        <span class="cmd">docker stop open-webui</span><br>
+        <span class="cmd">docker load -i /mnt/usb/open-webui-latest.tar.gz</span><br>
+        <span class="cmd">docker start open-webui</span><br>
+        <span class="cmt"># Data/chat history preserved in Docker volume automatically</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="sl"><div class="sn" style="background:#d29922">4</div></div>
+    <div class="sb">
+      <div class="st">Model Update Tracking — know when to update</div>
+      <div class="dark-card">
+        <div class="card-title">Update Frequency Guide</div>
+        <table>
+          <tr><th>Component</th><th>How often</th><th>Why</th></tr>
+          <tr><td>AI Models (Llama/Mistral)</td><td>Every 3–6 months</td><td>New versions with better accuracy</td></tr>
+          <tr><td>Open WebUI</td><td>Monthly</td><td>Bug fixes, new features</td></tr>
+          <tr><td>Ollama runtime</td><td>Every 2–3 months</td><td>Performance improvements</td></tr>
+          <tr><td>RAG knowledge base</td><td>When docs change</td><td>Keep internal runbooks current</td></tr>
+          <tr><td>System prompt</td><td>As needed</td><td>Tune for your environment</td></tr>
+        </table>
+      </div>
+      <div class="al al-blue">💡 Subscribe to <strong>Ollama GitHub releases</strong> page from an internet-connected machine to track when new models are available. Check monthly, download quarterly.
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- SECURITY -->
+<div id="security">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(248,81,73,.15)">🔐</div>
+    <div>
+      <div class="sec-title">Security Considerations</div>
+      <div class="sec-sub">Running AI on internal infra — things to lock down</div>
+    </div>
+  </div>
+</div>
+<div style="padding:0 32px 24px">
+<table>
+  <tr><th>Risk</th><th>Mitigation</th><th>Priority</th></tr>
+  <tr><td>Unauthorized team access to AI</td><td>Enable Open WebUI authentication — admin creates user accounts</td><td><span class="tag tr">High</span></td></tr>
+  <tr><td>AI suggests dangerous commands</td><td>System prompt includes warnings; never run AI output blindly — review first</td><td><span class="tag tr">High</span></td></tr>
+  <tr><td>Sensitive data in chat logs</td><td>Open WebUI stores chats locally — encrypt the disk, restrict access</td><td><span class="tag ta">Medium</span></td></tr>
+  <tr><td>Ollama API exposed internally</td><td>Firewall port 11434 to only AI server — users access via WebUI only</td><td><span class="tag ta">Medium</span></td></tr>
+  <tr><td>Malicious USB/model injection</td><td>Only use models from official Ollama library — verify checksums</td><td><span class="tag ta">Medium</span></td></tr>
+  <tr><td>USB drive policy</td><td>Only designated admin USB allowed — scan before plugging in</td><td><span class="tag tg">Low</span></td></tr>
+</table>
+
+<div class="code-block" style="margin-top:10px">
+  <span class="cmt"># Firewall rules — only allow WebUI port, block direct Ollama API</span><br>
+  <span class="cmd">sudo firewall-cmd --permanent --add-port=3000/tcp</span>&nbsp;<span class="cmt"># WebUI</span><br>
+  <span class="cmd">sudo firewall-cmd --permanent --remove-port=11434/tcp</span>&nbsp;<span class="cmt"># Block direct API</span><br>
+  <span class="cmd">sudo firewall-cmd --reload</span>
+</div>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- ROADMAP -->
+<div id="roadmap">
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-icon" style="background:rgba(88,166,255,.15)">🗺️</div>
+    <div>
+      <div class="sec-title">Implementation Roadmap</div>
+      <div class="sec-sub">Phase-by-phase rollout — from zero to full team AI assistant</div>
+    </div>
+  </div>
+</div>
+<div style="padding:0 32px 24px">
+<table>
+  <tr><th>Phase</th><th>Timeline</th><th>What to do</th><th>Outcome</th></tr>
+  <tr>
+    <td><span class="tag tg">Phase 1</span></td>
+    <td>Week 1</td>
+    <td>Download Ollama + Llama3.3 8B on internet machine → transfer to server via USB → install → test CLI</td>
+    <td>AI running locally, answering via terminal</td>
+  </tr>
+  <tr>
+    <td><span class="tag tb">Phase 2</span></td>
+    <td>Week 2</td>
+    <td>Install Open WebUI via Docker → configure system prompt → open to team on internal IP:3000</td>
+    <td>Team can use browser-based chat interface</td>
+  </tr>
+  <tr>
+    <td><span class="tag ta">Phase 3</span></td>
+    <td>Week 3–4</td>
+    <td>Upload internal runbooks, SOPs, config docs to Open WebUI RAG → AI now knows your environment</td>
+    <td>AI gives environment-specific answers</td>
+  </tr>
+  <tr>
+    <td><span class="tag tg">Phase 4</span></td>
+    <td>Month 2</td>
+    <td>Add bash wrapper script so admins can ask AI from terminal directly → integrate with monitoring alerts</td>
+    <td>AI accessible from command line anywhere</td>
+  </tr>
+  <tr>
+    <td><span class="tag tb">Phase 5</span></td>
+    <td>Month 3</td>
+    <td>Set up internal NFS update server → establish model update cadence → add second model (coder)</td>
+    <td>Fully managed offline AI with update process</td>
+  </tr>
+</table>
+
+<div class="dark-card" style="margin-top:14px">
+  <div class="card-title">💻 Bonus: Terminal AI Wrapper Script</div>
+  <div style="font-size:12px;color:#8b949e;margin-bottom:8px">Save as /usr/local/bin/ai — lets any admin ask AI from terminal with: <code style="color:#58a6ff">ai "how do I check open ports?"</code></div>
+  <div class="code-block">
+<span class="cmt">#!/bin/bash</span><br>
+<span class="cmt"># /usr/local/bin/ai — Linux Admin AI Assistant</span><br>
+<span class="cmt"># Usage: ai "your question here"</span><br><br>
+<span class="kw">if</span> [ -z <span class="str">"$1"</span> ]; <span class="kw">then</span><br>
+&nbsp;&nbsp;<span class="cmd">echo</span> <span class="str">"Usage: ai 'your linux question'"</span><br>
+&nbsp;&nbsp;<span class="cmd">exit</span> 1<br>
+<span class="kw">fi</span><br><br>
+<span class="kw">MODEL</span>=<span class="str">"llama3.3:8b"</span><br>
+<span class="kw">OLLAMA_URL</span>=<span class="str">"http://localhost:11434"</span><br><br>
+<span class="var">PROMPT</span>=<span class="str">"You are a Linux sysadmin expert. Give exact commands with brief explanation. Question: $1"</span><br><br>
+<span class="cmd">curl -s $OLLAMA_URL/api/generate \</span><br>
+&nbsp;&nbsp;-d <span class="str">"{\"model\":\"$MODEL\",\"prompt\":\"$PROMPT\",\"stream\":false}"</span> \<br>
+&nbsp;&nbsp;| python3 -c <span class="str">"import sys,json; print(json.load(sys.stdin)['response'])"</span><br><br>
+<span class="cmt"># Make executable: chmod +x /usr/local/bin/ai</span><br>
+<span class="cmt"># Now use: ai "how do I check memory usage?"</span>
+  </div>
+</div>
+
+</div>
+</div>
+
+<div class="footer">
+  🤖 Offline AI for Linux Admin — Built with Ollama + Open WebUI + Local LLMs<br>
+  100% air-gapped • No internet required • Offline model updates via USB/NFS
+</div>
+</div>
+</body>
+</html>
