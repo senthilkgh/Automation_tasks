@@ -1,124 +1,150 @@
 {
-  "name": "Zerodha Auto-Trader — Full Workflow",
+  "name": "Zerodha Auto-Trader \u2014 Full Workflow",
   "nodes": [
-
     {
       "id": "node-config",
-      "name": "⚙️ CONFIG — Edit These Variables",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [200, 80],
+      "name": "\u2699\ufe0f CONFIG \u2014 Edit These Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        80
+      ],
       "parameters": {
-        "mode": "manual",
-        "fields": {
-          "values": [
-            { "name": "ZERODHA_API_KEY",       "type": "stringValue", "string": "YOUR_KITE_API_KEY" },
-            { "name": "ZERODHA_ACCESS_TOKEN",   "type": "stringValue", "string": "YOUR_KITE_ACCESS_TOKEN" },
-            { "name": "CLAUDE_API_KEY",         "type": "stringValue", "string": "YOUR_ANTHROPIC_API_KEY" },
-            { "name": "GEMINI_API_KEY",         "type": "stringValue", "string": "YOUR_GEMINI_API_KEY" },
-            { "name": "GROK_API_KEY",           "type": "stringValue", "string": "YOUR_GROK_API_KEY" },
-            { "name": "PERPLEXITY_API_KEY",     "type": "stringValue", "string": "YOUR_PERPLEXITY_API_KEY" },
-            { "name": "NEWSAPI_KEY",            "type": "stringValue", "string": "YOUR_NEWSAPI_KEY" },
-            { "name": "TWILIO_ACCOUNT_SID",     "type": "stringValue", "string": "YOUR_TWILIO_SID" },
-            { "name": "TWILIO_AUTH_TOKEN",      "type": "stringValue", "string": "YOUR_TWILIO_AUTH_TOKEN" },
-            { "name": "TWILIO_WHATSAPP_FROM",   "type": "stringValue", "string": "whatsapp:+14155238886" },
-            { "name": "ALERT_PHONE",            "type": "stringValue", "string": "whatsapp:+91XXXXXXXXXX" },
-            { "name": "DAILY_BUDGET",           "type": "numberValue", "number": 1000 },
-            { "name": "PROFIT_TARGET_PCT",      "type": "numberValue", "number": 20 },
-            { "name": "STOPLOSS_PCT",           "type": "numberValue", "number": 2 },
-            { "name": "MAX_STOCKS",             "type": "numberValue", "number": 5 },
-            { "name": "ORDER_TYPE",             "type": "stringValue", "string": "MIS" },
-            { "name": "WATCHLIST",              "type": "stringValue", "string": "RELIANCE,TCS,INFY,HDFCBANK,ICICIBANK,SBIN,WIPRO,AXISBANK,LT,MARUTI,BAJFINANCE,TITAN,NESTLEIND,HINDUNILVR,KOTAKBANK" }
+        "jsCode": "\n// ================================================================\n//  \u2699\ufe0f  EDIT ALL YOUR API KEYS AND SETTINGS RIGHT HERE\n//  Leave keys as \"YOUR_...\" if you don't have them \u2014 they are\n//  automatically skipped. Nothing will break.\n// ================================================================\n\nconst CONFIG = {\n\n  // --- ZERODHA KITE CONNECT ---\n  // Get from: https://developers.kite.trade\n  // \u26a0\ufe0f  Access token expires DAILY \u2014 update every morning before 9:45 AM\n  ZERODHA_API_KEY:      \"YOUR_KITE_API_KEY\",\n  ZERODHA_ACCESS_TOKEN: \"YOUR_KITE_ACCESS_TOKEN\",\n\n  // --- AI ADVISORS (use any one or all four) ---\n  // Claude  \u2192 https://console.anthropic.com\n  CLAUDE_API_KEY:       \"YOUR_ANTHROPIC_API_KEY\",\n  // Gemini  \u2192 https://aistudio.google.com  (free tier available)\n  GEMINI_API_KEY:       \"YOUR_GEMINI_API_KEY\",\n  // Grok    \u2192 https://console.x.ai\n  GROK_API_KEY:         \"YOUR_GROK_API_KEY\",\n  // Perplexity \u2192 https://perplexity.ai/api  (has live web access)\n  PERPLEXITY_API_KEY:   \"YOUR_PERPLEXITY_API_KEY\",\n\n  // --- NEWS (optional but improves geo-political scoring) ---\n  // NewsAPI \u2192 https://newsapi.org  (free: 100 req/day)\n  NEWSAPI_KEY:          \"YOUR_NEWSAPI_KEY\",\n\n  // --- TWILIO (WhatsApp + SMS alerts) ---\n  // Sign up free at https://twilio.com \u2192 enable WhatsApp Sandbox\n  TWILIO_ACCOUNT_SID:   \"YOUR_TWILIO_SID\",\n  TWILIO_AUTH_TOKEN:    \"YOUR_TWILIO_AUTH_TOKEN\",\n  // Leave as-is for Twilio WhatsApp sandbox number:\n  TWILIO_WHATSAPP_FROM: \"whatsapp:+14155238886\",\n\n  // --- YOUR PHONE NUMBER (receives alerts + confirms trades) ---\n  // Format MUST be: whatsapp:+91XXXXXXXXXX\n  ALERT_PHONE:          \"whatsapp:+91XXXXXXXXXX\",\n\n  // ================================================================\n  //  TRADING SETTINGS \u2014 adjust anytime\n  // ================================================================\n  DAILY_BUDGET:         1000,   // Max INR to spend per day\n  PROFIT_TARGET_PCT:    20,     // Sell when profit reaches this %\n  STOPLOSS_PCT:         2,      // Auto-exit if loss reaches this %\n  MAX_STOCKS:           5,      // Max number of stocks to buy per day\n  ORDER_TYPE:           \"MIS\",  // \"MIS\" = intraday  |  \"CNC\" = delivery\n\n  // Watchlist: NSE symbols, comma-separated, no spaces\n  WATCHLIST: \"RELIANCE,TCS,INFY,HDFCBANK,ICICIBANK,SBIN,WIPRO,AXISBANK,LT,MARUTI,BAJFINANCE,TITAN,NESTLEIND,HINDUNILVR,KOTAKBANK\"\n};\n\n// ================================================================\n//  DO NOT EDIT BELOW THIS LINE\n// ================================================================\nreturn [{ json: CONFIG }];\n"
+      },
+      "notes": "EDIT THIS NODE to set your API keys and trading limits. All keys starting with YOUR_ are auto-skipped."
+    },
+    {
+      "id": "node-schedule",
+      "name": "\ud83d\udd58 Schedule \u2014 9:45 AM Mon-Fri",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        240
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "45 9 * * 1-5"
+            }
           ]
         }
       }
     },
-
-    {
-      "id": "node-schedule",
-      "name": "🕘 Schedule — 9:45 AM Mon-Fri",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [200, 240],
-      "parameters": {
-        "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "45 9 * * 1-5" }]
-        }
-      }
-    },
-
     {
       "id": "node-preflight",
-      "name": "🛡️ Pre-flight Check",
+      "name": "\ud83d\udee1\ufe0f Pre-flight Check",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 240],
+      "position": [
+        440,
+        240
+      ],
       "parameters": {
         "jsCode": "const cfg = items[0].json;\nconst ok = k => cfg[k] && !String(cfg[k]).startsWith('YOUR');\nreturn [{ json: { ...cfg, _flags: {\n  hasZerodha:    ok('ZERODHA_API_KEY') && ok('ZERODHA_ACCESS_TOKEN'),\n  hasClaude:     ok('CLAUDE_API_KEY'),\n  hasGemini:     ok('GEMINI_API_KEY'),\n  hasGrok:       ok('GROK_API_KEY'),\n  hasPerplexity: ok('PERPLEXITY_API_KEY'),\n  hasNews:       ok('NEWSAPI_KEY'),\n  hasTwilio:     ok('TWILIO_AUTH_TOKEN') && ok('TWILIO_ACCOUNT_SID') && !cfg.ALERT_PHONE.includes('XXXXXXXXXX'),\n  hasAnyAI:      ok('CLAUDE_API_KEY') || ok('GEMINI_API_KEY') || ok('GROK_API_KEY') || ok('PERPLEXITY_API_KEY')\n}}}];"
       }
     },
-
     {
       "id": "node-fetch-quotes",
-      "name": "📈 Fetch Quotes — Zerodha",
+      "name": "\ud83d\udcc8 Fetch Quotes \u2014 Zerodha",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 140],
+      "position": [
+        680,
+        140
+      ],
       "parameters": {
         "method": "GET",
         "url": "=https://api.kite.trade/quote?i={{ $json.WATCHLIST.split(',').map(s => 'NSE:' + s.trim()).join('&i=') }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Kite-Version", "value": "3" },
-            { "name": "Authorization",  "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}" }
+            {
+              "name": "X-Kite-Version",
+              "value": "3"
+            },
+            {
+              "name": "Authorization",
+              "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-fetch-news",
-      "name": "📰 Fetch News — NewsAPI",
+      "name": "\ud83d\udcf0 Fetch News \u2014 NewsAPI",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 340],
+      "position": [
+        680,
+        340
+      ],
       "parameters": {
         "method": "GET",
         "url": "=https://newsapi.org/v2/everything?q=India+stock+market+NSE+BSE&language=en&sortBy=publishedAt&pageSize=15&apiKey={{ $json.NEWSAPI_KEY }}",
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-tech-analysis",
-      "name": "🔬 Technical Analysis Engine",
+      "name": "\ud83d\udd2c Technical Analysis Engine",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [920, 240],
+      "position": [
+        920,
+        240
+      ],
       "parameters": {
         "jsCode": "// ============================================================\n// MULTI-INDICATOR TECHNICAL ANALYSIS ENGINE\n// Auto-detects real vs mock data. Works without Zerodha keys.\n// Indicators: RSI, MACD, EMA cross, Bollinger Bands, VWAP, Volume surge\n// ============================================================\nconst cfg = items[0].json;\nconst flags = cfg._flags || {};\n\nfunction ema(arr, p) {\n  const k = 2 / (p + 1); let e = arr[0];\n  for (const v of arr) e = v * k + e * (1 - k);\n  return e;\n}\nfunction rsi(closes, p = 14) {\n  if (closes.length < p + 1) return 50;\n  let g = 0, l = 0;\n  for (let i = closes.length - p; i < closes.length; i++) {\n    const d = closes[i] - closes[i-1];\n    if (d > 0) g += d; else l -= d;\n  }\n  return 100 - 100 / (1 + g / (l || 0.001));\n}\nfunction bollinger(closes, p = 20, m = 2) {\n  const sl = closes.slice(-p);\n  const mid = sl.reduce((a,b) => a+b,0)/p;\n  const sd = Math.sqrt(sl.reduce((a,b) => a+(b-mid)**2,0)/p);\n  return { upper: mid+m*sd, lower: mid-m*sd, mid };\n}\nfunction macd(closes) {\n  const line = ema(closes.slice(-26),12) - ema(closes,26);\n  return { line, signal: line*0.85 };\n}\nfunction vwap(H,L,C,V) {\n  let tpv=0,tv=0;\n  const n=Math.min(H.length,L.length,C.length,V.length);\n  for(let i=0;i<n;i++){const tp=(H[i]+L[i]+C[i])/3;tpv+=tp*V[i];tv+=V[i];}\n  return tv>0?tpv/tv:C[C.length-1];\n}\n\n// Build stock list from Zerodha response or mock\nlet stocks = [];\nconst q = cfg.quotes?.data || cfg.data;\nif (flags.hasZerodha && q) {\n  stocks = Object.entries(q).map(([k,v]) => ({\n    symbol: k.replace('NSE:',''), ltp: v.last_price,\n    open: v.ohlc.open, high: v.ohlc.high, low: v.ohlc.low,\n    close: v.ohlc.close, volume: v.volume, change: v.change, _mock: false\n  }));\n} else {\n  const syms = (cfg.WATCHLIST||'RELIANCE,TCS,INFY,HDFCBANK,ICICIBANK,SBIN,WIPRO,AXISBANK').split(',');\n  stocks = syms.map(s => {\n    const base = 800 + Math.random()*2200;\n    return { symbol:s.trim(), ltp:+base.toFixed(2), open:+(base*0.99).toFixed(2),\n      high:+(base*1.015).toFixed(2), low:+(base*0.975).toFixed(2),\n      close:+(base*1.001).toFixed(2), volume:Math.floor(500000+Math.random()*3000000),\n      change:+((Math.random()-0.35)*5).toFixed(2), _mock:true };\n  });\n}\n\n// News sentiment proxy\nconst headlines = (cfg.articles||[]).map(a=>a.title||'').join(' ').toLowerCase();\nconst geoScore = headlines.includes('war')||headlines.includes('sanction')||headlines.includes('crash') ? 35\n               : headlines.includes('growth')||headlines.includes('rally')||headlines.includes('boom') ? 75 : 55;\n\nconst budget = cfg.DAILY_BUDGET||1000;\nconst maxS = cfg.MAX_STOCKS||5;\nconst profitPct = cfg.PROFIT_TARGET_PCT||20;\nconst slPct = cfg.STOPLOSS_PCT||2;\n\nconst scored = stocks.map(s => {\n  const closes  = Array.from({length:30},(_,i)=>s.close*(0.93+Math.random()*0.14));\n  const highs   = closes.map(c=>c*(1+Math.random()*0.02));\n  const lows    = closes.map(c=>c*(1-Math.random()*0.02));\n  const volumes = closes.map(()=>s.volume*(0.7+Math.random()*0.6));\n  const RSI = rsi(closes);\n  const MACD = macd(closes);\n  const BB = bollinger(closes);\n  const EMA9 = ema(closes,9), EMA21 = ema(closes,21);\n  const VWAP = vwap(highs,lows,closes,volumes);\n  const avgVol = volumes.slice(-20).reduce((a,b)=>a+b,0)/20;\n  const volSurge = volumes[volumes.length-1] > avgVol*1.5;\n  let score = 0;\n  if (RSI>40&&RSI<70)                           score+=25;\n  if (MACD.line>MACD.signal)                    score+=20;\n  if (EMA9>EMA21)                               score+=15;\n  if (s.ltp<BB.lower+(BB.mid-BB.lower)*0.25)   score+=15;\n  if (s.ltp>VWAP)                               score+=10;\n  if (volSurge)                                 score+=10;\n  if (s.change>0&&s.change<3)                   score+=5;\n  const qty = Math.max(1,Math.floor((budget/maxS)/s.ltp));\n  return {\n    symbol:s.symbol, ltp:s.ltp, change:s.change, techScore:score,\n    rsi:+RSI.toFixed(1), macdBull:MACD.line>MACD.signal,\n    emaBull:EMA9>EMA21, aboveVWAP:s.ltp>VWAP, volSurge,\n    qty, costToTrade:+(qty*s.ltp).toFixed(2),\n    stopLoss:+(s.ltp*(1-slPct/100)).toFixed(2),\n    target:+(s.ltp*(1+profitPct/100)).toFixed(2),\n    _mock:s._mock\n  };\n}).sort((a,b)=>b.techScore-a.techScore);\n\nlet rem = budget;\nconst topPicks = [];\nfor (const s of scored) {\n  if (topPicks.length>=maxS) break;\n  if (s.costToTrade<=rem){topPicks.push(s);rem-=s.costToTrade;}\n}\n\nreturn [{ json: { ...cfg, techAnalysis:scored, topPicks, geoScore,\n  newsHeadlines:(cfg.articles||[]).slice(0,5).map(a=>a.title),\n  budgetUsed:+(budget-rem).toFixed(2), budgetLeft:+rem.toFixed(2),\n  analysisTime:new Date().toISOString() } }];"
       }
     },
-
     {
       "id": "node-claude",
-      "name": "🤖 AI — Claude",
+      "name": "\ud83e\udd16 AI \u2014 Claude",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1160, 80],
+      "position": [
+        1160,
+        80
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "x-api-key",         "value": "={{ $json.CLAUDE_API_KEY }}" },
-            { "name": "anthropic-version", "value": "2023-06-01" },
-            { "name": "content-type",      "value": "application/json" }
+            {
+              "name": "x-api-key",
+              "value": "={{ $json.CLAUDE_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -127,54 +153,94 @@
           "model": "claude-opus-4-6",
           "max_tokens": 600,
           "system": "Senior NSE/BSE intraday equity analyst. Reply ONLY with a raw JSON array, no markdown.",
-          "messages": [{
-            "role": "user",
-            "content": "={{ 'News: ' + JSON.stringify(($json.newsHeadlines||[]).slice(0,4)) + ' Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore,change:p.change}))) + ' Return JSON: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}"
-          }]
+          "messages": [
+            {
+              "role": "user",
+              "content": "={{ 'News: ' + JSON.stringify(($json.newsHeadlines||[]).slice(0,4)) + ' Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore,change:p.change}))) + ' Return JSON: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}"
+            }
+          ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-gemini",
-      "name": "🤖 AI — Gemini",
+      "name": "\ud83e\udd16 AI \u2014 Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1160, 220],
+      "position": [
+        1160,
+        220
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={{ $json.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "content-type", "value": "application/json" }]
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
         },
         "sendBody": true,
         "contentType": "json",
         "body": {
-          "contents": [{ "parts": [{ "text": "={{ 'NSE/BSE intraday analyst. Reply ONLY raw JSON array. Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore}))) + ' News: ' + JSON.stringify(($json.newsHeadlines||[]).slice(0,4)) + ' Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}" }] }],
-          "generationConfig": { "temperature": 0.2, "maxOutputTokens": 500 }
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "={{ 'NSE/BSE intraday analyst. Reply ONLY raw JSON array. Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore}))) + ' News: ' + JSON.stringify(($json.newsHeadlines||[]).slice(0,4)) + ' Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 500
+          }
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-grok",
-      "name": "🤖 AI — Grok",
+      "name": "\ud83e\udd16 AI \u2014 Grok",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1160, 360],
+      "position": [
+        1160,
+        360
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.x.ai/v1/chat/completions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $json.GROK_API_KEY }}" },
-            { "name": "content-type",  "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.GROK_API_KEY }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -184,29 +250,49 @@
           "temperature": 0.2,
           "max_tokens": 500,
           "messages": [
-            { "role": "system", "content": "NSE/BSE intraday analyst. Reply ONLY with raw JSON array." },
-            { "role": "user",   "content": "={{ 'Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore}))) + ' X/social sentiment context. Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}" }
+            {
+              "role": "system",
+              "content": "NSE/BSE intraday analyst. Reply ONLY with raw JSON array."
+            },
+            {
+              "role": "user",
+              "content": "={{ 'Stocks: ' + JSON.stringify($json.topPicks.map(p=>({symbol:p.symbol,ltp:p.ltp,rsi:p.rsi,techScore:p.techScore}))) + ' X/social sentiment context. Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-perplexity",
-      "name": "🤖 AI — Perplexity",
+      "name": "\ud83e\udd16 AI \u2014 Perplexity",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1160, 500],
+      "position": [
+        1160,
+        500
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.perplexity.ai/chat/completions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $json.PERPLEXITY_API_KEY }}" },
-            { "name": "content-type",  "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.PERPLEXITY_API_KEY }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -216,126 +302,197 @@
           "temperature": 0.2,
           "max_tokens": 500,
           "messages": [
-            { "role": "system", "content": "NSE/BSE intraday analyst with live web access. Reply ONLY raw JSON array." },
-            { "role": "user",   "content": "={{ 'Real-time geopolitical research for: ' + $json.topPicks.map(p=>p.symbol).join(',') + '. Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}" }
+            {
+              "role": "system",
+              "content": "NSE/BSE intraday analyst with live web access. Reply ONLY raw JSON array."
+            },
+            {
+              "role": "user",
+              "content": "={{ 'Real-time geopolitical research for: ' + $json.topPicks.map(p=>p.symbol).join(',') + '. Return: [{\"symbol\":\"X\",\"rec\":\"BUY\"|\"SKIP\",\"confidence\":0-100,\"reason\":\"under 12 words\"}]' }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-consensus",
-      "name": "🧮 Consensus Merger",
+      "name": "\ud83e\uddee Consensus Merger",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1400, 300],
+      "position": [
+        1400,
+        300
+      ],
       "parameters": {
         "jsCode": "// Safe JSON parser for AI responses\nfunction parseAI(raw) {\n  if (!raw) return [];\n  try {\n    const s = (typeof raw==='string'?raw:JSON.stringify(raw))\n      .replace(/```json/gi,'').replace(/```/g,'').trim();\n    const p = JSON.parse(s);\n    return Array.isArray(p)?p:[];\n  } catch { return []; }\n}\n\nconst data = items[0].json;\nconst picks = data.topPicks||[];\n\n// Each AI node response path\nconst claudeRecs =     parseAI(data.claudeResp?.content?.[0]?.text);\nconst geminiRecs =     parseAI(data.geminiResp?.candidates?.[0]?.content?.parts?.[0]?.text);\nconst grokRecs =       parseAI(data.grokResp?.choices?.[0]?.message?.content);\nconst perplexRecs =    parseAI(data.perplexResp?.choices?.[0]?.message?.content);\n\nconst allRecs = [...claudeRecs,...geminiRecs,...grokRecs,...perplexRecs];\nconst advisorCount = [claudeRecs,geminiRecs,grokRecs,perplexRecs].filter(r=>r.length>0).length;\n\n// Build AI map per symbol\nconst aiMap = {};\nfor (const r of allRecs) {\n  if (!r.symbol) continue;\n  if (!aiMap[r.symbol]) aiMap[r.symbol]={buyScore:0,count:0,reasons:[]};\n  aiMap[r.symbol].buyScore += r.rec==='BUY'?(r.confidence||50):0;\n  aiMap[r.symbol].count++;\n  if (r.reason) aiMap[r.symbol].reasons.push(r.reason);\n}\n\nconst profitPct = data.PROFIT_TARGET_PCT||20;\nconst slPct = data.STOPLOSS_PCT||2;\n\nconst finalPicks = picks.map(p => {\n  const ai = aiMap[p.symbol]||{buyScore:0,count:0,reasons:['Tech only']};\n  const aiScore = ai.count>0?ai.buyScore/ai.count:50;\n  const geoScore = data.geoScore||55;\n  const tw = advisorCount>0?0.50:0.70;\n  const aw = advisorCount>0?0.30:0;\n  const gw = 1-tw-aw;\n  const composite = p.techScore*tw + aiScore*aw + geoScore*gw;\n  return {\n    ...p, aiScore:+aiScore.toFixed(1), geoScore,\n    composite:+composite.toFixed(1),\n    recommendation: composite>=55?'BUY':'SKIP',\n    aiReasons: ai.reasons.slice(0,2),\n    advisorsUsed: advisorCount\n  };\n}).filter(p=>p.recommendation==='BUY')\n  .sort((a,b)=>b.composite-a.composite);\n\nreturn [{ json: { ...data, finalPicks, hasBuySignals:finalPicks.length>0, advisorsUsed:advisorCount } }];"
       }
     },
-
     {
       "id": "node-risk",
-      "name": "🛡️ Risk & Limits Guard",
+      "name": "\ud83d\udee1\ufe0f Risk & Limits Guard",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1640, 300],
+      "position": [
+        1640,
+        300
+      ],
       "parameters": {
         "jsCode": "const data = items[0].json;\nconst picks = data.finalPicks||[];\nconst budget = data.DAILY_BUDGET||1000;\nconst profitPct = data.PROFIT_TARGET_PCT||20;\nconst slPct = data.STOPLOSS_PCT||2;\nconst totalCost = picks.reduce((s,p)=>s+(p.costToTrade||0),0);\nconst withinBudget = totalCost<=budget;\nreturn [{ json: { ...data,\n  riskFlags: {\n    budgetOK:withinBudget, totalCost:+totalCost.toFixed(2),\n    budgetUsedPct:+(totalCost/budget*100).toFixed(1),\n    profitTarget:profitPct, stopLoss:slPct,\n    riskReward:+(profitPct/slPct).toFixed(1)\n  },\n  approved: withinBudget && picks.length>0\n}}];"
       }
     },
-
     {
       "id": "node-if-approved",
-      "name": "✅ IF — Approved?",
+      "name": "\u2705 IF \u2014 Approved?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1880, 300],
+      "position": [
+        1880,
+        300
+      ],
       "parameters": {
         "conditions": {
-          "conditions": [{ "leftValue": "={{ $json.approved }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true" } }],
+          "conditions": [
+            {
+              "leftValue": "={{ $json.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
           "combinator": "and"
         }
       }
     },
-
     {
       "id": "node-build-msg",
-      "name": "📝 Build Alert Message",
+      "name": "\ud83d\udcdd Build Alert Message",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2120, 180],
+      "position": [
+        2120,
+        180
+      ],
       "parameters": {
-        "jsCode": "const data = items[0].json;\nconst picks = data.finalPicks||[];\nconst risk = data.riskFlags||{};\nconst isMock = picks.some(p=>p._mock);\nconst lines = picks.map((p,i)=>\n  `${i+1}. *${p.symbol}* — Score: ${p.composite}/100\\n` +\n  `   LTP: ₹${p.ltp} | Qty: ${p.qty} | Cost: ₹${p.costToTrade}\\n` +\n  `   Target: ₹${p.target} (+${data.PROFIT_TARGET_PCT}%) | SL: ₹${p.stopLoss} (-${data.STOPLOSS_PCT}%)\\n` +\n  `   Tech:${p.techScore} AI:${p.aiScore} Geo:${p.geoScore}\\n` +\n  (p.aiReasons?.[0]?`   ${p.aiReasons[0]}\\n`:'')\n).join('\\n');\nconst now = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});\nconst msg =\n  `📊 *AUTO-TRADER ALERT*\\n${now}\\n` +\n  `━━━━━━━━━━━━━━━━\\n` +\n  (isMock?`⚠️ DRY-RUN MODE (no Zerodha key)\\n`:'')+\n  `AI Advisors: ${data.advisorsUsed||0}/4 active\\n\\n` +\n  lines +\n  `\\n━━━━━━━━━━━━━━━━\\n` +\n  `Budget: ₹${risk.totalCost} / ₹${data.DAILY_BUDGET} (${risk.budgetUsedPct}%)\\n` +\n  `R:R = ${risk.riskReward}:1\\n\\n` +\n  `Reply *CONFIRM* to execute | *SKIP* to cancel`;\nreturn [{ json: { ...data, alertMessage:msg, alertTime:now } }];"
+        "jsCode": "const data = items[0].json;\nconst picks = data.finalPicks||[];\nconst risk = data.riskFlags||{};\nconst isMock = picks.some(p=>p._mock);\nconst lines = picks.map((p,i)=>\n  `${i+1}. *${p.symbol}* \u2014 Score: ${p.composite}/100\\n` +\n  `   LTP: \u20b9${p.ltp} | Qty: ${p.qty} | Cost: \u20b9${p.costToTrade}\\n` +\n  `   Target: \u20b9${p.target} (+${data.PROFIT_TARGET_PCT}%) | SL: \u20b9${p.stopLoss} (-${data.STOPLOSS_PCT}%)\\n` +\n  `   Tech:${p.techScore} AI:${p.aiScore} Geo:${p.geoScore}\\n` +\n  (p.aiReasons?.[0]?`   ${p.aiReasons[0]}\\n`:'')\n).join('\\n');\nconst now = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});\nconst msg =\n  `\ud83d\udcca *AUTO-TRADER ALERT*\\n${now}\\n` +\n  `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n` +\n  (isMock?`\u26a0\ufe0f DRY-RUN MODE (no Zerodha key)\\n`:'')+\n  `AI Advisors: ${data.advisorsUsed||0}/4 active\\n\\n` +\n  lines +\n  `\\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n` +\n  `Budget: \u20b9${risk.totalCost} / \u20b9${data.DAILY_BUDGET} (${risk.budgetUsedPct}%)\\n` +\n  `R:R = ${risk.riskReward}:1\\n\\n` +\n  `Reply *CONFIRM* to execute | *SKIP* to cancel`;\nreturn [{ json: { ...data, alertMessage:msg, alertTime:now } }];"
       }
     },
-
     {
       "id": "node-whatsapp",
-      "name": "📱 WhatsApp — Twilio",
+      "name": "\ud83d\udcf1 WhatsApp \u2014 Twilio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2360, 100],
+      "position": [
+        2360,
+        100
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.TWILIO_ACCOUNT_SID }}/Messages.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "From", "value": "={{ $json.TWILIO_WHATSAPP_FROM }}" },
-            { "name": "To",   "value": "={{ $json.ALERT_PHONE }}" },
-            { "name": "Body", "value": "={{ $json.alertMessage }}" }
+            {
+              "name": "From",
+              "value": "={{ $json.TWILIO_WHATSAPP_FROM }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.ALERT_PHONE }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.alertMessage }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-sms",
-      "name": "💬 SMS Fallback — Twilio",
+      "name": "\ud83d\udcac SMS Fallback \u2014 Twilio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2360, 260],
+      "position": [
+        2360,
+        260
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.TWILIO_ACCOUNT_SID }}/Messages.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "From", "value": "={{ $json.TWILIO_WHATSAPP_FROM.replace('whatsapp:','') }}" },
-            { "name": "To",   "value": "={{ $json.ALERT_PHONE.replace('whatsapp:','') }}" },
-            { "name": "Body", "value": "={{ $json.alertMessage.replace(/\\*/g,'') }}" }
+            {
+              "name": "From",
+              "value": "={{ $json.TWILIO_WHATSAPP_FROM.replace('whatsapp:','') }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.ALERT_PHONE.replace('whatsapp:','') }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.alertMessage.replace(/\\*/g,'') }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-webhook",
-      "name": "⏳ Webhook — Await CONFIRM",
+      "name": "\u23f3 Webhook \u2014 Await CONFIRM",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [2600, 180],
+      "position": [
+        2600,
+        180
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "trader-confirm",
@@ -344,82 +501,144 @@
       },
       "notes": "Set Twilio SMS/WhatsApp webhook URL to: https://YOUR_N8N_URL/webhook/trader-confirm"
     },
-
     {
       "id": "node-check-reply",
-      "name": "🔍 Reply = CONFIRM?",
+      "name": "\ud83d\udd0d Reply = CONFIRM?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2840, 180],
+      "position": [
+        2840,
+        180
+      ],
       "parameters": {
         "conditions": {
-          "conditions": [{ "leftValue": "={{ ($json.Body||$json.body||'').toUpperCase().trim() }}", "rightValue": "CONFIRM", "operator": { "type": "string", "operation": "equals" } }],
+          "conditions": [
+            {
+              "leftValue": "={{ ($json.Body||$json.body||'').toUpperCase().trim() }}",
+              "rightValue": "CONFIRM",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
           "combinator": "and"
         }
       }
     },
-
     {
       "id": "node-place-orders",
-      "name": "🚀 Build Order Payloads",
+      "name": "\ud83d\ude80 Build Order Payloads",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3080, 100],
+      "position": [
+        3080,
+        100
+      ],
       "parameters": {
         "jsCode": "const data = items[0].json;\nconst flags = data._flags||{};\nif (!flags.hasZerodha) {\n  return [{ json:{...data,orderStatus:'SKIPPED_NO_ZERODHA_KEY',orders:[] }}];\n}\nconst picks = data.finalPicks||[];\nreturn picks.map(p=>({ json:{ ...data, currentOrder:{\n  tradingsymbol:p.symbol, exchange:'NSE', transaction_type:'BUY',\n  order_type:'MARKET', product:data.ORDER_TYPE||'MIS',\n  quantity:p.qty, validity:'DAY', tag:'AutoTrader',\n  _target:p.target, _stopLoss:p.stopLoss, _ltp:p.ltp\n}}}));"
       }
     },
-
     {
       "id": "node-kite-order",
-      "name": "📤 Kite — Place Order",
+      "name": "\ud83d\udce4 Kite \u2014 Place Order",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3320, 100],
+      "position": [
+        3320,
+        100
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.kite.trade/orders/regular",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Kite-Version", "value": "3" },
-            { "name": "Authorization",  "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}" }
+            {
+              "name": "X-Kite-Version",
+              "value": "3"
+            },
+            {
+              "name": "Authorization",
+              "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "tradingsymbol",    "value": "={{ $json.currentOrder.tradingsymbol }}" },
-            { "name": "exchange",         "value": "NSE" },
-            { "name": "transaction_type", "value": "BUY" },
-            { "name": "order_type",       "value": "MARKET" },
-            { "name": "product",          "value": "={{ $json.ORDER_TYPE||'MIS' }}" },
-            { "name": "quantity",         "value": "={{ $json.currentOrder.quantity }}" },
-            { "name": "validity",         "value": "DAY" },
-            { "name": "tag",              "value": "AutoTrader" }
+            {
+              "name": "tradingsymbol",
+              "value": "={{ $json.currentOrder.tradingsymbol }}"
+            },
+            {
+              "name": "exchange",
+              "value": "NSE"
+            },
+            {
+              "name": "transaction_type",
+              "value": "BUY"
+            },
+            {
+              "name": "order_type",
+              "value": "MARKET"
+            },
+            {
+              "name": "product",
+              "value": "={{ $json.ORDER_TYPE||'MIS' }}"
+            },
+            {
+              "name": "quantity",
+              "value": "={{ $json.currentOrder.quantity }}"
+            },
+            {
+              "name": "validity",
+              "value": "DAY"
+            },
+            {
+              "name": "tag",
+              "value": "AutoTrader"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-gtt",
-      "name": "🎯 Kite — GTT Stop-loss + Target",
+      "name": "\ud83c\udfaf Kite \u2014 GTT Stop-loss + Target",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3560, 100],
+      "position": [
+        3560,
+        100
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.kite.trade/gtt/triggers",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Kite-Version", "value": "3" },
-            { "name": "Authorization",  "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}" },
-            { "name": "Content-Type",   "value": "application/json" }
+            {
+              "name": "X-Kite-Version",
+              "value": "3"
+            },
+            {
+              "name": "Authorization",
+              "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
@@ -428,234 +647,587 @@
           "trigger_type": "two-leg",
           "tradingsymbol": "={{ $json.currentOrder.tradingsymbol }}",
           "exchange": "NSE",
-          "trigger_values": ["={{ $json.currentOrder._stopLoss }}", "={{ $json.currentOrder._target }}"],
+          "trigger_values": [
+            "={{ $json.currentOrder._stopLoss }}",
+            "={{ $json.currentOrder._target }}"
+          ],
           "last_price": "={{ $json.currentOrder._ltp }}",
           "orders": [
-            { "transaction_type": "SELL", "quantity": "={{ $json.currentOrder.quantity }}", "order_type": "LIMIT", "price": "={{ $json.currentOrder._stopLoss }}", "product": "={{ $json.ORDER_TYPE||'MIS' }}" },
-            { "transaction_type": "SELL", "quantity": "={{ $json.currentOrder.quantity }}", "order_type": "LIMIT", "price": "={{ $json.currentOrder._target }}",   "product": "={{ $json.ORDER_TYPE||'MIS' }}" }
+            {
+              "transaction_type": "SELL",
+              "quantity": "={{ $json.currentOrder.quantity }}",
+              "order_type": "LIMIT",
+              "price": "={{ $json.currentOrder._stopLoss }}",
+              "product": "={{ $json.ORDER_TYPE||'MIS' }}"
+            },
+            {
+              "transaction_type": "SELL",
+              "quantity": "={{ $json.currentOrder.quantity }}",
+              "order_type": "LIMIT",
+              "price": "={{ $json.currentOrder._target }}",
+              "product": "={{ $json.ORDER_TYPE||'MIS' }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-order-confirm",
-      "name": "✅ WhatsApp Order Confirmation",
+      "name": "\u2705 WhatsApp Order Confirmation",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3800, 100],
+      "position": [
+        3800,
+        100
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.TWILIO_ACCOUNT_SID }}/Messages.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "From", "value": "={{ $json.TWILIO_WHATSAPP_FROM }}" },
-            { "name": "To",   "value": "={{ $json.ALERT_PHONE }}" },
-            { "name": "Body", "value": "=✅ ORDER PLACED\\n{{ $json.currentOrder.tradingsymbol }} x{{ $json.currentOrder.quantity }} @ ₹{{ $json.currentOrder._ltp }}\\nTarget: ₹{{ $json.currentOrder._target }} | SL: ₹{{ $json.currentOrder._stopLoss }}\\nCheck Kite app for order ID." }
+            {
+              "name": "From",
+              "value": "={{ $json.TWILIO_WHATSAPP_FROM }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.ALERT_PHONE }}"
+            },
+            {
+              "name": "Body",
+              "value": "=\u2705 ORDER PLACED\\n{{ $json.currentOrder.tradingsymbol }} x{{ $json.currentOrder.quantity }} @ \u20b9{{ $json.currentOrder._ltp }}\\nTarget: \u20b9{{ $json.currentOrder._target }} | SL: \u20b9{{ $json.currentOrder._stopLoss }}\\nCheck Kite app for order ID."
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-no-signal",
-      "name": "🔕 No Signal Alert",
+      "name": "\ud83d\udd15 No Signal Alert",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2120, 420],
+      "position": [
+        2120,
+        420
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.TWILIO_ACCOUNT_SID }}/Messages.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "From", "value": "={{ $json.TWILIO_WHATSAPP_FROM }}" },
-            { "name": "To",   "value": "={{ $json.ALERT_PHONE }}" },
-            { "name": "Body", "value": "=📉 Auto-Trader: No strong BUY signals today. Market conditions unfavourable. No orders placed." }
+            {
+              "name": "From",
+              "value": "={{ $json.TWILIO_WHATSAPP_FROM }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $json.ALERT_PHONE }}"
+            },
+            {
+              "name": "Body",
+              "value": "=\ud83d\udcc9 Auto-Trader: No strong BUY signals today. Market conditions unfavourable. No orders placed."
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-monitor-trigger",
-      "name": "⏱️ Monitor — Every 5 Min",
+      "name": "\u23f1\ufe0f Monitor \u2014 Every 5 Min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 700],
+      "position": [
+        200,
+        700
+      ],
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "*/5 10-15 * * 1-5" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 10-15 * * 1-5"
+            }
+          ]
         }
       },
       "notes": "Keep as a SEPARATE workflow in n8n. Monitors open positions every 5 minutes."
     },
-
     {
       "id": "node-check-positions",
-      "name": "📊 Check Positions — Zerodha",
+      "name": "\ud83d\udcca Check Positions \u2014 Zerodha",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 700],
+      "position": [
+        440,
+        700
+      ],
       "parameters": {
         "method": "GET",
         "url": "https://api.kite.trade/portfolio/positions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-Kite-Version", "value": "3" },
-            { "name": "Authorization",  "value": "=token {{ $env.ZERODHA_API_KEY }}:{{ $env.ZERODHA_ACCESS_TOKEN }}" }
+            {
+              "name": "X-Kite-Version",
+              "value": "3"
+            },
+            {
+              "name": "Authorization",
+              "value": "=token {{ $env.ZERODHA_API_KEY }}:{{ $env.ZERODHA_ACCESS_TOKEN }}"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     },
-
     {
       "id": "node-pnl",
-      "name": "💰 P&L Monitor + EOD Exit",
+      "name": "\ud83d\udcb0 P&L Monitor + EOD Exit",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 700],
+      "position": [
+        680,
+        700
+      ],
       "parameters": {
-        "jsCode": "const pos = items[0].json?.data?.net||[];\nconst now = new Date();\nconst ist = d => new Intl.DateTimeFormat('en-IN',{...d,timeZone:'Asia/Kolkata'}).format(now);\nconst h = parseInt(ist({hour:'numeric',hour12:false}));\nconst m = parseInt(ist({minute:'numeric'}));\nconst isEOD = h===15&&m>=10;\nconst alerts=[], toExit=[];\nfor (const p of pos) {\n  if (!p.quantity) continue;\n  const pnlPct = p.average_price>0?(p.pnl/(p.average_price*Math.abs(p.quantity))*100):0;\n  if (isEOD) { toExit.push({symbol:p.tradingsymbol,qty:p.quantity,reason:'EOD'}); alerts.push(`⏰ EOD: ${p.tradingsymbol} P&L ₹${(p.pnl||0).toFixed(0)}`); }\n}\nreturn [{ json:{positions:pos,toExit,alerts,isEOD,ts:now.toISOString()} }];"
+        "jsCode": "const pos = items[0].json?.data?.net||[];\nconst now = new Date();\nconst ist = d => new Intl.DateTimeFormat('en-IN',{...d,timeZone:'Asia/Kolkata'}).format(now);\nconst h = parseInt(ist({hour:'numeric',hour12:false}));\nconst m = parseInt(ist({minute:'numeric'}));\nconst isEOD = h===15&&m>=10;\nconst alerts=[], toExit=[];\nfor (const p of pos) {\n  if (!p.quantity) continue;\n  const pnlPct = p.average_price>0?(p.pnl/(p.average_price*Math.abs(p.quantity))*100):0;\n  if (isEOD) { toExit.push({symbol:p.tradingsymbol,qty:p.quantity,reason:'EOD'}); alerts.push(`\u23f0 EOD: ${p.tradingsymbol} P&L \u20b9${(p.pnl||0).toFixed(0)}`); }\n}\nreturn [{ json:{positions:pos,toExit,alerts,isEOD,ts:now.toISOString()} }];"
       }
     },
-
     {
       "id": "node-eod-schedule",
-      "name": "📋 EOD Report — 3:25 PM",
+      "name": "\ud83d\udccb EOD Report \u2014 3:25 PM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 860],
+      "position": [
+        200,
+        860
+      ],
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "25 15 * * 1-5" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "25 15 * * 1-5"
+            }
+          ]
         }
       }
     },
-
     {
       "id": "node-eod-msg",
-      "name": "📨 EOD WhatsApp Summary",
+      "name": "\ud83d\udce8 EOD WhatsApp Summary",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 860],
+      "position": [
+        440,
+        860
+      ],
       "parameters": {
         "method": "POST",
         "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Basic {{ Buffer.from($env.TWILIO_ACCOUNT_SID + ':' + $env.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+            {
+              "name": "Authorization",
+              "value": "=Basic {{ Buffer.from($env.TWILIO_ACCOUNT_SID + ':' + $env.TWILIO_AUTH_TOKEN).toString('base64') }}"
+            }
           ]
         },
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
           "parameters": [
-            { "name": "From", "value": "={{ $env.TWILIO_WHATSAPP_FROM }}" },
-            { "name": "To",   "value": "={{ $env.ALERT_PHONE }}" },
-            { "name": "Body", "value": "=📋 *DAILY SUMMARY*\nDate: {{ new Date().toLocaleDateString('en-IN') }}\nAll MIS positions squared off.\nCheck Kite app for final P&L.\n\n⚙️ Auto-Trader by n8n+Zerodha" }
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_WHATSAPP_FROM }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $env.ALERT_PHONE }}"
+            },
+            {
+              "name": "Body",
+              "value": "=\ud83d\udccb *DAILY SUMMARY*\nDate: {{ new Date().toLocaleDateString('en-IN') }}\nAll MIS positions squared off.\nCheck Kite app for final P&L.\n\n\u2699\ufe0f Auto-Trader by n8n+Zerodha"
+            }
           ]
         },
-        "options": { "response": { "response": { "neverError": true } } }
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
       },
       "continueOnFail": true
     }
-
   ],
-
   "connections": {
-    "🕘 Schedule — 9:45 AM Mon-Fri":  { "main": [[{ "node": "⚙️ CONFIG — Edit These Variables", "type": "main", "index": 0 }]] },
-    "⚙️ CONFIG — Edit These Variables": { "main": [[{ "node": "🛡️ Pre-flight Check", "type": "main", "index": 0 }]] },
-    "🛡️ Pre-flight Check": { "main": [[
-      { "node": "📈 Fetch Quotes — Zerodha", "type": "main", "index": 0 },
-      { "node": "📰 Fetch News — NewsAPI",   "type": "main", "index": 0 }
-    ]]},
-    "📈 Fetch Quotes — Zerodha":  { "main": [[{ "node": "🔬 Technical Analysis Engine", "type": "main", "index": 0 }]] },
-    "📰 Fetch News — NewsAPI":    { "main": [[{ "node": "🔬 Technical Analysis Engine", "type": "main", "index": 0 }]] },
-    "🔬 Technical Analysis Engine": { "main": [[
-      { "node": "🤖 AI — Claude",      "type": "main", "index": 0 },
-      { "node": "🤖 AI — Gemini",      "type": "main", "index": 0 },
-      { "node": "🤖 AI — Grok",        "type": "main", "index": 0 },
-      { "node": "🤖 AI — Perplexity",  "type": "main", "index": 0 }
-    ]]},
-    "🤖 AI — Claude":      { "main": [[{ "node": "🧮 Consensus Merger", "type": "main", "index": 0 }]] },
-    "🤖 AI — Gemini":      { "main": [[{ "node": "🧮 Consensus Merger", "type": "main", "index": 0 }]] },
-    "🤖 AI — Grok":        { "main": [[{ "node": "🧮 Consensus Merger", "type": "main", "index": 0 }]] },
-    "🤖 AI — Perplexity":  { "main": [[{ "node": "🧮 Consensus Merger", "type": "main", "index": 0 }]] },
-    "🧮 Consensus Merger": { "main": [[{ "node": "🛡️ Risk & Limits Guard", "type": "main", "index": 0 }]] },
-    "🛡️ Risk & Limits Guard": { "main": [[{ "node": "✅ IF — Approved?", "type": "main", "index": 0 }]] },
-    "✅ IF — Approved?": { "main": [
-      [{ "node": "📝 Build Alert Message", "type": "main", "index": 0 }],
-      [{ "node": "🔕 No Signal Alert",     "type": "main", "index": 0 }]
-    ]},
-    "📝 Build Alert Message": { "main": [[
-      { "node": "📱 WhatsApp — Twilio", "type": "main", "index": 0 },
-      { "node": "💬 SMS Fallback — Twilio", "type": "main", "index": 0 }
-    ]]},
-    "📱 WhatsApp — Twilio":      { "main": [[{ "node": "⏳ Webhook — Await CONFIRM", "type": "main", "index": 0 }]] },
-    "⏳ Webhook — Await CONFIRM": { "main": [[{ "node": "🔍 Reply = CONFIRM?", "type": "main", "index": 0 }]] },
-    "🔍 Reply = CONFIRM?": { "main": [
-      [{ "node": "🚀 Build Order Payloads", "type": "main", "index": 0 }],
-      []
-    ]},
-    "🚀 Build Order Payloads":          { "main": [[{ "node": "📤 Kite — Place Order",               "type": "main", "index": 0 }]] },
-    "📤 Kite — Place Order":            { "main": [[{ "node": "🎯 Kite — GTT Stop-loss + Target",     "type": "main", "index": 0 }]] },
-    "🎯 Kite — GTT Stop-loss + Target": { "main": [[{ "node": "✅ WhatsApp Order Confirmation",       "type": "main", "index": 0 }]] },
-    "⏱️ Monitor — Every 5 Min":         { "main": [[{ "node": "📊 Check Positions — Zerodha",         "type": "main", "index": 0 }]] },
-    "📊 Check Positions — Zerodha":      { "main": [[{ "node": "💰 P&L Monitor + EOD Exit",            "type": "main", "index": 0 }]] },
-    "📋 EOD Report — 3:25 PM":           { "main": [[{ "node": "📨 EOD WhatsApp Summary",              "type": "main", "index": 0 }]] }
+    "\ud83d\udd58 Schedule \u2014 9:45 AM Mon-Fri": {
+      "main": [
+        [
+          {
+            "node": "\u2699\ufe0f CONFIG \u2014 Edit These Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\u2699\ufe0f CONFIG \u2014 Edit These Variables": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udee1\ufe0f Pre-flight Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udee1\ufe0f Pre-flight Check": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udcc8 Fetch Quotes \u2014 Zerodha",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "\ud83d\udcf0 Fetch News \u2014 NewsAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udcc8 Fetch Quotes \u2014 Zerodha": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udd2c Technical Analysis Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udcf0 Fetch News \u2014 NewsAPI": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udd2c Technical Analysis Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udd2c Technical Analysis Engine": {
+      "main": [
+        [
+          {
+            "node": "\ud83e\udd16 AI \u2014 Claude",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "\ud83e\udd16 AI \u2014 Gemini",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "\ud83e\udd16 AI \u2014 Grok",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "\ud83e\udd16 AI \u2014 Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83e\udd16 AI \u2014 Claude": {
+      "main": [
+        [
+          {
+            "node": "\ud83e\uddee Consensus Merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83e\udd16 AI \u2014 Gemini": {
+      "main": [
+        [
+          {
+            "node": "\ud83e\uddee Consensus Merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83e\udd16 AI \u2014 Grok": {
+      "main": [
+        [
+          {
+            "node": "\ud83e\uddee Consensus Merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83e\udd16 AI \u2014 Perplexity": {
+      "main": [
+        [
+          {
+            "node": "\ud83e\uddee Consensus Merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83e\uddee Consensus Merger": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udee1\ufe0f Risk & Limits Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udee1\ufe0f Risk & Limits Guard": {
+      "main": [
+        [
+          {
+            "node": "\u2705 IF \u2014 Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\u2705 IF \u2014 Approved?": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udcdd Build Alert Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "\ud83d\udd15 No Signal Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udcdd Build Alert Message": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udcf1 WhatsApp \u2014 Twilio",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "\ud83d\udcac SMS Fallback \u2014 Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udcf1 WhatsApp \u2014 Twilio": {
+      "main": [
+        [
+          {
+            "node": "\u23f3 Webhook \u2014 Await CONFIRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\u23f3 Webhook \u2014 Await CONFIRM": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udd0d Reply = CONFIRM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udd0d Reply = CONFIRM?": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\ude80 Build Order Payloads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "\ud83d\ude80 Build Order Payloads": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udce4 Kite \u2014 Place Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udce4 Kite \u2014 Place Order": {
+      "main": [
+        [
+          {
+            "node": "\ud83c\udfaf Kite \u2014 GTT Stop-loss + Target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83c\udfaf Kite \u2014 GTT Stop-loss + Target": {
+      "main": [
+        [
+          {
+            "node": "\u2705 WhatsApp Order Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\u23f1\ufe0f Monitor \u2014 Every 5 Min": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udcca Check Positions \u2014 Zerodha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udcca Check Positions \u2014 Zerodha": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udcb0 P&L Monitor + EOD Exit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\ud83d\udccb EOD Report \u2014 3:25 PM": {
+      "main": [
+        [
+          {
+            "node": "\ud83d\udce8 EOD WhatsApp Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-
   "settings": {
     "executionOrder": "v1",
     "saveManualExecutions": true,
     "timezone": "Asia/Kolkata",
     "callerPolicy": "workflowsFromSameOwner"
   },
-
   "__README__": {
-    "HOW_TO_IMPORT": "n8n → top-right menu → Import from File → select this JSON",
+    "HOW_TO_IMPORT": "n8n \u2192 top-right menu \u2192 Import from File \u2192 select this JSON",
     "SETUP_STEPS": [
-      "1. Open '⚙️ CONFIG — Edit These Variables' node",
-      "2. Replace only the keys you have — leave others as YOUR_xxx_KEY",
-      "3. Keys starting with YOUR_ are auto-skipped — workflow still runs in dry-run",
+      "1. Open '\u2699\ufe0f CONFIG \u2014 Edit These Variables' node",
+      "2. Replace only the keys you have \u2014 leave others as YOUR_xxx_KEY",
+      "3. Keys starting with YOUR_ are auto-skipped \u2014 workflow still runs in dry-run",
       "4. Set ALERT_PHONE to: whatsapp:+91XXXXXXXXXX (your number)",
       "5. Set Twilio webhook URL to: https://YOUR_N8N_URL/webhook/trader-confirm",
-      "6. Activate workflow — fires weekdays at 9:45 AM IST (30 min post market open)",
-      "7. To update any key later: open CONFIG node → edit value → save → done"
+      "6. Activate workflow \u2014 fires weekdays at 9:45 AM IST (30 min post market open)",
+      "7. To update any key later: open CONFIG node \u2192 edit value \u2192 save \u2192 done"
     ],
     "MINIMUM_TO_RUN": [
-      "TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + ALERT_PHONE — for alerts",
-      "At least ONE AI key (Claude/Gemini/Grok/Perplexity) — for analysis",
+      "TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + ALERT_PHONE \u2014 for alerts",
+      "At least ONE AI key (Claude/Gemini/Grok/Perplexity) \u2014 for analysis",
       "Without Zerodha keys: runs in dry-run mode (mock data, no real orders)"
     ],
     "WHAT_EACH_KEY_DOES": {
-      "ZERODHA_API_KEY + ACCESS_TOKEN": "Live stock data + order placement. Token expires daily — refresh each morning at developers.kite.trade",
+      "ZERODHA_API_KEY + ACCESS_TOKEN": "Live stock data + order placement. Token expires daily \u2014 refresh each morning at developers.kite.trade",
       "CLAUDE_API_KEY": "Sector analysis + news interpretation (Anthropic)",
       "GEMINI_API_KEY": "Google AI stock sentiment (free tier available)",
       "GROK_API_KEY": "X/Twitter social sentiment via xAI",
@@ -669,7 +1241,7 @@
       "STOPLOSS_PCT": "2 (percent)",
       "MAX_STOCKS": "5 (max picks per day)",
       "ORDER_TYPE": "MIS (intraday) or CNC (delivery)",
-      "WATCHLIST": "Comma-separated NSE symbols — edit freely"
+      "WATCHLIST": "Comma-separated NSE symbols \u2014 edit freely"
     }
   }
 }
