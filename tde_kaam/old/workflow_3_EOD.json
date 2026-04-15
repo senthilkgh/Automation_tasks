@@ -1,0 +1,150 @@
+{
+  "name": "📋 Zerodha EOD Report — 3:25 PM",
+  "nodes": [
+
+    {
+      "id": "eod-trigger",
+      "name": "🕒 EOD Trigger — 3:25 PM Mon-Fri",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [100, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "25 15 * * 1-5" }]
+        }
+      }
+    },
+
+    {
+      "id": "eod-load-state",
+      "name": "📂 Load Today's Trade State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 300],
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst ENV_FILE = path.join(process.env.HOME||'/root', 'autotrader', 'n8n_autotrader.env');\nconst STATE_FILE = path.join(process.env.HOME||'/root', 'autotrader', 'active_trades.json');\nconst today = new Date().toISOString().split('T')[0];\n\n// Load env for Twilio credentials\nconst env = {};\ntry {\n  const raw = fs.readFileSync(ENV_FILE, 'utf8');\n  for (const line of raw.split('\\n')) {\n    const t = line.trim();\n    if (!t || t.startsWith('#')) continue;\n    const i = t.indexOf('=');\n    if (i < 0) continue;\n    env[t.slice(0,i).trim()] = t.slice(i+1).trim();\n  }\n} catch(e) { console.log('No .env file found'); }\n\nlet state = null;\ntry {\n  state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));\n} catch(e) {\n  state = { date: today, trades: [], noTradesDay: true };\n}\n\nreturn [{ json: {\n  ...state,\n  TWILIO_ACCOUNT_SID:   state.TWILIO_ACCOUNT_SID   || env.TWILIO_ACCOUNT_SID   || '',\n  TWILIO_AUTH_TOKEN:    state.TWILIO_AUTH_TOKEN     || env.TWILIO_AUTH_TOKEN     || '',\n  TWILIO_WHATSAPP_FROM: state.TWILIO_WHATSAPP_FROM  || env.TWILIO_WHATSAPP_FROM  || '',\n  ALERT_PHONE:          state.ALERT_PHONE           || env.ALERT_PHONE           || '',\n  today, stateFile: STATE_FILE\n}}];"
+      }
+    },
+
+    {
+      "id": "eod-squareoff",
+      "name": "🔴 Force Square-off Any Open Positions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [580, 300],
+      "parameters": {
+        "jsCode": "// Identify any still-open MIS positions to force exit\nconst data = items[0].json;\nconst openTrades = (data.trades||[]).filter(t => t.status === 'OPEN');\n// Return one item per open trade for the SELL HTTP node\nif (openTrades.length === 0) {\n  return [{ json: { ...data, forceExits: [], hasForceExits: false } }];\n}\nreturn [{ json: { ...data, forceExits: openTrades, hasForceExits: true } }];"
+      }
+    },
+
+    {
+      "id": "eod-has-open",
+      "name": "🔍 Any Force-exits?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [820, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "leftValue": "={{ $json.hasForceExits }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true" } }],
+          "combinator": "and"
+        }
+      }
+    },
+
+    {
+      "id": "eod-split",
+      "name": "🔀 Split Force Exits",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 180],
+      "parameters": {
+        "jsCode": "const data = items[0].json;\nreturn (data.forceExits||[]).map(t => ({ json: { ...data, currentExit: t } }));"
+      }
+    },
+
+    {
+      "id": "eod-sell",
+      "name": "📤 Kite — Force SELL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kite.trade/orders/regular",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Kite-Version", "value": "3" },
+            { "name": "Authorization",  "value": "=token {{ $json.ZERODHA_API_KEY }}:{{ $json.ZERODHA_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "tradingsymbol",    "value": "={{ $json.currentExit.symbol }}" },
+            { "name": "exchange",         "value": "NSE" },
+            { "name": "transaction_type", "value": "SELL" },
+            { "name": "order_type",       "value": "MARKET" },
+            { "name": "product",          "value": "MIS" },
+            { "name": "quantity",         "value": "={{ $json.currentExit.qty }}" },
+            { "name": "validity",         "value": "DAY" },
+            { "name": "tag",              "value": "AutoTrader-EOD" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "continueOnFail": true
+    },
+
+    {
+      "id": "eod-build-report",
+      "name": "📊 Build EOD Summary Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 460],
+      "parameters": {
+        "jsCode": "const data = items[0].json;\nconst trades = data.trades||[];\nconst today = data.today||new Date().toISOString().split('T')[0];\nconst dateDisplay = new Date(today).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});\n\nif (data.noTradesDay || trades.length === 0) {\n  return [{ json: { ...data, eodMessage:\n    `📋 *DAILY SUMMARY — ${dateDisplay}*\\n\\n` +\n    `No trades were placed today.\\nMarket conditions were unfavourable.\\n\\n` +\n    `⚙️ Auto-Trader by n8n + Zerodha`\n  }}];\n}\n\nconst closed = trades.filter(t=>t.status==='CLOSED'||t.status==='CLOSING');\nconst open   = trades.filter(t=>t.status==='OPEN');\n\nconst totalPnL    = trades.reduce((s,t)=>s+(t.pnl||0),0);\nconst totalCost   = trades.reduce((s,t)=>s+(t.costToTrade||0),0);\nconst winners     = closed.filter(t=>(t.pnl||0)>0).length;\nconst losers      = closed.filter(t=>(t.pnl||0)<=0).length;\n\nconst emoji = r => r==='TARGET_HIT'?'🎯':r==='STOPLOSS_HIT'?'🛑':'⏰';\nconst tradeLines = trades.map(t=>{\n  const p=t.pnl||0,pp=t.pnlPct||0;\n  return `${emoji(t.exitReason||'EOD_SQUAREOFF')} ${t.symbol}: Entry ₹${t.entryPrice} → Exit ₹${t.ltp||'N/A'} | ${p>=0?'+':''}₹${p.toFixed(0)}(${pp>=0?'+':''}${pp.toFixed(1)}%)`;\n}).join('\\n');\n\nconst overallEmoji = totalPnL>0?'🟢':totalPnL<0?'🔴':'⚪';\nconst msg=\n  `📋 *DAILY SUMMARY — ${dateDisplay}*\\n` +\n  `━━━━━━━━━━━━━━━━━━\\n` +\n  `${tradeLines}\\n` +\n  `━━━━━━━━━━━━━━━━━━\\n` +\n  `${overallEmoji} Net P&L: ${totalPnL>=0?'+':''}₹${totalPnL.toFixed(2)}\\n` +\n  `📦 Invested: ₹${totalCost.toFixed(2)}\\n` +\n  `✅ Winners: ${winners} | ❌ Losers: ${losers}\\n` +\n  `📊 Total trades: ${trades.length}\\n\\n` +\n  `⚙️ Auto-Trader by n8n + Zerodha\\n` +\n  `Next session: Tomorrow 9:45 AM`;\n\nreturn[{json:{...data,eodMessage:msg,totalPnL:+totalPnL.toFixed(2),winners,losers}}];"
+      }
+    },
+
+    {
+      "id": "eod-whatsapp",
+      "name": "📱 WhatsApp — EOD Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 460],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $json.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Basic {{ Buffer.from($json.TWILIO_ACCOUNT_SID + ':' + $json.TWILIO_AUTH_TOKEN).toString('base64') }}" }]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "From", "value": "={{ $json.TWILIO_WHATSAPP_FROM }}" },
+            { "name": "To",   "value": "={{ $json.ALERT_PHONE }}" },
+            { "name": "Body", "value": "={{ $json.eodMessage }}" }
+          ]
+        },
+        "options": { "response": { "response": { "neverError": true } } }
+      },
+      "continueOnFail": true
+    }
+
+  ],
+
+  "connections": {
+    "🕒 EOD Trigger — 3:25 PM Mon-Fri":       { "main": [[{ "node": "📂 Load Today's Trade State",           "type": "main", "index": 0 }]] },
+    "📂 Load Today's Trade State":             { "main": [[{ "node": "🔴 Force Square-off Any Open Positions", "type": "main", "index": 0 }, { "node": "📊 Build EOD Summary Report", "type": "main", "index": 0 }]] },
+    "🔴 Force Square-off Any Open Positions": { "main": [[{ "node": "🔍 Any Force-exits?",                    "type": "main", "index": 0 }]] },
+    "🔍 Any Force-exits?":                    { "main": [[{ "node": "🔀 Split Force Exits",                    "type": "main", "index": 0 }], []] },
+    "🔀 Split Force Exits":                   { "main": [[{ "node": "📤 Kite — Force SELL",                    "type": "main", "index": 0 }]] },
+    "📊 Build EOD Summary Report":             { "main": [[{ "node": "📱 WhatsApp — EOD Summary",              "type": "main", "index": 0 }]] }
+  },
+
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Kolkata" }
+}
