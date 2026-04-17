@@ -494,6 +494,10 @@ function step2(){
         <label>Perquisites / Bonus (if any)</label>
         <div class="rupee-wrap"><input type="number" class="rupee" id="perquisites" value="${ITR.perquisites||0}" placeholder="0"/></div>
       </div>
+      <div class="form-group">
+        <label>NPS Employer Contribution u/s 80CCD(2) <span class="tip">(14% of basic — new regime / 10% — old regime, auto-allowed)</span></label>
+        <div class="rupee-wrap"><input type="number" class="rupee" id="nps80ccd2" value="${ITR.nps80ccd2||0}" placeholder="0"/></div>
+      </div>
     </div>
 
     <div class="section-sub">HRA Exemption Calculator <span class="tag tag-hra">Section 10(13A)</span></div>
@@ -617,7 +621,7 @@ function step3(){
     <div class="section-sub">Income from House Property <span class="tag tag-hra">Schedule HP</span></div>
     <div class="info-box info-orange">
       <div class="info-box-icon">🏘️</div>
-      <div>For rented property: Annual Rent − Municipal Tax − 30% Standard Deduction − Home Loan Interest. For self-occupied property with home loan, you can claim interest u/s 24(b) up to ₹2,00,000.</div>
+      <div>For rented property: Annual Rent − Municipal Tax − 30% Standard Deduction − Home Loan Interest = HP Income. For self-occupied property: Interest u/s 24(b) creates loss (max ₹2,00,000) — <strong>this loss is deductible only under Old Regime</strong>. Under New Regime, no deduction u/s 24(b) is available for any property type.</div>
     </div>
     <div class="form-grid fg3">
       <div class="form-group">
@@ -646,7 +650,7 @@ function step3(){
     <div class="section-sub">Capital Gains <span class="tag tag-other">Schedule CG</span></div>
     <div class="info-box info-blue">
       <div class="info-box-icon">📈</div>
-      <div>STCG u/s 111A (equity/MF held &lt;12 months): taxed at <strong>20%</strong> (Budget 2024). LTCG u/s 112A (equity/MF held &gt;12 months above ₹1,25,000): taxed at <strong>12.5%</strong>. Other LTCG: 20% with indexation.</div>
+      <div><strong>Budget 2024 changes (effective 23 Jul 2024):</strong> STCG u/s 111A (equity/MF &lt;12 months): now taxed at <strong>20%</strong> (earlier 15%). LTCG u/s 112A (equity/MF &gt;12 months): now <strong>12.5%</strong> (earlier 10%) with ₹1,25,000 exemption (earlier ₹1,00,000). Other LTCG (debt/property/gold): <strong>20% without indexation</strong> (indexation benefit removed by Budget 2024). Enter <em>net gain</em> amounts.</div>
     </div>
     <div class="form-grid fg2">
       <div class="form-group">
@@ -662,7 +666,7 @@ function step3(){
         <div class="rupee-wrap"><input type="number" class="rupee" id="ltcg112a" value="${ITR.ltcg112a||0}" placeholder="0"/></div>
       </div>
       <div class="form-group">
-        <label>LTCG — Other (Debt / Property / Gold @20%)</label>
+        <label>LTCG — Other (Debt / Property / Gold @20% — no indexation from FY25)</label>
         <div class="rupee-wrap"><input type="number" class="rupee" id="ltcgOther" value="${ITR.ltcgOther||0}" placeholder="0"/></div>
       </div>
     </div>
@@ -905,6 +909,7 @@ function calcDedTotal(){
   const sec80tta_ttb=Math.max(sec80tta,sec80ttb);
   const sec80u=parseFloat(document.getElementById('disability80u')?.value)||0;
   const sec80dd=parseFloat(document.getElementById('disabilityDep')?.value)||0;
+  const nps80ccd2=n('nps80ccd2')||0; // 80CCD(2) allowed in BOTH regimes
   const totalDed=sec80c+nps1b+sec80d+sec80e+sec80g+sec80tta_ttb+sec80u+sec80dd;
 
   const el=document.getElementById('ded-total-box');
@@ -913,6 +918,7 @@ function calcDedTotal(){
       <h3>Deduction Summary (Old Regime)</h3>
       <div class="sum-row"><span class="sum-label">80C — Investments (${fmt(gross80c)} → capped)</span><span class="sum-val positive">${fmt(sec80c)}</span></div>
       <div class="sum-row"><span class="sum-label">80CCD(1B) — Additional NPS</span><span class="sum-val positive">${fmt(nps1b)}</span></div>
+      <div class="sum-row"><span class="sum-label">80CCD(2) — Employer NPS (both regimes)</span><span class="sum-val positive">${fmt(nps80ccd2)}</span></div>
       <div class="sum-row"><span class="sum-label">80D — Health Insurance</span><span class="sum-val positive">${fmt(sec80d)}</span></div>
       <div class="sum-row"><span class="sum-label">80E — Education Loan Interest</span><span class="sum-val positive">${fmt(sec80e)}</span></div>
       <div class="sum-row"><span class="sum-label">80G — Donations</span><span class="sum-val positive">${fmt(sec80g)}</span></div>
@@ -927,7 +933,7 @@ function calcDedTotal(){
   ITR._sec80c=sec80c; ITR._nps1b=nps1b; ITR._sec80d=sec80d; ITR._sec80e=sec80e;
   ITR._sec80g=sec80g; ITR._sec80tta=sec80tta_ttb; ITR._sec80u=sec80u+sec80dd;
   ITR._totalDed=totalDed;
-  return {sec80c,nps1b,sec80d,sec80e,sec80g,sec80tta_ttb,sec80u,sec80dd,totalDed};
+  return {sec80c,nps1b,sec80d,sec80e,sec80g,sec80tta_ttb,sec80u,sec80dd,totalDed,nps80ccd2};
 }
 
 // ═══════════════════════════════════════════════════
@@ -958,6 +964,7 @@ function computeTax(){
   const otherInc=n('otherInc');
   const familyPension=n('familyPension');
   const fpExempt=Math.min(familyPension/3,25000);
+  const nps80ccd2=n('nps80ccd2')||0; // 80CCD(2) employer NPS — allowed in BOTH regimes
 
   // ── OLD REGIME ──────────────────────────────────
   const stdDedOld=50000;
@@ -966,16 +973,17 @@ function computeTax(){
   const oldOther=savInt+fdInt+rdInt+dividend+(familyPension-fpExempt)+otherInc;
   const old80TTA=Math.min(savInt,agecat==='below60'?10000:50000);
   const oldGrossTotal=oldSalary+Math.max(0,oldHP)+oldOther+stcgOther;
-  const oldTaxable=Math.max(0,oldGrossTotal-ded.totalDed);
+  const oldTaxable=Math.max(0,oldGrossTotal-ded.totalDed-nps80ccd2);
 
   // ── NEW REGIME ──────────────────────────────────
   const stdDedNew=75000; // Budget 2024 increase
   const newSalary=Math.max(0,salaryNet-profTax-stdDedNew);
-  // New regime: no 24b, no 80C etc. HP loss max 2L not allowed for rented property (no change for self-occ up to 2L)
-  const newHP=v('propType')==='self'?-Math.min(hlInt,200000):0;
+  // New regime: NO 24b deduction at all (neither self-occ nor let-out). HP loss set-off not allowed.
+  const newHP=0;
   const newOther=savInt+fdInt+rdInt+dividend+(familyPension-fpExempt)+otherInc;
   const newGrossTotal=newSalary+Math.max(0,newHP)+newOther+stcgOther;
-  const newTaxable=Math.max(0,newGrossTotal);
+  // New regime: only 80CCD(2) employer NPS contribution is allowed
+  const newTaxable=Math.max(0,newGrossTotal-nps80ccd2);
 
   function slabTax(income,regime,age){
     let tax=0;
@@ -1005,28 +1013,32 @@ function computeTax(){
 
   // Old regime tax
   const oldBaseTax=slabTax(oldTaxable,'old',agecat);
-  // 87A rebate: if income <= 5L, rebate of tax amount (max 12500)
-  const old87A=oldTaxable<=500000?Math.min(oldBaseTax,12500):0;
+  // 87A rebate OLD: if total income (incl special rates) <= 5L, rebate up to 12500 on slab tax only
+  const oldTotalIncomeChk=oldTaxable+(stcg111a||0)+(ltcg112a||0)+(ltcgOther||0);
+  const old87A=oldTotalIncomeChk<=500000?Math.min(oldBaseTax,12500):0;
   const oldAfterRebate=Math.max(0,oldBaseTax-old87A);
-  // STCG / LTCG (special rates)
+  // STCG / LTCG (special rates) — Budget 2024: STCG 111A @20%, LTCG 112A @12.5%, exemption ₹1,25,000
   const oldSTCG111aTax=stcg111a*0.20;
   const oldLTCG112aTax=Math.max(0,ltcg112a-125000)*0.125;
   const oldLTCGOtherTax=ltcgOther*0.20;
   const oldTotalBeforeSurcharge=oldAfterRebate+oldSTCG111aTax+oldLTCG112aTax+oldLTCGOtherTax;
+  // Old regime surcharge: 10%/15%/25%/37% — max 37% for old regime
   const oldSurcharge=oldTaxable>5000000&&oldTaxable<=10000000?oldTotalBeforeSurcharge*0.10:oldTaxable>10000000&&oldTaxable<=20000000?oldTotalBeforeSurcharge*0.15:oldTaxable>20000000&&oldTaxable<=50000000?oldTotalBeforeSurcharge*0.25:oldTaxable>50000000?oldTotalBeforeSurcharge*0.37:0;
   const oldCess=(oldTotalBeforeSurcharge+oldSurcharge)*0.04;
   const oldTotalTax=oldTotalBeforeSurcharge+oldSurcharge+oldCess;
 
   // New regime tax
   const newBaseTax=slabTax(newTaxable,'new',agecat);
-  // 87A rebate new: if income <= 7L, rebate (max 25000)
+  // 87A rebate NEW (Budget 2024): ONLY on slab income, NOT on special rate (STCG/LTCG) income
+  // Rebate up to ₹25,000 if taxable income (excl. special rates) <= ₹7,00,000
   const new87A=newTaxable<=700000?Math.min(newBaseTax,25000):0;
   const newAfterRebate=Math.max(0,newBaseTax-new87A);
   const newSTCG111aTax=stcg111a*0.20;
   const newLTCG112aTax=Math.max(0,ltcg112a-125000)*0.125;
   const newLTCGOtherTax=ltcgOther*0.20;
   const newTotalBeforeSurcharge=newAfterRebate+newSTCG111aTax+newLTCG112aTax+newLTCGOtherTax;
-  const newSurcharge=newTaxable>5000000&&newTaxable<=10000000?newTotalBeforeSurcharge*0.10:newTaxable>10000000?newTotalBeforeSurcharge*0.15:0;
+  // New regime surcharge: capped at 25% (NOT 37%) — Budget 2023 change retained
+  const newSurcharge=newTaxable>5000000&&newTaxable<=10000000?newTotalBeforeSurcharge*0.10:newTaxable>10000000&&newTaxable<=20000000?newTotalBeforeSurcharge*0.15:newTaxable>20000000?newTotalBeforeSurcharge*0.25:0;
   const newCess=(newTotalBeforeSurcharge+newSurcharge)*0.04;
   const newTotalTax=newTotalBeforeSurcharge+newSurcharge+newCess;
 
@@ -1054,7 +1066,8 @@ function computeTax(){
     oldOther,newOther,
     totalDed:ded.totalDed,
     sec80c:ded.sec80c,nps1b:ded.nps1b,sec80d:ded.sec80d,sec80e:ded.sec80e,sec80g:ded.sec80g,
-    sec80tta:ded.sec80tta_ttb,
+    sec80tta:ded.sec80tta_ttb,sec80u:ded.sec80u,sec80dd:ded.sec80dd,
+    nps80ccd2,
     stcg111a,stcgOther,ltcg112a,ltcgOther
   };
 }
@@ -1135,7 +1148,7 @@ function step5(){
         <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Std Ded ₹75,000 | Most deductions not allowed</div>
         <div class="slab-row" style="font-size:12px"><span>Taxable Income</span><span></span><span style="font-weight:700">${fmt(c.newTaxable)}</span></div>
         ${slabBreakupHTML(c.newTaxable,'new',agecat)}
-        ${c.new87A>0?`<div class="slab-row" style="color:var(--green)"><span>87A Rebate (up to ₹7L)</span><span></span><span>- ${fmt(c.new87A)}</span></div>`:''}
+        ${c.new87A>0?`<div class="slab-row" style="color:var(--green)"><span>87A Rebate (slab income ≤₹7L; not on STCG/LTCG)</span><span></span><span>- ${fmt(c.new87A)}</span></div>`:''}
         ${c.newSTCG111aTax>0?`<div class="slab-row"><span>STCG @20%</span><span></span><span>${fmt(c.newSTCG111aTax)}</span></div>`:''}
         ${c.newLTCG112aTax>0?`<div class="slab-row"><span>LTCG @12.5%</span><span></span><span>${fmt(c.newLTCG112aTax)}</span></div>`:''}
         ${c.newSurcharge>0?`<div class="slab-row"><span>Surcharge</span><span></span><span>${fmt(c.newSurcharge)}</span></div>`:''}
@@ -1218,12 +1231,12 @@ function computeDetailHTML(c,regime){
   const taxable=isOld?c.oldTaxable:c.newTaxable;
   return `
   <table class="comp-table">
-    <tr class="td-section"><td colspan="2">A. GROSS TOTAL INCOME</td></tr>
+    <tr class="td-section"><td colspan="2">A. INCOME COMPUTATION</td></tr>
     <tr><td>Gross Salary (after u/s 10 exemptions)</td><td class="td-right">${fmt(c.salaryNet)}</td></tr>
-    <tr><td>Less: Professional Tax</td><td class="td-right td-red">- ${fmt(c.profTax)}</td></tr>
+    <tr><td>Less: Professional Tax u/s 16(iii)</td><td class="td-right td-red">- ${fmt(c.profTax)}</td></tr>
     <tr><td>Less: Standard Deduction u/s 16(ia) (₹${isOld?'50,000':'75,000'})</td><td class="td-right td-red">- ${fmt(stdDed)}</td></tr>
     <tr><td><strong>Income from Salary</strong></td><td class="td-right"><strong>${fmt(salNet)}</strong></td></tr>
-    <tr><td>Income from House Property</td><td class="td-right ${hp<0?'td-red':''}">${hp<0?'- ':''}${fmt(Math.abs(hp))}</td></tr>
+    <tr><td>Income from House Property${!isOld?' (24b loss not allowed in New Regime)':''}</td><td class="td-right ${hp<0?'td-red':''}">${hp<0?'- ':''}${fmt(Math.abs(hp))}</td></tr>
     <tr><td>Income from Other Sources</td><td class="td-right">${fmt(other)}</td></tr>
     ${c.stcgOther>0?`<tr><td>STCG (Other — at slab rate)</td><td class="td-right">${fmt(c.stcgOther)}</td></tr>`:''}
     <tr class="td-section"><td colspan="2">B. GROSS TOTAL INCOME</td></tr>
@@ -1231,17 +1244,18 @@ function computeDetailHTML(c,regime){
     ${isOld?`
     <tr class="td-section"><td colspan="2">C. DEDUCTIONS (CHAPTER VI-A) — OLD REGIME ONLY</td></tr>
     <tr><td>80C — Investments</td><td class="td-right td-green">- ${fmt(c.sec80c)}</td></tr>
-    ${c.nps1b>0?`<tr><td>80CCD(1B) — Additional NPS</td><td class="td-right td-green">- ${fmt(c.nps1b)}</td></tr>`:''}
+    ${c.nps1b>0?`<tr><td>80CCD(1B) — Additional NPS (self)</td><td class="td-right td-green">- ${fmt(c.nps1b)}</td></tr>`:''}
     ${c.sec80d>0?`<tr><td>80D — Health Insurance</td><td class="td-right td-green">- ${fmt(c.sec80d)}</td></tr>`:''}
     ${c.sec80e>0?`<tr><td>80E — Education Loan Interest</td><td class="td-right td-green">- ${fmt(c.sec80e)}</td></tr>`:''}
     ${c.sec80g>0?`<tr><td>80G — Donations</td><td class="td-right td-green">- ${fmt(c.sec80g)}</td></tr>`:''}
     ${c.sec80tta>0?`<tr><td>80TTA/TTB — Savings Interest</td><td class="td-right td-green">- ${fmt(c.sec80tta)}</td></tr>`:''}
-    <tr><td><strong>Total Deductions</strong></td><td class="td-right td-green"><strong>- ${fmt(c.totalDed)}</strong></td></tr>`:'<tr><td colspan="2" style="color:var(--text3);font-style:italic">No Chapter VI-A deductions in new regime</td></tr>'}
+    <tr><td><strong>Sub-total Chapter VI-A</strong></td><td class="td-right td-green"><strong>- ${fmt(c.totalDed)}</strong></td></tr>`:'<tr><td colspan="2" style="color:var(--text3);font-style:italic;padding:8px 12px">No Chapter VI-A deductions in new regime (except 80CCD(2) below)</td></tr>'}
+    ${c.nps80ccd2>0?`<tr><td>80CCD(2) — Employer NPS Contribution (allowed in both regimes)</td><td class="td-right td-green">- ${fmt(c.nps80ccd2)}</td></tr>`:''}
     <tr class="td-section"><td colspan="2">D. TAXABLE INCOME</td></tr>
     <tr><td><strong>Total Taxable Income (at slab rates)</strong></td><td class="td-right" style="font-size:15px;font-weight:700;color:var(--navy)">${fmt(taxable)}</td></tr>
-    ${c.stcg111a>0?`<tr><td>+ STCG u/s 111A (taxed @20%)</td><td class="td-right">${fmt(c.stcg111a)}</td></tr>`:''}
-    ${c.ltcg112a>0?`<tr><td>+ LTCG u/s 112A above ₹1,25,000 (@12.5%)</td><td class="td-right">${fmt(c.ltcg112a)}</td></tr>`:''}
-    ${c.ltcgOther>0?`<tr><td>+ LTCG Other (@20%)</td><td class="td-right">${fmt(c.ltcgOther)}</td></tr>`:''}
+    ${c.stcg111a>0?`<tr><td>+ STCG u/s 111A — taxed @20% (Budget 2024 rate)</td><td class="td-right">${fmt(c.stcg111a)}</td></tr>`:''}
+    ${c.ltcg112a>0?`<tr><td>+ LTCG u/s 112A above ₹1,25,000 — taxed @12.5%</td><td class="td-right">${fmt(c.ltcg112a)}</td></tr>`:''}
+    ${c.ltcgOther>0?`<tr><td>+ LTCG Other (no indexation) — taxed @20%</td><td class="td-right">${fmt(c.ltcgOther)}</td></tr>`:''}
   </table>`;
 }
 
@@ -1324,18 +1338,19 @@ function step6(){
       <tr><td>Less: Standard Deduction</td><td></td><td class="td-right td-red">- ${fmt(recommended==='old'?50000:75000)}</td></tr>
       <tr><td>Less: Professional Tax</td><td></td><td class="td-right td-red">- ${fmt(c.profTax)}</td></tr>
       <tr><td><strong>Income from Salary</strong></td><td></td><td class="td-right"><strong>${fmt(recommended==='old'?c.oldSalary:c.newSalary)}</strong></td></tr>
-      <tr><td>Income from House Property</td><td></td><td class="td-right ${(recommended==='old'?c.oldHP:c.newHP)<0?'td-red':''}">${fmt(recommended==='old'?c.oldHP:c.newHP)}</td></tr>
+      <tr><td>Income from House Property${recommended==='new'?' (24b not applicable)':''}</td><td></td><td class="td-right ${(recommended==='old'?c.oldHP:c.newHP)<0?'td-red':''}">${(recommended==='old'?c.oldHP:c.newHP)<0?'- ':''}${fmt(Math.abs(recommended==='old'?c.oldHP:c.newHP))}</td></tr>
       <tr><td>Income from Other Sources</td><td></td><td class="td-right">${fmt(recommended==='old'?c.oldOther:c.newOther)}</td></tr>
       ${c.stcgOther>0?`<tr><td>STCG (Other)</td><td></td><td class="td-right">${fmt(c.stcgOther)}</td></tr>`:''}
-      <tr class="td-section"><td colspan="3">DEDUCTIONS (CHAPTER VI-A) ${recommended==='new'?'— Not applicable in New Regime':''}</td></tr>
+      <tr class="td-section"><td colspan="3">DEDUCTIONS (CHAPTER VI-A) ${recommended==='new'?'— Not applicable in New Regime (only 80CCD(2) allowed)':''}</td></tr>
       ${recommended==='old'?`
       <tr><td>80C — Investments (LIC/PPF/ELSS/Tuition etc.)</td><td class="td-right td-green">${fmt(c.sec80c)}</td><td class="td-right td-red">- ${fmt(c.sec80c)}</td></tr>
-      ${c.nps1b>0?`<tr><td>80CCD(1B) — NPS Additional</td><td class="td-right td-green">${fmt(c.nps1b)}</td><td class="td-right td-red">- ${fmt(c.nps1b)}</td></tr>`:''}
+      ${c.nps1b>0?`<tr><td>80CCD(1B) — NPS Additional (self)</td><td class="td-right td-green">${fmt(c.nps1b)}</td><td class="td-right td-red">- ${fmt(c.nps1b)}</td></tr>`:''}
       ${c.sec80d>0?`<tr><td>80D — Health Insurance</td><td class="td-right td-green">${fmt(c.sec80d)}</td><td class="td-right td-red">- ${fmt(c.sec80d)}</td></tr>`:''}
       ${c.sec80e>0?`<tr><td>80E — Education Loan Interest</td><td class="td-right td-green">${fmt(c.sec80e)}</td><td class="td-right td-red">- ${fmt(c.sec80e)}</td></tr>`:''}
       ${c.sec80g>0?`<tr><td>80G — Donations</td><td class="td-right td-green">${fmt(c.sec80g)}</td><td class="td-right td-red">- ${fmt(c.sec80g)}</td></tr>`:''}
-      ${c.sec80tta>0?`<tr><td>80TTA/TTB</td><td class="td-right td-green">${fmt(c.sec80tta)}</td><td class="td-right td-red">- ${fmt(c.sec80tta)}</td></tr>`:''}
-      <tr><td><strong>Total Deductions</strong></td><td></td><td class="td-right td-red"><strong>- ${fmt(c.totalDed)}</strong></td></tr>`:'<tr><td colspan="3" style="color:var(--text3);font-style:italic;padding:10px 12px">No deductions applicable in new regime</td></tr>'}
+      ${c.sec80tta>0?`<tr><td>80TTA/TTB — Savings Interest</td><td class="td-right td-green">${fmt(c.sec80tta)}</td><td class="td-right td-red">- ${fmt(c.sec80tta)}</td></tr>`:''}
+      <tr><td><strong>Sub-total Chapter VI-A</strong></td><td></td><td class="td-right td-red"><strong>- ${fmt(c.totalDed)}</strong></td></tr>`:'<tr><td colspan="3" style="color:var(--text3);font-style:italic;padding:10px 12px">No Chapter VI-A deductions in new regime</td></tr>'}
+      ${c.nps80ccd2>0?`<tr><td>80CCD(2) — Employer NPS (allowed in both regimes)</td><td class="td-right td-green">${fmt(c.nps80ccd2)}</td><td class="td-right td-red">- ${fmt(c.nps80ccd2)}</td></tr>`:''}
       <tr class="td-section"><td colspan="3">TAX COMPUTATION</td></tr>
       <tr><td><strong>Total Taxable Income</strong></td><td></td><td class="td-right" style="font-weight:700;font-size:15px">${fmt(regimeTaxable)}</td></tr>
       <tr><td>Tax on Slab Income</td><td></td><td class="td-right">${fmt(recommended==='old'?c.oldBaseTax:c.newBaseTax)}</td></tr>
@@ -1369,7 +1384,7 @@ function step6(){
     <!-- FILING CHECKLIST -->
     <div class="section-sub" style="margin-top:20px">Filing Checklist</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      ${['Form 16 from employer','PAN + Aadhaar linked','26AS / AIS verified','Bank account pre-validated','TDS certificates collected','Investment proofs for deductions','Rent receipts (if HRA claimed)','Home loan certificate (if applicable)'].map(item=>`
+      ${['Form 16 Part A & Part B from employer','PAN + Aadhaar linked on e-filing portal','26AS & AIS downloaded and verified','Bank account pre-validated for refund','TDS certificates (Form 16A) collected','Investment proofs for 80C/80D/80E deductions','Rent receipts + landlord PAN (if HRA claimed)','Home loan interest certificate (if applicable)','Capital gain statements from broker/MF','NPS Statement for 80CCD(1B) / 80CCD(2) claim'].map(item=>`
         <div class="check-row"><input type="checkbox"/><label>${item}</label></div>`).join('')}
     </div>
 
@@ -1394,7 +1409,17 @@ function downloadJSON(){
       version:"2025-26",
       generatedOn:new Date().toISOString(),
       assessmentYear:"2025-26",
-      financialYear:"2024-25"
+      financialYear:"2024-25",
+      budget2024Changes:{
+        stcg111aRate:"20% (raised from 15%, effective 23 Jul 2024)",
+        ltcg112aRate:"12.5% (raised from 10%)",
+        ltcg112aExemption:"₹1,25,000 (raised from ₹1,00,000)",
+        ltcgOtherIndexation:"Removed from FY 2024-25",
+        standardDeductionNew:"₹75,000 (raised from ₹50,000)",
+        rebate87ANew:"₹25,000 if taxable income ≤ ₹7L (slab income only, not STCG/LTCG)",
+        newRegimeSurchargeCap:"25% (capped, old regime retains 37%)",
+        section24bNewRegime:"Not allowed in new regime"
+      }
     },
     taxpayerInfo:{
       name:ITR.fullname,pan:ITR.pan,dob:ITR.dob,
@@ -1415,15 +1440,17 @@ function downloadJSON(){
       standardDeduction:{old:50000,new:75000},
       professionalTax:Math.min(n('profTax'),2500),
       incomeFromSalary:{old:c.oldSalary,new:c.newSalary},
-      incomeFromHouseProperty:{old:c.oldHP,new:c.newHP},
+      incomeFromHouseProperty:{old:c.oldHP,new:c.newHP,note:"New regime: 24b deduction not available"},
       incomeFromOtherSources:{
         savingsInterest:n('savingsInt'),fdInterest:n('fdInt'),rdInterest:n('rdInt'),
         rentalIncome:n('rentalInc'),dividendIncome:n('dividendInc'),
         otherIncome:n('otherInc'),familyPension:n('familyPension')
       },
       capitalGains:{
-        stcg111a:n('stcg111a'),stcgOther:n('stcgOther'),
-        ltcg112a:n('ltcg112a'),ltcgOther:n('ltcgOther')
+        stcg111a:{amount:n('stcg111a'),rate:"20%",note:"Budget 2024: raised from 15%"},
+        stcgOther:n('stcgOther'),
+        ltcg112a:{amount:n('ltcg112a'),rate:"12.5%",exemption:125000,note:"Budget 2024: raised from 10%, exemption raised from 1L"},
+        ltcgOther:{amount:n('ltcgOther'),rate:"20%",note:"Budget 2024: indexation benefit removed"}
       }
     },
     deductionsChapterVIA:{
@@ -1433,13 +1460,14 @@ function downloadJSON(){
         tuitionFees:n('tuitionFees'),hlPrincipal:n('hlPrincipal'),
         fd5yr:n('fd5yr'),stamps:n('stamps'),nps:n('nps1'),
         grossTotal:['lic','ppf','epf','elss','nsc','scss','sukanya','tuitionFees','hlPrincipal','fd5yr','stamps','nps1'].reduce((s,id)=>s+n(id),0),
-        allowedDeduction:c.sec80c,limit:150000
+        allowedDeduction:c.sec80c,limit:150000,applicableRegime:"Old only"
       },
-      sec80CCD1B:{npsAdditional:n('nps1b'),allowedDeduction:c.nps1b,limit:50000},
-      sec80D:{selfMedical:n('selfMed'),parentMedical:n('parentMed'),preventiveHealth:n('preventive'),allowedDeduction:c.sec80d},
-      sec80E:{educationLoanInterest:n('educLoan'),allowedDeduction:c.sec80e},
-      sec80G:{donations100pct:n('donation100'),donations50pct:n('donation50'),allowedDeduction:c.sec80g},
-      sec80TTA_TTB:{savingsInterest:n('savingsInt'),allowedDeduction:c.sec80tta},
+      sec80CCD1B:{npsAdditional:n('nps1b'),allowedDeduction:c.nps1b,limit:50000,applicableRegime:"Old only"},
+      sec80CCD2:{employerNPS:n('nps80ccd2'),allowedDeduction:c.nps80ccd2,note:"Allowed in BOTH regimes. New regime limit: 14% of basic; Old: 10% of basic"},
+      sec80D:{selfMedical:n('selfMed'),parentMedical:n('parentMed'),preventiveHealth:n('preventive'),allowedDeduction:c.sec80d,applicableRegime:"Old only"},
+      sec80E:{educationLoanInterest:n('educLoan'),allowedDeduction:c.sec80e,applicableRegime:"Old only"},
+      sec80G:{donations100pct:n('donation100'),donations50pct:n('donation50'),allowedDeduction:c.sec80g,applicableRegime:"Old only"},
+      sec80TTA_TTB:{savingsInterest:n('savingsInt'),allowedDeduction:c.sec80tta,applicableRegime:"Old only"},
       totalDeductions:c.totalDed
     },
     taxComputation:{
