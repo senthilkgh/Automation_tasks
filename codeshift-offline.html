@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeShift — Offline Script Converter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg:       #07080c;
+  --bg2:      #0d0f16;
+  --surface:  #111520;
+  --surface2: #161b2a;
+  --surface3: #1b2236;
+  --border:   #1e2840;
+  --border2:  #253050;
+  --text:     #dce8ff;
+  --muted:    #4a5980;
+  --muted2:   #6b7fa8;
+  --accent:   #4f8eff;
+  --accent2:  #00d4aa;
+  --warn:     #ffb547;
+  --danger:   #ff5f5f;
+  --success:  #00d4aa;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'Outfit', sans-serif;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { height:100%; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Background ── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, rgba(79,142,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(0,212,170,0.04) 0%, transparent 60%);
+}
+.grid-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(79,142,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,142,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Layout ── */
+.app {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+}
+
+/* ── Topbar ── */
+.topbar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: rgba(13,15,22,0.95);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.brand-name {
+  font-size: 17px; font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.brand-name em {
+  font-style: normal;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.2);
+  color: var(--accent2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.topbar-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Ollama connection indicator */
+.conn-indicator {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.conn-indicator:hover { border-color: var(--border2); }
+.conn-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+.conn-dot.online  { background: var(--success); box-shadow: 0 0 8px rgba(0,212,170,0.5); }
+.conn-dot.offline { background: var(--danger);  box-shadow: 0 0 8px rgba(255,95,95,0.4); animation: blink 1.5s ease infinite; }
+.conn-dot.checking { background: var(--warn); animation: blink 0.8s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.conn-text { color: var(--muted2); }
+
+/* ── Config bar ── */
+.config-bar {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lang-group { display: flex; flex-direction: column; gap: 4px; }
+.lang-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding-left: 2px;
+}
+
+.lang-select {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a5980' d='M5 6L0 0h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 34px 9px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.lang-select:hover  { background-color: var(--surface2); border-color: var(--border2); }
+.lang-select:focus  { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,142,255,0.12); }
+.lang-select option, .lang-select optgroup { background: #131825; }
+
+.swap-btn {
+  width: 40px; height: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted2); font-size: 18px;
+  transition: all 0.25s;
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+.swap-btn:hover { background: rgba(79,142,255,0.1); border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
+
+/* model select row */
+.model-group {
+  display: flex; flex-direction: column; gap: 4px;
+  align-self: flex-end;
+}
+.model-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.model-select {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a5980' d='M5 6L0 0h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 9px 30px 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+  transition: border-color 0.2s;
+}
+.model-select:focus { border-color: var(--accent); }
+.model-select option { background: #131825; }
+
+.refresh-btn {
+  width: 32px; height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.refresh-btn.spin svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Options strip ── */
+.opts-strip {
+  display: flex; align-items: center;
+  gap: 8px; padding: 8px 24px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.opt-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.opt-chip:hover { border-color: var(--border2); }
+.opt-chip.on { background: rgba(79,142,255,0.08); border-color: rgba(79,142,255,0.35); }
+.opt-check {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.opt-chip.on .opt-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.opt-label { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
+.opt-chip.on .opt-label { color: var(--text); }
+
+.opts-spacer { flex: 1; }
+.sample-btn {
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.sample-btn:hover { border-color: var(--border2); color: var(--text); }
+
+/* ── Editor area ── */
+.editors-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+.editor-pane {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.editor-pane:last-child { border-right: none; }
+
+.pane-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pane-title {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted2); letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.pane-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-src { background: var(--accent);  box-shadow: 0 0 6px rgba(79,142,255,0.6); }
+.dot-out { background: var(--accent2); box-shadow: 0 0 6px rgba(0,212,170,0.6); }
+
+.pane-btns { display: flex; gap: 5px; }
+.pane-btn {
+  font-family: var(--mono); font-size: 10px;
+  padding: 4px 9px; border-radius: 5px;
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--muted2);
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px;
+}
+.pane-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.pane-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.pane-btn.ok { color: var(--success); border-color: rgba(0,212,170,0.4); background: rgba(0,212,170,0.06); }
+
+.code-editor {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.75;
+  padding: 16px 18px;
+  background: transparent;
+  border: none; outline: none;
+  color: var(--text);
+  resize: none;
+  overflow-y: auto;
+  tab-size: 2;
+  caret-color: var(--accent);
+}
+.code-editor::placeholder { color: var(--muted); opacity: 0.5; }
+.code-editor.out-area { color: #7ddfc3; }
+
+/* Line counter row */
+.line-count {
+  padding: 4px 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  display: flex; gap: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Bottom bar ── */
+.bottom-bar {
+  display: flex; align-items: center;
+  gap: 10px; padding: 10px 24px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.convert-btn {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 28px;
+  background: linear-gradient(135deg, var(--accent) 0%, #3a72e0 100%);
+  border: none; border-radius: 8px;
+  color: #fff;
+  font-family: var(--sans); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+  letter-spacing: 0.2px;
+  box-shadow: 0 3px 16px rgba(79,142,255,0.3);
+  flex-shrink: 0;
+}
+.convert-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+}
+.convert-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 22px rgba(79,142,255,0.45); }
+.convert-btn:active:not(:disabled) { transform: none; }
+.convert-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: none;
+}
+
+/* Status */
+.status {
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 13px;
+  min-height: 38px;
+  transition: all 0.3s;
+}
+.status.loading { color: var(--accent);  border-color: rgba(79,142,255,0.3); background: rgba(79,142,255,0.04); }
+.status.ok      { color: var(--success); border-color: rgba(0,212,170,0.3);  background: rgba(0,212,170,0.04); }
+.status.err     { color: var(--danger);  border-color: rgba(255,95,95,0.3);  background: rgba(255,95,95,0.04); }
+.status.warn    { color: var(--warn);    border-color: rgba(255,181,71,0.3); background: rgba(255,181,71,0.04); }
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+.status.loading .status-dot { animation: blink 1s ease infinite; }
+
+/* Download buttons */
+.dl-btn {
+  font-family: var(--mono); font-size: 11px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--muted2);
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.dl-btn:hover:not(:disabled) { background: var(--surface2); color: var(--text); border-color: var(--muted); }
+.dl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Libs panel ── */
+.libs-panel {
+  display: none;
+  padding: 8px 24px;
+  background: rgba(0,212,170,0.03);
+  border-top: 1px solid rgba(0,212,170,0.15);
+  flex-shrink: 0;
+}
+.libs-panel.show { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; animation: slideIn 0.25s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.libs-title { font-family: var(--mono); font-size: 10px; color: var(--muted2); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.lib-tag {
+  font-family: var(--mono); font-size: 11px;
+  padding: 3px 9px; border-radius: 5px;
+  background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.2);
+  color: var(--accent2);
+}
+
+/* ── Config overlay ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.overlay.show { display: flex; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.config-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: 420px;
+  max-width: 90vw;
+  animation: popIn 0.2s ease;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:none} }
+
+.modal-title {
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-title span { font-size: 20px; }
+
+.field-row { margin-bottom: 16px; }
+.field-label {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted2); letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 6px;
+  display: block;
+}
+.field-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono); font-size: 13px;
+  padding: 10px 13px; border-radius: 8px;
+  outline: none; transition: border-color 0.2s;
+}
+.field-input:focus { border-color: var(--accent); }
+
+.modal-hint {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--muted); line-height: 1.7;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 13px;
+  margin-bottom: 18px;
+}
+.modal-hint code { color: var(--accent2); }
+
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  padding: 9px 20px; border-radius: 7px;
+  cursor: pointer; transition: all 0.15s; border: none;
+}
+.modal-btn.primary { background: var(--accent); color: #fff; }
+.modal-btn.primary:hover { background: #3a72e0; }
+.modal-btn.secondary { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border2); }
+.modal-btn.secondary:hover { color: var(--text); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Responsive ── */
+@media (max-width: 800px) {
+  .editors-wrap { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .editor-pane { border-right: none; border-bottom: 1px solid var(--border); }
+  .config-bar { grid-template-columns: 1fr; }
+  .swap-btn { width: 36px; height: 36px; align-self: center; }
+  .model-group { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="grid-layer"></div>
+
+<div class="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">⇄</div>
+      <div class="brand-name">Code<em>Shift</em></div>
+      <div class="brand-tag">Offline</div>
+    </div>
+    <div class="topbar-right">
+      <div class="conn-indicator" id="connIndicator" title="Click to configure Ollama">
+        <div class="conn-dot" id="connDot"></div>
+        <span class="conn-text" id="connText">Checking…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config bar -->
+  <div class="config-bar">
+    <div class="lang-group">
+      <div class="lang-label">▸ Source Language</div>
+      <select class="lang-select" id="srcLang">
+        <option value="auto">🔍 Auto Detect</option>
+        <optgroup label="── Systems ──">
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+        </optgroup>
+        <optgroup label="── Scripting ──">
+          <option value="bash" selected>Bash / Shell</option>
+          <option value="perl">Perl</option>
+          <option value="python">Python</option>
+          <option value="ruby">Ruby</option>
+          <option value="php">PHP</option>
+          <option value="powershell">PowerShell</option>
+          <option value="lua">Lua</option>
+          <option value="awk">AWK</option>
+        </optgroup>
+        <optgroup label="── JVM / Enterprise ──">
+          <option value="java">Java</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="groovy">Groovy</option>
+          <option value="scala">Scala</option>
+        </optgroup>
+        <optgroup label="── Web ──">
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+        </optgroup>
+        <optgroup label="── Data / Config ──">
+          <option value="json">JSON</option>
+          <option value="yaml">YAML</option>
+          <option value="toml">TOML</option>
+          <option value="xml">XML</option>
+          <option value="sql">SQL</option>
+        </optgroup>
+        <optgroup label="── Modern ──">
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="swift">Swift</option>
+          <option value="dart">Dart</option>
+          <option value="r">R</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <button class="swap-btn" id="swapBtn" title="Swap source ↔ target">⇄</button>
+
+    <div class="lang-group">
+      <div class="lang-label">◂ Target Language</div>
+      <select class="lang-select" id="tgtLang">
+        <optgroup label="── Systems ──">
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+        </optgroup>
+        <optgroup label="── Scripting ──">
+          <option value="bash">Bash / Shell</option>
+          <option value="perl">Perl</option>
+          <option value="python" selected>Python</option>
+          <option value="ruby">Ruby</option>
+          <option value="php">PHP</option>
+          <option value="powershell">PowerShell</option>
+          <option value="lua">Lua</option>
+          <option value="awk">AWK</option>
+        </optgroup>
+        <optgroup label="── JVM / Enterprise ──">
+          <option value="java">Java</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="groovy">Groovy</option>
+          <option value="scala">Scala</option>
+        </optgroup>
+        <optgroup label="── Web ──">
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+        </optgroup>
+        <optgroup label="── Data / Config ──">
+          <option value="json">JSON</option>
+          <option value="yaml">YAML</option>
+          <option value="toml">TOML</option>
+          <option value="xml">XML</option>
+          <option value="sql">SQL</option>
+        </optgroup>
+        <optgroup label="── Modern ──">
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="swift">Swift</option>
+          <option value="dart">Dart</option>
+          <option value="r">R</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="model-group">
+      <div class="lang-label">◈ Ollama Model</div>
+      <div class="model-row">
+        <select class="model-select" id="modelSelect">
+          <option value="">Loading models…</option>
+        </select>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh model list">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options strip -->
+  <div class="opts-strip">
+    <div class="opt-chip on" data-key="comments">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Comments</span>
+    </div>
+    <div class="opt-chip on" data-key="imports">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Imports &amp; Libs</span>
+    </div>
+    <div class="opt-chip on" data-key="errors">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Error Handling</span>
+    </div>
+    <div class="opt-chip" data-key="optimize">
+      <div class="opt-check"></div>
+      <span class="opt-label">Optimize</span>
+    </div>
+    <div class="opt-chip" data-key="idiomatic">
+      <div class="opt-check"></div>
+      <span class="opt-label">Idiomatic</span>
+    </div>
+    <div class="opt-chip" data-key="strict">
+      <div class="opt-check"></div>
+      <span class="opt-label">Strict Types</span>
+    </div>
+    <div class="opts-spacer"></div>
+    <button class="sample-btn" id="sampleBtn">◈ Load Sample</button>
+  </div>
+
+  <!-- Editors -->
+  <div class="editors-wrap">
+    <div class="editor-pane">
+      <div class="pane-header">
+        <div class="pane-title"><div class="pane-dot dot-src"></div>SOURCE CODE</div>
+        <div class="pane-btns">
+          <button class="pane-btn" id="pasteBtn">⌘ Paste</button>
+          <button class="pane-btn" id="clearSrcBtn">✕</button>
+        </div>
+      </div>
+      <textarea class="code-editor" id="srcCode"
+        placeholder="// Paste or type your source code here
+// Supported: Bash · Perl · C · C++ · Java · Python · Go
+// Rust · JavaScript · TypeScript · HTML · CSS · JSON
+// YAML · SQL · Ruby · PHP · Kotlin · Scala · and more
+//
+// Tip: Ctrl+Enter to convert"></textarea>
+      <div class="line-count">
+        <span id="srcLines">0 lines</span>
+        <span id="srcChars">0 chars</span>
+      </div>
+    </div>
+
+    <div class="editor-pane">
+      <div class="pane-header">
+        <div class="pane-title"><div class="pane-dot dot-out"></div>CONVERTED OUTPUT</div>
+        <div class="pane-btns">
+          <button class="pane-btn" id="copyBtn" disabled>⎘ Copy</button>
+          <button class="pane-btn" id="clearOutBtn">✕</button>
+        </div>
+      </div>
+      <textarea class="code-editor out-area" id="outCode"
+        placeholder="// Converted code appears here
+// ── 100% offline using local Ollama ──
+// No internet connection required" readonly></textarea>
+      <div class="line-count">
+        <span id="outLines">0 lines</span>
+        <span id="outChars">0 chars</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libs panel -->
+  <div class="libs-panel" id="libsPanel">
+    <span class="libs-title">📦 Required:</span>
+    <div id="libsTags"></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <button class="convert-btn" id="convertBtn" disabled>
+      <div class="spinner" id="spinner"></div>
+      <span id="btnLabel">⇄ Convert</span>
+    </button>
+    <div class="status" id="status">
+      <div class="status-dot"></div>
+      <span id="statusTxt">Connecting to Ollama…</span>
+    </div>
+    <button class="dl-btn" id="dlOut" disabled>⬇ Download</button>
+    <button class="dl-btn" id="dlBoth" disabled>⬇ Both Files</button>
+  </div>
+</div>
+
+<!-- Config Overlay -->
+<div class="overlay" id="overlay">
+  <div class="config-modal">
+    <div class="modal-title"><span>⚙</span> Ollama Configuration</div>
+    <div class="modal-hint">
+      Make sure Ollama is running and CORS is allowed.<br><br>
+      Start Ollama with CORS enabled:<br>
+      <code>OLLAMA_ORIGINS="*" ollama serve</code><br><br>
+      Or set in environment permanently:<br>
+      <code>export OLLAMA_ORIGINS="*"</code>
+    </div>
+    <div class="field-row">
+      <label class="field-label">Ollama Host URL</label>
+      <input class="field-input" id="hostInput" type="text"
+        placeholder="http://localhost:11434" value="http://localhost:11434">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" id="cancelModal">Cancel</button>
+      <button class="modal-btn primary" id="saveModal">Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let ollamaHost  = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
+let modelList   = [];
+let isConverting = false;
+
+const EXT = {
+  bash:'sh',shell:'sh',perl:'pl',python:'py',ruby:'rb',php:'php',
+  powershell:'ps1',lua:'lua',awk:'awk',c:'c',cpp:'cpp',java:'java',
+  kotlin:'kt',groovy:'groovy',scala:'scala',javascript:'js',
+  typescript:'ts',html:'html',css:'css',json:'json',yaml:'yml',
+  toml:'toml',xml:'xml',sql:'sql',go:'go',rust:'rs',swift:'swift',
+  dart:'dart',r:'r'
+};
+
+const SAMPLES = {
+  bash:`#!/bin/bash
+# System health monitor
+HOSTNAME=$(hostname)
+DATE=$(date +"%Y-%m-%d %H:%M:%S")
+
+check_disk() {
+  local part="$1"
+  local usage
+  usage=$(df -h "$part" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')
+  [ -z "$usage" ] && return
+  if [ "$usage" -gt 85 ]; then
+    echo "[$DATE] WARN: $part on $HOSTNAME is ${usage}% full"
+  fi
+}
+
+check_memory() {
+  local free_pct
+  free_pct=$(free | awk '/^Mem:/{printf "%.0f", $4/$2*100}')
+  if [ "$free_pct" -lt 10 ]; then
+    echo "[$DATE] WARN: Low memory - only ${free_pct}% free"
+  fi
+}
+
+check_load() {
+  local load
+  load=$(uptime | awk -F'load average:' '{print $2}' | cut -d, -f1 | xargs)
+  local cpus
+  cpus=$(nproc)
+  echo "[$DATE] Load: $load / CPUs: $cpus"
+}
+
+for p in / /var /tmp /home; do
+  mountpoint -q "$p" 2>/dev/null && check_disk "$p"
+done
+check_memory
+check_load`,
+
+  c:`#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Node {
+  int   data;
+  struct Node *next;
+} Node;
+
+Node* node_new(int val) {
+  Node *n = malloc(sizeof(Node));
+  if (!n) { perror("malloc"); exit(1); }
+  n->data = val;
+  n->next = NULL;
+  return n;
+}
+
+void list_push(Node **head, int val) {
+  Node *n  = node_new(val);
+  n->next  = *head;
+  *head    = n;
+}
+
+int list_sum(Node *head) {
+  int s = 0;
+  while (head) { s += head->data; head = head->next; }
+  return s;
+}
+
+void list_print(Node *head) {
+  while (head) {
+    printf("%d%s", head->data, head->next ? " -> " : "\\n");
+    head = head->next;
+  }
+}
+
+void list_free(Node *head) {
+  while (head) { Node *t = head; head = head->next; free(t); }
+}
+
+int main(void) {
+  Node *list = NULL;
+  for (int i = 1; i <= 6; i++) list_push(&list, i * 5);
+  list_print(list);
+  printf("Sum: %d\\n", list_sum(list));
+  list_free(list);
+  return 0;
+}`,
+
+  python:`#!/usr/bin/env python3
+"""Log analyser — parse and summarise system logs."""
+import re
+import sys
+from pathlib import Path
+from collections import Counter, defaultdict
+from datetime import datetime
+
+LOG_PATTERN = re.compile(
+  r'(?P<month>\\w+)\\s+(?P<day>\\d+)\\s+(?P<time>[\\d:]+)\\s+'
+  r'(?P<host>\\S+)\\s+(?P<proc>\\S+?)(?:\\[\\d+\\])?:\\s+(?P<msg>.+)'
+)
+SEVERITY = {'error': 3, 'warn': 2, 'crit': 4, 'emerg': 5, 'alert': 4}
+
+def parse_log(path: str) -> list[dict]:
+  entries = []
+  for line in Path(path).read_text(errors='ignore').splitlines():
+    if m := LOG_PATTERN.match(line):
+      d = m.groupdict()
+      msg_lower = d['msg'].lower()
+      d['level'] = next((k for k in SEVERITY if k in msg_lower), 'info')
+      entries.append(d)
+  return entries
+
+def summarise(entries: list[dict]) -> None:
+  by_level  = Counter(e['level']  for e in entries)
+  by_proc   = Counter(e['proc']   for e in entries)
+  print(f"Total entries  : {len(entries)}")
+  print(f"\\nBy severity:")
+  for lv, cnt in sorted(by_level.items(), key=lambda x: -SEVERITY.get(x[0],0)):
+    print(f"  {lv:8s}: {cnt}")
+  print(f"\\nTop processes:")
+  for proc, cnt in by_proc.most_common(5):
+    print(f"  {proc:20s}: {cnt}")
+
+if __name__ == '__main__':
+  log_file = sys.argv[1] if len(sys.argv) > 1 else '/var/log/syslog'
+  entries  = parse_log(log_file)
+  summarise(entries)`,
+
+  perl:`#!/usr/bin/perl
+use strict; use warnings;
+use File::Find;
+use POSIX qw(strftime);
+
+my %stats  = (files => 0, size => 0);
+my @issues;
+
+sub wanted {
+  return if -d;
+  $stats{files}++;
+  my $sz = -s $_;
+  $stats{size} += $sz;
+  if ($sz > 5_242_880) {   # > 5 MB
+    push @issues, { path => $File::Find::name, sz => $sz,
+                    age  => (stat)[9] };
+  }
+}
+
+find(\\&wanted, '/var/log');
+
+printf "Scanned  : %d files\\n",           $stats{files};
+printf "Total    : %.1f MB\\n",            $stats{size}/1048576;
+printf "Large (>5M): %d files\\n\\n",     scalar @issues;
+
+for my $f (sort { $b->{sz} <=> $a->{sz} } @issues) {
+  printf "  %-35s  %6.1f MB  %s\\n",
+    (split /\\//, $f->{path})[-1],
+    $f->{sz}/1048576,
+    strftime("%Y-%m-%d", localtime $f->{age});
+}`,
+
+  java:`import java.util.*;
+import java.util.stream.*;
+import java.time.Instant;
+
+public class ProcessMonitor {
+  record Process(String name, int pid, double cpu, long memBytes, Instant started) {}
+
+  static List<Process> fetchProcesses() {
+    // Simulated — replace with ProcessBuilder("ps","aux") in production
+    return List.of(
+      new Process("nginx",    1001, 1.2,  48_000_000L, Instant.now()),
+      new Process("postgres", 2002, 9.4, 384_000_000L, Instant.now()),
+      new Process("java",     3003,18.7, 768_000_000L, Instant.now()),
+      new Process("redis",    4004, 0.3,  24_000_000L, Instant.now()),
+      new Process("node",     5005, 6.1, 192_000_000L, Instant.now())
+    );
+  }
+
+  static void printTable(List<Process> procs) {
+    System.out.printf("%-14s %6s %7s %10s%n","PROCESS","PID","CPU%","MEM");
+    System.out.println("─".repeat(42));
+    procs.stream()
+      .sorted(Comparator.comparingDouble(Process::cpu).reversed())
+      .forEach(p -> System.out.printf(
+        "%-14s %6d %6.1f%% %8.1fMB%n",
+        p.name(), p.pid(), p.cpu(), p.memBytes()/1e6));
+  }
+
+  public static void main(String[] args) {
+    var procs = fetchProcesses();
+    printTable(procs);
+    double totalCpu = procs.stream().mapToDouble(Process::cpu).sum();
+    System.out.printf("%nTotal CPU usage: %.1f%%%n", totalCpu);
+  }
+}`
+};
+
+// ══════════════════════════════════════════════════════
+//  OLLAMA API
+// ══════════════════════════════════════════════════════
+async function ollamaGet(path) {
+  const r = await fetch(ollamaHost + path, { signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function ollamaGenerate(model, prompt, onChunk) {
+  const r = await fetch(ollamaHost + '/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, prompt, stream: true })
+  });
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`Ollama error ${r.status}: ${txt.substring(0,120)}`);
+  }
+  const reader = r.body.getReader();
+  const dec    = new TextDecoder();
+  let full     = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    for (const line of dec.decode(value).split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.response) { full += obj.response; onChunk(obj.response); }
+        if (obj.done) return full;
+      } catch {}
+    }
+  }
+  return full;
+}
+
+// ══════════════════════════════════════════════════════
+//  CONNECTION & MODEL MANAGEMENT
+// ══════════════════════════════════════════════════════
+async function checkConnection() {
+  const dot  = document.getElementById('connDot');
+  const txt  = document.getElementById('connText');
+  const btn  = document.getElementById('convertBtn');
+
+  dot.className = 'conn-dot checking';
+  txt.textContent = 'Checking…';
+  setStatus('', 'Connecting to Ollama at ' + ollamaHost + '…');
+
+  try {
+    const data = await ollamaGet('/api/tags');
+    modelList = (data.models || []).map(m => m.name);
+
+    dot.className = 'conn-dot online';
+    txt.textContent = ollamaHost.replace('http://','').replace('https://','');
+
+    populateModels(modelList);
+
+    if (modelList.length > 0) {
+      btn.disabled = false;
+      setStatus('ok', `✓ Connected — ${modelList.length} model${modelList.length===1?'':'s'} available`);
+    } else {
+      setStatus('warn', '⚠ Connected but no models found — run: ollama pull phi3:latest');
+    }
+  } catch(e) {
+    dot.className = 'conn-dot offline';
+    txt.textContent = 'Offline';
+    btn.disabled = true;
+    setStatus('err', `✗ Cannot reach Ollama at ${ollamaHost} — click the indicator to configure`);
+    populateModels([]);
+  }
+}
+
+function populateModels(list) {
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '';
+  if (list.length === 0) {
+    sel.innerHTML = '<option value="">No models found</option>';
+    return;
+  }
+  // Prefer code-capable models first
+  const preferred = ['mistral','codellama','phi','deepseek','codegemma','llama','gemma','qwen'];
+  const sorted = [...list].sort((a,b) => {
+    const ai = preferred.findIndex(p => a.toLowerCase().includes(p));
+    const bi = preferred.findIndex(p => b.toLowerCase().includes(p));
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+  sorted.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m;
+    sel.appendChild(o);
+  });
+  // Restore saved preference
+  const saved = localStorage.getItem('preferredModel');
+  if (saved && sorted.includes(saved)) sel.value = saved;
+}
+
+// ══════════════════════════════════════════════════════
+//  PROMPT BUILDER
+// ══════════════════════════════════════════════════════
+function buildPrompt(srcLang, tgtLang, srcCode) {
+  const opts = {
+    comments:  isOptOn('comments'),
+    imports:   isOptOn('imports'),
+    errors:    isOptOn('errors'),
+    optimize:  isOptOn('optimize'),
+    idiomatic: isOptOn('idiomatic'),
+    strict:    isOptOn('strict')
+  };
+
+  const src = srcLang === 'auto' ? 'auto-detected' : srcLang.toUpperCase();
+
+  const reqs = [];
+  if (opts.comments)  reqs.push('- Add clear inline comments explaining the logic and purpose');
+  if (opts.imports)   reqs.push('- Include ALL required imports, includes, use/require statements, package declarations at the top of the file');
+  if (opts.errors)    reqs.push('- Add proper idiomatic error handling for the target language');
+  if (opts.optimize)  reqs.push('- Optimize for performance and readability');
+  if (opts.idiomatic) reqs.push('- Use idiomatic patterns and conventions of the target language');
+  if (opts.strict)    reqs.push('- Use strict typing and type annotations where applicable');
+
+  return `You are an expert software engineer specialising in code conversion between programming languages.
+
+TASK: Convert the ${src} code below to ${tgtLang.toUpperCase()}.
+
+STRICT RULES:
+- Output ONLY the converted code — absolutely no explanations, no markdown, no triple backticks
+- The output must be complete, correct, and immediately runnable or compilable
+- Preserve ALL logic, algorithms, and functionality exactly
+- Map every library/module to the closest equivalent in ${tgtLang.toUpperCase()}
+${reqs.length ? reqs.join('\n') : '- Produce clean working code'}
+- At the very end add a single-line comment listing dependencies:
+  Use the target language comment syntax, format: DEPS: pkg1, pkg2  (or DEPS: stdlib-only)
+
+SOURCE ${src} CODE:
+${srcCode}
+
+${tgtLang.toUpperCase()} OUTPUT:`;
+}
+
+// ══════════════════════════════════════════════════════
+//  CONVERSION
+// ══════════════════════════════════════════════════════
+async function doConvert() {
+  if (isConverting) return;
+  const src  = document.getElementById('srcCode').value.trim();
+  const sLng = document.getElementById('srcLang').value;
+  const tLng = document.getElementById('tgtLang').value;
+  const mdl  = document.getElementById('modelSelect').value;
+
+  if (!src)  { setStatus('err','⚠ Paste or type source code first'); return; }
+  if (!mdl)  { setStatus('err','⚠ No model selected — pull a model first'); return; }
+  if (sLng !== 'auto' && sLng === tLng) {
+    setStatus('err','⚠ Source and target must be different languages'); return;
+  }
+
+  isConverting = true;
+  const btn = document.getElementById('convertBtn');
+  btn.disabled = true;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('btnLabel').textContent = 'Converting…';
+
+  const out = document.getElementById('outCode');
+  out.value = '';
+  document.getElementById('libsPanel').classList.remove('show');
+  document.getElementById('copyBtn').disabled = true;
+  document.getElementById('dlOut').disabled   = true;
+  document.getElementById('dlBoth').disabled  = true;
+  setStatus('loading', `Converting ${sLng.toUpperCase()} → ${tLng.toUpperCase()} using ${mdl}…`);
+
+  try {
+    const prompt = buildPrompt(sLng, tLng, src);
+    let full = '';
+
+    await ollamaGenerate(mdl, prompt, chunk => {
+      full += chunk;
+      // Clean and stream to output box
+      let display = full
+        .replace(/^```[\w]*\n?/gm, '')
+        .replace(/```\s*$/gm, '')
+        .trim();
+      out.value = display;
+      out.scrollTop = out.scrollHeight;
+      updateLineCounts();
+    });
+
+    // Final clean
+    let result = full
+      .replace(/^```[\w]*\n?/gm, '')
+      .replace(/```\s*$/gm, '')
+      .trim();
+    out.value = result;
+
+    // Parse deps
+    const depsMatch = result.match(/DEPS:\s*([^\n\r]+)/i);
+    if (depsMatch) {
+      const raw = depsMatch[1].trim();
+      if (raw.toLowerCase() !== 'stdlib-only' && raw !== '') {
+        const deps = raw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+        showLibs(deps);
+      }
+    }
+
+    document.getElementById('copyBtn').disabled = false;
+    document.getElementById('dlOut').disabled   = false;
+    document.getElementById('dlBoth').disabled  = false;
+
+    const lines = result.split('\n').length;
+    setStatus('ok', `✓ Done — ${lines} lines converted using ${mdl}`);
+
+    // Save model preference
+    localStorage.setItem('preferredModel', mdl);
+
+  } catch(e) {
+    setStatus('err', `✗ ${e.message}`);
+    out.value = '// Error during conversion\n// ' + e.message;
+  } finally {
+    isConverting = false;
+    btn.disabled = false;
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('btnLabel').textContent = '⇄ Convert';
+    updateLineCounts();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function setStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = 'status' + (type ? ' ' + type : '');
+  document.getElementById('statusTxt').textContent = msg;
+}
+
+function isOptOn(key) {
+  return document.querySelector(`.opt-chip[data-key="${key}"]`)?.classList.contains('on');
+}
+
+function showLibs(deps) {
+  const panel = document.getElementById('libsPanel');
+  const tags  = document.getElementById('libsTags');
+  tags.innerHTML = deps.map(d => `<span class="lib-tag">${d}</span>`).join('');
+  panel.classList.add('show');
+}
+
+function updateLineCounts() {
+  const src = document.getElementById('srcCode').value;
+  const out = document.getElementById('outCode').value;
+  document.getElementById('srcLines').textContent = src.split('\n').length + ' lines';
+  document.getElementById('srcChars').textContent = src.length.toLocaleString() + ' chars';
+  document.getElementById('outLines').textContent = out.split('\n').length + ' lines';
+  document.getElementById('outChars').textContent = out.length.toLocaleString() + ' chars';
+}
+
+function downloadFile(name, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/plain;charset=utf-8'}));
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ══════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ══════════════════════════════════════════════════════
+
+// Option chips
+document.querySelectorAll('.opt-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('on');
+    const box = chip.querySelector('.opt-check');
+    box.textContent = chip.classList.contains('on') ? '✓' : '';
+  });
+});
+
+// Swap
+document.getElementById('swapBtn').addEventListener('click', () => {
+  const sEl = document.getElementById('srcLang');
+  const tEl = document.getElementById('tgtLang');
+  const sv  = sEl.value, tv = tEl.value;
+  const sc  = document.getElementById('srcCode').value;
+  const oc  = document.getElementById('outCode').value;
+  // swap lang selectors
+  trySetOption(sEl, tv);
+  trySetOption(tEl, sv === 'auto' ? 'python' : sv);
+  // swap code
+  document.getElementById('srcCode').value = oc;
+  document.getElementById('outCode').value = sc;
+  updateLineCounts();
+});
+
+function trySetOption(sel, val) {
+  for (const o of sel.options) { if (o.value === val) { sel.value = val; return; } }
+}
+
+// Sample
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  const lang = document.getElementById('srcLang').value;
+  document.getElementById('srcCode').value = SAMPLES[lang] || SAMPLES.bash;
+  updateLineCounts();
+  setStatus('', `Sample ${lang === 'auto' ? 'Bash' : lang.toUpperCase()} code loaded`);
+});
+
+// Clear
+document.getElementById('clearSrcBtn').addEventListener('click', () => {
+  document.getElementById('srcCode').value = '';
+  updateLineCounts();
+});
+document.getElementById('clearOutBtn').addEventListener('click', () => {
+  document.getElementById('outCode').value = '';
+  document.getElementById('libsPanel').classList.remove('show');
+  document.getElementById('copyBtn').disabled = true;
+  document.getElementById('dlOut').disabled   = true;
+  document.getElementById('dlBoth').disabled  = true;
+  updateLineCounts();
+});
+
+// Paste
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+  try {
+    const t = await navigator.clipboard.readText();
+    document.getElementById('srcCode').value = t;
+    updateLineCounts();
+  } catch { setStatus('warn', '⚠ Clipboard blocked — paste with Ctrl+V'); }
+});
+
+// Copy output
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const v = document.getElementById('outCode').value;
+  if (!v) return;
+  await navigator.clipboard.writeText(v).catch(() => {});
+  const b = document.getElementById('copyBtn');
+  b.textContent = '✓ Copied';
+  b.classList.add('ok');
+  setTimeout(() => { b.textContent = '⎘ Copy'; b.classList.remove('ok'); }, 2000);
+});
+
+// Convert
+document.getElementById('convertBtn').addEventListener('click', doConvert);
+
+// Download
+document.getElementById('dlOut').addEventListener('click', () => {
+  const code = document.getElementById('outCode').value;
+  const lang = document.getElementById('tgtLang').value;
+  downloadFile(`converted.${EXT[lang]||'txt'}`, code);
+});
+document.getElementById('dlBoth').addEventListener('click', () => {
+  const sc = document.getElementById('srcCode').value;
+  const oc = document.getElementById('outCode').value;
+  const sl = document.getElementById('srcLang').value;
+  const tl = document.getElementById('tgtLang').value;
+  if (sc) downloadFile(`source.${EXT[sl==='auto'?'bash':sl]||'txt'}`, sc);
+  if (oc) downloadFile(`converted.${EXT[tl]||'txt'}`, oc);
+});
+
+// Refresh models
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spin');
+  await checkConnection();
+  btn.classList.remove('spin');
+});
+
+// Connection indicator → config modal
+document.getElementById('connIndicator').addEventListener('click', () => {
+  document.getElementById('hostInput').value = ollamaHost;
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('cancelModal').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+document.getElementById('saveModal').addEventListener('click', async () => {
+  const v = document.getElementById('hostInput').value.trim().replace(/\/$/, '');
+  if (!v) return;
+  ollamaHost = v;
+  localStorage.setItem('ollamaHost', v);
+  document.getElementById('overlay').classList.remove('show');
+  await checkConnection();
+});
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doConvert(); }
+  if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show');
+});
+
+// Tab in source editor
+document.getElementById('srcCode').addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = e.target, p = s.selectionStart;
+    s.value = s.value.slice(0,p) + '  ' + s.value.slice(s.selectionEnd);
+    s.selectionStart = s.selectionEnd = p + 2;
+  }
+});
+
+// Live line count
+['srcCode','outCode'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateLineCounts);
+});
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+(async () => {
+  updateLineCounts();
+  await checkConnection();
+})();
+</script>
+</body>
+</html>
