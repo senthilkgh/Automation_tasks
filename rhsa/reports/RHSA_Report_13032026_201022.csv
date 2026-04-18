@@ -1,0 +1,2 @@
+﻿"RHSAID","CreatedDate","UpdatedDate","PackagesImpacted","FixedDate"
+"RHSA-2026:0719","15-01-2026","15-01-2026","gnupg2-2.3.3-5.el9_7.x86_64; gnupg2-debuginfo-2.3.3-5.el9_7.x86_64; gnupg2-debugsource-2.3.3-5.el9_7.x86_64; gnupg2-smime-2.3.3-5.el9_7.x86_64; gnupg2-smime-debuginfo-2.3.3-5.el9_7.x86_64","15-01-2026"
