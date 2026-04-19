@@ -5,7 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CodeShift — Offline Script Converter</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
+/* ── Offline font stacks — no external requests ── */
+/* IBM Plex Mono → best available monospace on each OS */
+:root {
+  --font-mono-stack:
+    'IBM Plex Mono',      /* installed on some systems */
+    'JetBrains Mono',     /* developers often have this */
+    'Cascadia Code',      /* Windows 11 Terminal */
+    'Cascadia Mono',
+    'Fira Code',
+    ui-monospace,         /* Safari 13.1+ system mono */
+    'SF Mono',            /* macOS / iOS */
+    'Menlo',              /* macOS fallback */
+    'Consolas',           /* Windows */
+    'Liberation Mono',    /* Linux */
+    'DejaVu Sans Mono',
+    monospace;
+  /* Outfit → clean geometric sans on each OS */
+  --font-sans-stack:
+    'Outfit',             /* installed on some systems */
+    'Inter',              /* very common on dev machines */
+    'DM Sans',
+    system-ui,            /* OS native UI font */
+    -apple-system,        /* macOS/iOS San Francisco */
+    'Segoe UI',           /* Windows */
+    'Ubuntu',             /* Ubuntu Linux */
+    'Cantarell',          /* GNOME Linux */
+    sans-serif;
+}
 
 :root {
   --bg:       #07080c;
@@ -23,8 +50,8 @@
   --warn:     #ffb547;
   --danger:   #ff5f5f;
   --success:  #00d4aa;
-  --mono:     'IBM Plex Mono', monospace;
-  --sans:     'Outfit', sans-serif;
+  --mono:     var(--font-mono-stack);
+  --sans:     var(--font-sans-stack);
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
