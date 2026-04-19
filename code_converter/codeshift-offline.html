@@ -767,13 +767,20 @@ body {
 <div class="overlay" id="overlay">
   <div class="config-modal">
     <div class="modal-title"><span>⚙</span> Ollama Configuration</div>
+    <div id="liveError" style="display:none;font-family:var(--mono);font-size:11px;color:var(--danger);background:rgba(255,95,95,0.07);border:1px solid rgba(255,95,95,0.25);border-radius:6px;padding:9px 12px;margin-bottom:14px;"></div>
     <div class="modal-hint">
-      Make sure Ollama is running and CORS is allowed.<br><br>
-      Start Ollama with CORS enabled:<br>
-      <code>OLLAMA_ORIGINS="*" ollama serve</code><br><br>
-      Or set in environment permanently:<br>
-      <code>export OLLAMA_ORIGINS="*"</code>
+      <b style="color:var(--text)">Step 1 — Add CORS to docker-compose.yml:</b><br>
+      <code>environment:</code><br>
+      <code>&nbsp;&nbsp;- OLLAMA_ORIGINS=*</code><br>
+      <code>&nbsp;&nbsp;- OLLAMA_HOST=0.0.0.0:11434</code><br><br>
+      <b style="color:var(--text)">Step 2 — Restart Ollama:</b><br>
+      <code>docker compose restart ollama</code><br><br>
+      <b style="color:var(--text)">Step 3 — Verify from n8n host:</b><br>
+      <code>curl http://localhost:11434/api/tags</code><br><br>
+      <b style="color:var(--text)">Step 4 — Open this file from same host</b><br>
+      <span style="color:var(--muted2)">Or serve it: python3 -m http.server 8080</span>
     </div>
+    <div id="testResult" style="font-family:var(--mono);font-size:12px;min-height:18px;margin-bottom:12px;"></div>
     <div class="field-row">
       <label class="field-label">Ollama Host URL</label>
       <input class="field-input" id="hostInput" type="text"
@@ -781,6 +788,7 @@ body {
     </div>
     <div class="modal-btns">
       <button class="modal-btn secondary" id="cancelModal">Cancel</button>
+      <button class="modal-btn secondary" id="testConnBtn">Test Connection</button>
       <button class="modal-btn primary" id="saveModal">Save &amp; Connect</button>
     </div>
   </div>
@@ -790,9 +798,10 @@ body {
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-let ollamaHost  = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
-let modelList   = [];
+let ollamaHost   = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
+let modelList    = [];
 let isConverting = false;
+let lastError    = '';
 
 const EXT = {
   bash:'sh',shell:'sh',perl:'pl',python:'py',ruby:'rb',php:'php',
@@ -804,341 +813,228 @@ const EXT = {
 };
 
 const SAMPLES = {
-  bash:`#!/bin/bash
-# System health monitor
-HOSTNAME=$(hostname)
-DATE=$(date +"%Y-%m-%d %H:%M:%S")
-
-check_disk() {
-  local part="$1"
-  local usage
-  usage=$(df -h "$part" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')
-  [ -z "$usage" ] && return
-  if [ "$usage" -gt 85 ]; then
-    echo "[$DATE] WARN: $part on $HOSTNAME is ${usage}% full"
-  fi
-}
-
-check_memory() {
-  local free_pct
-  free_pct=$(free | awk '/^Mem:/{printf "%.0f", $4/$2*100}')
-  if [ "$free_pct" -lt 10 ]; then
-    echo "[$DATE] WARN: Low memory - only ${free_pct}% free"
-  fi
-}
-
-check_load() {
-  local load
-  load=$(uptime | awk -F'load average:' '{print $2}' | cut -d, -f1 | xargs)
-  local cpus
-  cpus=$(nproc)
-  echo "[$DATE] Load: $load / CPUs: $cpus"
-}
-
-for p in / /var /tmp /home; do
-  mountpoint -q "$p" 2>/dev/null && check_disk "$p"
-done
-check_memory
-check_load`,
-
-  c:`#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-typedef struct Node {
-  int   data;
-  struct Node *next;
-} Node;
-
-Node* node_new(int val) {
-  Node *n = malloc(sizeof(Node));
-  if (!n) { perror("malloc"); exit(1); }
-  n->data = val;
-  n->next = NULL;
-  return n;
-}
-
-void list_push(Node **head, int val) {
-  Node *n  = node_new(val);
-  n->next  = *head;
-  *head    = n;
-}
-
-int list_sum(Node *head) {
-  int s = 0;
-  while (head) { s += head->data; head = head->next; }
-  return s;
-}
-
-void list_print(Node *head) {
-  while (head) {
-    printf("%d%s", head->data, head->next ? " -> " : "\\n");
-    head = head->next;
-  }
-}
-
-void list_free(Node *head) {
-  while (head) { Node *t = head; head = head->next; free(t); }
-}
-
-int main(void) {
-  Node *list = NULL;
-  for (int i = 1; i <= 6; i++) list_push(&list, i * 5);
-  list_print(list);
-  printf("Sum: %d\\n", list_sum(list));
-  list_free(list);
-  return 0;
-}`,
-
-  python:`#!/usr/bin/env python3
-"""Log analyser — parse and summarise system logs."""
-import re
-import sys
-from pathlib import Path
-from collections import Counter, defaultdict
-from datetime import datetime
-
-LOG_PATTERN = re.compile(
-  r'(?P<month>\\w+)\\s+(?P<day>\\d+)\\s+(?P<time>[\\d:]+)\\s+'
-  r'(?P<host>\\S+)\\s+(?P<proc>\\S+?)(?:\\[\\d+\\])?:\\s+(?P<msg>.+)'
-)
-SEVERITY = {'error': 3, 'warn': 2, 'crit': 4, 'emerg': 5, 'alert': 4}
-
-def parse_log(path: str) -> list[dict]:
-  entries = []
-  for line in Path(path).read_text(errors='ignore').splitlines():
-    if m := LOG_PATTERN.match(line):
-      d = m.groupdict()
-      msg_lower = d['msg'].lower()
-      d['level'] = next((k for k in SEVERITY if k in msg_lower), 'info')
-      entries.append(d)
-  return entries
-
-def summarise(entries: list[dict]) -> None:
-  by_level  = Counter(e['level']  for e in entries)
-  by_proc   = Counter(e['proc']   for e in entries)
-  print(f"Total entries  : {len(entries)}")
-  print(f"\\nBy severity:")
-  for lv, cnt in sorted(by_level.items(), key=lambda x: -SEVERITY.get(x[0],0)):
-    print(f"  {lv:8s}: {cnt}")
-  print(f"\\nTop processes:")
-  for proc, cnt in by_proc.most_common(5):
-    print(f"  {proc:20s}: {cnt}")
-
-if __name__ == '__main__':
-  log_file = sys.argv[1] if len(sys.argv) > 1 else '/var/log/syslog'
-  entries  = parse_log(log_file)
-  summarise(entries)`,
-
-  perl:`#!/usr/bin/perl
-use strict; use warnings;
-use File::Find;
-use POSIX qw(strftime);
-
-my %stats  = (files => 0, size => 0);
-my @issues;
-
-sub wanted {
-  return if -d;
-  $stats{files}++;
-  my $sz = -s $_;
-  $stats{size} += $sz;
-  if ($sz > 5_242_880) {   # > 5 MB
-    push @issues, { path => $File::Find::name, sz => $sz,
-                    age  => (stat)[9] };
-  }
-}
-
-find(\\&wanted, '/var/log');
-
-printf "Scanned  : %d files\\n",           $stats{files};
-printf "Total    : %.1f MB\\n",            $stats{size}/1048576;
-printf "Large (>5M): %d files\\n\\n",     scalar @issues;
-
-for my $f (sort { $b->{sz} <=> $a->{sz} } @issues) {
-  printf "  %-35s  %6.1f MB  %s\\n",
-    (split /\\//, $f->{path})[-1],
-    $f->{sz}/1048576,
-    strftime("%Y-%m-%d", localtime $f->{age});
-}`,
-
-  java:`import java.util.*;
-import java.util.stream.*;
-import java.time.Instant;
-
-public class ProcessMonitor {
-  record Process(String name, int pid, double cpu, long memBytes, Instant started) {}
-
-  static List<Process> fetchProcesses() {
-    // Simulated — replace with ProcessBuilder("ps","aux") in production
-    return List.of(
-      new Process("nginx",    1001, 1.2,  48_000_000L, Instant.now()),
-      new Process("postgres", 2002, 9.4, 384_000_000L, Instant.now()),
-      new Process("java",     3003,18.7, 768_000_000L, Instant.now()),
-      new Process("redis",    4004, 0.3,  24_000_000L, Instant.now()),
-      new Process("node",     5005, 6.1, 192_000_000L, Instant.now())
-    );
-  }
-
-  static void printTable(List<Process> procs) {
-    System.out.printf("%-14s %6s %7s %10s%n","PROCESS","PID","CPU%","MEM");
-    System.out.println("─".repeat(42));
-    procs.stream()
-      .sorted(Comparator.comparingDouble(Process::cpu).reversed())
-      .forEach(p -> System.out.printf(
-        "%-14s %6d %6.1f%% %8.1fMB%n",
-        p.name(), p.pid(), p.cpu(), p.memBytes()/1e6));
-  }
-
-  public static void main(String[] args) {
-    var procs = fetchProcesses();
-    printTable(procs);
-    double totalCpu = procs.stream().mapToDouble(Process::cpu).sum();
-    System.out.printf("%nTotal CPU usage: %.1f%%%n", totalCpu);
-  }
-}`
+  bash: "#!/bin/bash\n# System health monitor\nHOSTNAME=$(hostname)\nDATE=$(date +\"%Y-%m-%d %H:%M:%S\")\n\ncheck_disk() {\n  local part=\"$1\"\n  local usage\n  usage=$(df -h \"$part\" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')\n  [ -z \"$usage\" ] && return\n  if [ \"$usage\" -gt 85 ]; then\n    echo \"[$DATE] WARN: $part on $HOSTNAME is ${usage}% full\"\n  fi\n}\n\ncheck_memory() {\n  local free_pct\n  free_pct=$(free | awk '/^Mem:/{printf \"%.0f\", $4/$2*100}')\n  if [ \"$free_pct\" -lt 10 ]; then\n    echo \"[$DATE] WARN: Low memory - only ${free_pct}% free\"\n  fi\n}\n\ncheck_load() {\n  local load\n  load=$(uptime | awk -F'load average:' '{print $2}' | cut -d, -f1 | xargs)\n  echo \"[$DATE] Load: $load / CPUs: $(nproc)\"\n}\n\nfor p in / /var /tmp /home; do\n  mountpoint -q \"$p\" 2>/dev/null && check_disk \"$p\"\ndone\ncheck_memory\ncheck_load\n",
+  c: "#include <stdio.h>\n#include <stdlib.h>\n\ntypedef struct Node {\n  int data;\n  struct Node *next;\n} Node;\n\nNode* node_new(int val) {\n  Node *n = malloc(sizeof(Node));\n  if (!n) { perror(\"malloc\"); exit(1); }\n  n->data = val; n->next = NULL;\n  return n;\n}\n\nvoid list_push(Node **head, int val) {\n  Node *n = node_new(val);\n  n->next = *head;\n  *head = n;\n}\n\nvoid list_print(Node *head) {\n  while (head) {\n    printf(\"%d%s\", head->data, head->next ? \" -> \" : \"\\n\");\n    head = head->next;\n  }\n}\n\nint main(void) {\n  Node *list = NULL;\n  for (int i = 1; i <= 6; i++) list_push(&list, i * 5);\n  list_print(list);\n  return 0;\n}\n",
+  python: "#!/usr/bin/env python3\nimport re, sys\nfrom pathlib import Path\nfrom collections import Counter\n\nLOG_RE = re.compile(\n    r\"(?P<mon>\\w+)\\s+(?P<day>\\d+)\\s+(?P<time>[\\d:]+)\\s+\"\n    r\"(?P<host>\\S+)\\s+(?P<proc>\\S+?)(?:\\[\\d+\\])?:\\s+(?P<msg>.+)\"\n)\nSEV = {\"error\": 3, \"warn\": 2, \"crit\": 4, \"emerg\": 5}\n\ndef parse_log(path):\n    entries = []\n    for line in Path(path).read_text(errors=\"ignore\").splitlines():\n        if m := LOG_RE.match(line):\n            d = m.groupdict()\n            d[\"level\"] = next((k for k in SEV if k in d[\"msg\"].lower()), \"info\")\n            entries.append(d)\n    return entries\n\ndef summarise(entries):\n    by_level = Counter(e[\"level\"] for e in entries)\n    by_proc  = Counter(e[\"proc\"]  for e in entries)\n    print(f\"Total: {len(entries)}\")\n    for lv, cnt in sorted(by_level.items(), key=lambda x: -SEV.get(x[0], 0)):\n        print(f\"  {lv:8s}: {cnt}\")\n    print(\"Top processes:\")\n    for proc, cnt in by_proc.most_common(5):\n        print(f\"  {proc:20s}: {cnt}\")\n\nif __name__ == \"__main__\":\n    f = sys.argv[1] if len(sys.argv) > 1 else \"/var/log/syslog\"\n    summarise(parse_log(f))\n",
+  perl: "#!/usr/bin/perl\nuse strict; use warnings;\nuse File::Find;\nuse POSIX qw(strftime);\n\nmy %stats = (files => 0, size => 0);\nmy @large;\n\nsub wanted {\n    return if -d $_;\n    $stats{files}++;\n    my $sz = -s $_;\n    $stats{size} += $sz;\n    push @large, { path => $File::Find::name, sz => $sz, mt => (stat)[9] }\n        if $sz > 5_242_880;\n}\n\nfind(\\&wanted, \"/var/log\");\nprintf \"Scanned : %d files\\n\",        $stats{files};\nprintf \"Total   : %.1f MB\\n\",         $stats{size}/1048576;\nprintf \"Large   : %d files (>5MB)\\n\", scalar @large;\nfor my $f (sort { $b->{sz} <=> $a->{sz} } @large) {\n    printf \"  %-30s %5.1fMB  %s\\n\",\n        (split /\\//, $f->{path})[-1], $f->{sz}/1048576,\n        strftime(\"%Y-%m-%d\", localtime $f->{mt});\n}\n",
+  java: "import java.util.*;\nimport java.util.stream.*;\n\npublic class ProcessMonitor {\n    record Process(String name, int pid, double cpu, long mem) {}\n\n    static List<Process> getProcesses() {\n        return List.of(\n            new Process(\"nginx\",    1001,  1.2,  48_000_000L),\n            new Process(\"postgres\", 2002,  9.4, 384_000_000L),\n            new Process(\"java\",     3003, 18.7, 768_000_000L),\n            new Process(\"redis\",    4004,  0.3,  24_000_000L)\n        );\n    }\n\n    public static void main(String[] args) {\n        System.out.printf(\"%-14s %6s %7s %10s%n\",\"NAME\",\"PID\",\"CPU%\",\"MEM\");\n        System.out.println(\"-\".repeat(42));\n        getProcesses().stream()\n            .sorted(Comparator.comparingDouble(Process::cpu).reversed())\n            .forEach(p -> System.out.printf(\n                \"%-14s %6d %6.1f%% %8.1fMB%n\",\n                p.name(), p.pid(), p.cpu(), p.mem()/1e6));\n    }\n}\n",
 };
+  const id   = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal })
+    .finally(() => clearTimeout(id));
+}
 
-// ══════════════════════════════════════════════════════
-//  OLLAMA API
-// ══════════════════════════════════════════════════════
-async function ollamaGet(path) {
-  const r = await fetch(ollamaHost + path, { signal: AbortSignal.timeout(6000) });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+async function ollamaGet(path, timeoutMs) {
+  timeoutMs = timeoutMs || 8000;
+  const url = ollamaHost + path;
+  const r   = await fetchWithTimeout(url, {
+    method:  'GET',
+    mode:    'cors',
+    headers: { 'Accept': 'application/json' }
+  }, timeoutMs);
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + url);
   return r.json();
 }
 
-async function ollamaGenerate(model, prompt, onChunk) {
-  const r = await fetch(ollamaHost + '/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, prompt, stream: true })
-  });
-  if (!r.ok) {
-    const txt = await r.text();
-    throw new Error(`Ollama error ${r.status}: ${txt.substring(0,120)}`);
+// Try localhost, then 127.0.0.1 as fallback
+async function checkConnection() {
+  const dot = document.getElementById('connDot');
+  const txt = document.getElementById('connText');
+  const btn = document.getElementById('convertBtn');
+
+  dot.className = 'conn-dot checking';
+  txt.textContent = 'Checking…';
+  setStatus('', 'Connecting to ' + ollamaHost + ' …');
+
+  // If host is localhost, also try 127.0.0.1 as fallback
+  const hostsToTry = [ollamaHost];
+  if (ollamaHost.includes('localhost')) {
+    hostsToTry.push(ollamaHost.replace('localhost', '127.0.0.1'));
   }
+
+  let lastErr = '';
+  for (const host of hostsToTry) {
+    try {
+      const savedHost = ollamaHost;
+      ollamaHost = host;
+      const data = await ollamaGet('/api/tags', 8000);
+      modelList  = (data.models || []).map(m => m.name);
+
+      // Persist working host
+      if (host !== savedHost) {
+        localStorage.setItem('ollamaHost', host);
+        document.getElementById('hostInput').value = host;
+      }
+
+      dot.className = 'conn-dot online';
+      txt.textContent = host.replace(/https?:\/\//, '');
+      populateModels(modelList);
+
+      if (modelList.length > 0) {
+        btn.disabled = false;
+        setStatus('ok', '✓ Connected to ' + host + ' — ' + modelList.length + ' model(s) loaded');
+      } else {
+        setStatus('warn', '⚠ Connected but no models — run: ollama pull phi3:latest');
+      }
+      lastError = '';
+      return; // success
+    } catch (e) {
+      lastErr = e.message || String(e);
+      ollamaHost = hostsToTry[0]; // reset for next try
+    }
+  }
+
+  // All hosts failed
+  lastError = lastErr;
+  dot.className = 'conn-dot offline';
+  txt.textContent = 'Offline';
+  btn.disabled = true;
+  modelList = [];
+  populateModels([]);
+
+  // Diagnose error type
+  let hint = '';
+  if (lastErr.includes('abort') || lastErr.includes('timeout')) {
+    hint = 'Timeout — Ollama may not be running. Run: ollama serve';
+  } else if (lastErr.includes('Failed to fetch') || lastErr.includes('NetworkError') || lastErr.includes('CORS')) {
+    hint = 'CORS blocked — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+  } else if (lastErr.includes('refused') || lastErr.includes('ECONNREFUSED')) {
+    hint = 'Connection refused — is Ollama running on port 11434?';
+  } else {
+    hint = lastErr;
+  }
+  setStatus('err', '✗ ' + hint + ' — click indicator to configure');
+  updateModalError(hint);
+}
+
+function updateModalError(msg) {
+  let el = document.getElementById('liveError');
+  if (!el) return;
+  el.textContent = msg ? '⚠ ' + msg : '';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function ollamaGenerate(model, prompt, onChunk) {
+  const url = ollamaHost + '/api/generate';
+  let r;
+  try {
+    r = await fetch(url, {
+      method:  'POST',
+      mode:    'cors',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ model, prompt, stream: true })
+    });
+  } catch (e) {
+    // CORS or network error — try non-streaming fallback
+    if (e.message && (e.message.includes('CORS') || e.message.includes('Failed to fetch'))) {
+      return ollamaGenerateNoStream(model, prompt, onChunk);
+    }
+    throw e;
+  }
+
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error('Ollama ' + r.status + ': ' + txt.substring(0, 150));
+  }
+
   const reader = r.body.getReader();
   const dec    = new TextDecoder();
-  let full     = '';
+  let full = '';
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    for (const line of dec.decode(value).split('\n')) {
+    for (const line of dec.decode(value, { stream: true }).split('\n')) {
       if (!line.trim()) continue;
       try {
         const obj = JSON.parse(line);
         if (obj.response) { full += obj.response; onChunk(obj.response); }
-        if (obj.done) return full;
-      } catch {}
+        if (obj.done)     return full;
+        if (obj.error)    throw new Error('Model error: ' + obj.error);
+      } catch (parseErr) {
+        // skip malformed line
+      }
     }
   }
   return full;
 }
 
-// ══════════════════════════════════════════════════════
-//  CONNECTION & MODEL MANAGEMENT
-// ══════════════════════════════════════════════════════
-async function checkConnection() {
-  const dot  = document.getElementById('connDot');
-  const txt  = document.getElementById('connText');
-  const btn  = document.getElementById('convertBtn');
-
-  dot.className = 'conn-dot checking';
-  txt.textContent = 'Checking…';
-  setStatus('', 'Connecting to Ollama at ' + ollamaHost + '…');
-
-  try {
-    const data = await ollamaGet('/api/tags');
-    modelList = (data.models || []).map(m => m.name);
-
-    dot.className = 'conn-dot online';
-    txt.textContent = ollamaHost.replace('http://','').replace('https://','');
-
-    populateModels(modelList);
-
-    if (modelList.length > 0) {
-      btn.disabled = false;
-      setStatus('ok', `✓ Connected — ${modelList.length} model${modelList.length===1?'':'s'} available`);
-    } else {
-      setStatus('warn', '⚠ Connected but no models found — run: ollama pull phi3:latest');
-    }
-  } catch(e) {
-    dot.className = 'conn-dot offline';
-    txt.textContent = 'Offline';
-    btn.disabled = true;
-    setStatus('err', `✗ Cannot reach Ollama at ${ollamaHost} — click the indicator to configure`);
-    populateModels([]);
+async function ollamaGenerateNoStream(model, prompt, onChunk) {
+  const r = await fetchWithTimeout(ollamaHost + '/api/generate', {
+    method:  'POST',
+    mode:    'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ model, prompt, stream: false })
+  }, 300000);
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error('Ollama ' + r.status + ': ' + txt.substring(0, 150));
   }
+  const data = await r.json();
+  const text = data.response || '';
+  onChunk(text);
+  return text;
 }
 
+// ══════════════════════════════════════════════════════
+//  MODELS
+// ══════════════════════════════════════════════════════
 function populateModels(list) {
   const sel = document.getElementById('modelSelect');
   sel.innerHTML = '';
-  if (list.length === 0) {
-    sel.innerHTML = '<option value="">No models found</option>';
+  if (!list || list.length === 0) {
+    const o   = document.createElement('option');
+    o.value   = '';
+    o.textContent = '— no models found —';
+    sel.appendChild(o);
     return;
   }
-  // Prefer code-capable models first
-  const preferred = ['mistral','codellama','phi','deepseek','codegemma','llama','gemma','qwen'];
-  const sorted = [...list].sort((a,b) => {
-    const ai = preferred.findIndex(p => a.toLowerCase().includes(p));
-    const bi = preferred.findIndex(p => b.toLowerCase().includes(p));
-    if (ai === -1 && bi === -1) return a.localeCompare(b);
+  const preferred = ['codellama','deepseek-coder','codegemma','mistral','phi','llama','gemma','qwen','neural'];
+  const sorted = [...list].sort((a, b) => {
+    const al = a.toLowerCase(), bl = b.toLowerCase();
+    const ai = preferred.findIndex(p => al.includes(p));
+    const bi = preferred.findIndex(p => bl.includes(p));
+    if (ai === -1 && bi === -1) return al.localeCompare(bl);
     if (ai === -1) return 1;
     if (bi === -1) return -1;
     return ai - bi;
   });
   sorted.forEach(m => {
     const o = document.createElement('option');
-    o.value = m; o.textContent = m;
+    o.value = m;
+    o.textContent = m;
     sel.appendChild(o);
   });
-  // Restore saved preference
   const saved = localStorage.getItem('preferredModel');
   if (saved && sorted.includes(saved)) sel.value = saved;
 }
 
 // ══════════════════════════════════════════════════════
-//  PROMPT BUILDER
+//  PROMPT
 // ══════════════════════════════════════════════════════
 function buildPrompt(srcLang, tgtLang, srcCode) {
-  const opts = {
-    comments:  isOptOn('comments'),
-    imports:   isOptOn('imports'),
-    errors:    isOptOn('errors'),
-    optimize:  isOptOn('optimize'),
-    idiomatic: isOptOn('idiomatic'),
-    strict:    isOptOn('strict')
-  };
-
+  const on = key => document.querySelector('.opt-chip[data-key="' + key + '"]')?.classList.contains('on');
   const src = srcLang === 'auto' ? 'auto-detected' : srcLang.toUpperCase();
-
   const reqs = [];
-  if (opts.comments)  reqs.push('- Add clear inline comments explaining the logic and purpose');
-  if (opts.imports)   reqs.push('- Include ALL required imports, includes, use/require statements, package declarations at the top of the file');
-  if (opts.errors)    reqs.push('- Add proper idiomatic error handling for the target language');
-  if (opts.optimize)  reqs.push('- Optimize for performance and readability');
-  if (opts.idiomatic) reqs.push('- Use idiomatic patterns and conventions of the target language');
-  if (opts.strict)    reqs.push('- Use strict typing and type annotations where applicable');
+  if (on('comments'))  reqs.push('- Add clear inline comments explaining the logic');
+  if (on('imports'))   reqs.push('- Include ALL required imports/includes/use/require at the top');
+  if (on('errors'))    reqs.push('- Add idiomatic error handling for ' + tgtLang.toUpperCase());
+  if (on('optimize'))  reqs.push('- Optimise for performance and readability');
+  if (on('idiomatic')) reqs.push('- Use idiomatic ' + tgtLang.toUpperCase() + ' patterns and conventions');
+  if (on('strict'))    reqs.push('- Use strict typing and type annotations');
 
-  return `You are an expert software engineer specialising in code conversion between programming languages.
-
-TASK: Convert the ${src} code below to ${tgtLang.toUpperCase()}.
-
-STRICT RULES:
-- Output ONLY the converted code — absolutely no explanations, no markdown, no triple backticks
-- The output must be complete, correct, and immediately runnable or compilable
-- Preserve ALL logic, algorithms, and functionality exactly
-- Map every library/module to the closest equivalent in ${tgtLang.toUpperCase()}
-${reqs.length ? reqs.join('\n') : '- Produce clean working code'}
-- At the very end add a single-line comment listing dependencies:
-  Use the target language comment syntax, format: DEPS: pkg1, pkg2  (or DEPS: stdlib-only)
-
-SOURCE ${src} CODE:
-${srcCode}
-
-${tgtLang.toUpperCase()} OUTPUT:`;
+  return 'You are an expert polyglot programmer specialising in code conversion.\n\n'
+    + 'TASK: Convert the ' + src + ' code below to ' + tgtLang.toUpperCase() + '.\n\n'
+    + 'STRICT RULES:\n'
+    + '- Output ONLY the converted code — no explanations, no markdown, no triple backticks\n'
+    + '- Code must be complete and immediately runnable or compilable\n'
+    + '- Preserve ALL logic and functionality exactly\n'
+    + '- Map every library to the closest equivalent in ' + tgtLang.toUpperCase() + '\n'
+    + (reqs.length ? reqs.join('\n') + '\n' : '')
+    + '- Last line must be a comment: DEPS: pkg1, pkg2  (or DEPS: stdlib-only)\n\n'
+    + 'SOURCE ' + src + ' CODE:\n'
+    + srcCode
+    + '\n\n' + tgtLang.toUpperCase() + ' OUTPUT:';
 }
 
 // ══════════════════════════════════════════════════════
@@ -1151,77 +1047,70 @@ async function doConvert() {
   const tLng = document.getElementById('tgtLang').value;
   const mdl  = document.getElementById('modelSelect').value;
 
-  if (!src)  { setStatus('err','⚠ Paste or type source code first'); return; }
-  if (!mdl)  { setStatus('err','⚠ No model selected — pull a model first'); return; }
+  if (!src) { setStatus('err', '⚠ Paste or type source code first'); return; }
+  if (!mdl) { setStatus('err', '⚠ No model — click the connection indicator to set up Ollama'); return; }
   if (sLng !== 'auto' && sLng === tLng) {
-    setStatus('err','⚠ Source and target must be different languages'); return;
+    setStatus('err', '⚠ Source and target must be different languages'); return;
   }
 
   isConverting = true;
-  const btn = document.getElementById('convertBtn');
+  const btn    = document.getElementById('convertBtn');
   btn.disabled = true;
-  document.getElementById('spinner').style.display = 'block';
-  document.getElementById('btnLabel').textContent = 'Converting…';
+  document.getElementById('spinner').style.display  = 'block';
+  document.getElementById('btnLabel').textContent   = 'Converting…';
 
   const out = document.getElementById('outCode');
-  out.value = '';
+  out.value  = '';
   document.getElementById('libsPanel').classList.remove('show');
   document.getElementById('copyBtn').disabled = true;
   document.getElementById('dlOut').disabled   = true;
   document.getElementById('dlBoth').disabled  = true;
-  setStatus('loading', `Converting ${sLng.toUpperCase()} → ${tLng.toUpperCase()} using ${mdl}…`);
+  setStatus('loading', 'Converting ' + sLng.toUpperCase() + ' → ' + tLng.toUpperCase() + ' using ' + mdl + '…');
 
   try {
     const prompt = buildPrompt(sLng, tLng, src);
-    let full = '';
+    let full     = '';
 
     await ollamaGenerate(mdl, prompt, chunk => {
       full += chunk;
-      // Clean and stream to output box
-      let display = full
-        .replace(/^```[\w]*\n?/gm, '')
-        .replace(/```\s*$/gm, '')
-        .trim();
-      out.value = display;
+      out.value = full.replace(/^```[\w]*\n?/gm, '').replace(/```\s*$/gm, '').trim();
       out.scrollTop = out.scrollHeight;
       updateLineCounts();
     });
 
-    // Final clean
-    let result = full
-      .replace(/^```[\w]*\n?/gm, '')
-      .replace(/```\s*$/gm, '')
-      .trim();
-    out.value = result;
+    let result = full.replace(/^```[\w]*\n?/gm, '').replace(/```\s*$/gm, '').trim();
+    out.value  = result;
 
-    // Parse deps
-    const depsMatch = result.match(/DEPS:\s*([^\n\r]+)/i);
-    if (depsMatch) {
-      const raw = depsMatch[1].trim();
-      if (raw.toLowerCase() !== 'stdlib-only' && raw !== '') {
-        const deps = raw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
-        showLibs(deps);
+    // Detect deps
+    const dm = result.match(/DEPS:\s*([^\n\r]+)/i);
+    if (dm) {
+      const raw = dm[1].trim();
+      if (!/stdlib.only/i.test(raw) && raw) {
+        const deps = raw.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+        if (deps.length) showLibs(deps);
       }
     }
 
     document.getElementById('copyBtn').disabled = false;
     document.getElementById('dlOut').disabled   = false;
     document.getElementById('dlBoth').disabled  = false;
-
-    const lines = result.split('\n').length;
-    setStatus('ok', `✓ Done — ${lines} lines converted using ${mdl}`);
-
-    // Save model preference
     localStorage.setItem('preferredModel', mdl);
+    setStatus('ok', '✓ Done — ' + result.split('\n').length + ' lines | model: ' + mdl);
 
-  } catch(e) {
-    setStatus('err', `✗ ${e.message}`);
-    out.value = '// Error during conversion\n// ' + e.message;
+  } catch (e) {
+    let msg = e.message || String(e);
+    if (msg.includes('abort') || msg.includes('timeout')) {
+      msg = 'Timeout — model is too slow or overloaded. Try a smaller model.';
+    } else if (msg.includes('CORS') || msg.includes('Failed to fetch')) {
+      msg = 'CORS error — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+    }
+    setStatus('err', '✗ ' + msg);
+    out.value = '// Conversion failed\n// ' + msg;
   } finally {
     isConverting = false;
     btn.disabled = false;
     document.getElementById('spinner').style.display = 'none';
-    document.getElementById('btnLabel').textContent = '⇄ Convert';
+    document.getElementById('btnLabel').textContent  = '⇄ Convert';
     updateLineCounts();
   }
 }
@@ -1235,29 +1124,24 @@ function setStatus(type, msg) {
   document.getElementById('statusTxt').textContent = msg;
 }
 
-function isOptOn(key) {
-  return document.querySelector(`.opt-chip[data-key="${key}"]`)?.classList.contains('on');
-}
-
 function showLibs(deps) {
-  const panel = document.getElementById('libsPanel');
-  const tags  = document.getElementById('libsTags');
-  tags.innerHTML = deps.map(d => `<span class="lib-tag">${d}</span>`).join('');
-  panel.classList.add('show');
+  document.getElementById('libsTags').innerHTML =
+    deps.map(d => '<span class="lib-tag">' + d + '</span>').join('');
+  document.getElementById('libsPanel').classList.add('show');
 }
 
 function updateLineCounts() {
-  const src = document.getElementById('srcCode').value;
-  const out = document.getElementById('outCode').value;
-  document.getElementById('srcLines').textContent = src.split('\n').length + ' lines';
-  document.getElementById('srcChars').textContent = src.length.toLocaleString() + ' chars';
-  document.getElementById('outLines').textContent = out.split('\n').length + ' lines';
-  document.getElementById('outChars').textContent = out.length.toLocaleString() + ' chars';
+  const s = document.getElementById('srcCode').value;
+  const o = document.getElementById('outCode').value;
+  document.getElementById('srcLines').textContent = s.split('\n').length + ' lines';
+  document.getElementById('srcChars').textContent = s.length.toLocaleString() + ' chars';
+  document.getElementById('outLines').textContent = o.split('\n').length + ' lines';
+  document.getElementById('outChars').textContent = o.length.toLocaleString() + ' chars';
 }
 
 function downloadFile(name, content) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], {type:'text/plain;charset=utf-8'}));
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
   a.download = name;
   document.body.appendChild(a);
   a.click();
@@ -1265,52 +1149,46 @@ function downloadFile(name, content) {
   URL.revokeObjectURL(a.href);
 }
 
+function trySetOption(sel, val) {
+  for (const o of sel.options) { if (o.value === val) { sel.value = val; return; } }
+}
+
 // ══════════════════════════════════════════════════════
 //  EVENT LISTENERS
 // ══════════════════════════════════════════════════════
-
-// Option chips
 document.querySelectorAll('.opt-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     chip.classList.toggle('on');
-    const box = chip.querySelector('.opt-check');
-    box.textContent = chip.classList.contains('on') ? '✓' : '';
+    chip.querySelector('.opt-check').textContent = chip.classList.contains('on') ? '✓' : '';
   });
 });
 
-// Swap
 document.getElementById('swapBtn').addEventListener('click', () => {
   const sEl = document.getElementById('srcLang');
   const tEl = document.getElementById('tgtLang');
   const sv  = sEl.value, tv = tEl.value;
   const sc  = document.getElementById('srcCode').value;
   const oc  = document.getElementById('outCode').value;
-  // swap lang selectors
-  trySetOption(sEl, tv);
+  trySetOption(sEl, tv === 'auto' ? 'bash' : tv);
   trySetOption(tEl, sv === 'auto' ? 'python' : sv);
-  // swap code
   document.getElementById('srcCode').value = oc;
   document.getElementById('outCode').value = sc;
   updateLineCounts();
 });
 
-function trySetOption(sel, val) {
-  for (const o of sel.options) { if (o.value === val) { sel.value = val; return; } }
-}
-
-// Sample
 document.getElementById('sampleBtn').addEventListener('click', () => {
   const lang = document.getElementById('srcLang').value;
-  document.getElementById('srcCode').value = SAMPLES[lang] || SAMPLES.bash;
+  const key  = (lang === 'auto') ? 'bash' : lang;
+  document.getElementById('srcCode').value = SAMPLES[key] || SAMPLES['bash'];
   updateLineCounts();
-  setStatus('', `Sample ${lang === 'auto' ? 'Bash' : lang.toUpperCase()} code loaded`);
+  setStatus('', 'Sample ' + key.toUpperCase() + ' code loaded');
 });
 
-// Clear
 document.getElementById('clearSrcBtn').addEventListener('click', () => {
   document.getElementById('srcCode').value = '';
   updateLineCounts();
 });
+
 document.getElementById('clearOutBtn').addEventListener('click', () => {
   document.getElementById('outCode').value = '';
   document.getElementById('libsPanel').classList.remove('show');
@@ -1320,45 +1198,41 @@ document.getElementById('clearOutBtn').addEventListener('click', () => {
   updateLineCounts();
 });
 
-// Paste
 document.getElementById('pasteBtn').addEventListener('click', async () => {
   try {
-    const t = await navigator.clipboard.readText();
-    document.getElementById('srcCode').value = t;
+    document.getElementById('srcCode').value = await navigator.clipboard.readText();
     updateLineCounts();
   } catch { setStatus('warn', '⚠ Clipboard blocked — paste with Ctrl+V'); }
 });
 
-// Copy output
 document.getElementById('copyBtn').addEventListener('click', async () => {
   const v = document.getElementById('outCode').value;
   if (!v) return;
-  await navigator.clipboard.writeText(v).catch(() => {});
+  try { await navigator.clipboard.writeText(v); } catch {}
   const b = document.getElementById('copyBtn');
+  const prev = b.textContent;
   b.textContent = '✓ Copied';
   b.classList.add('ok');
-  setTimeout(() => { b.textContent = '⎘ Copy'; b.classList.remove('ok'); }, 2000);
+  setTimeout(() => { b.textContent = prev; b.classList.remove('ok'); }, 2000);
 });
 
-// Convert
 document.getElementById('convertBtn').addEventListener('click', doConvert);
 
-// Download
 document.getElementById('dlOut').addEventListener('click', () => {
   const code = document.getElementById('outCode').value;
   const lang = document.getElementById('tgtLang').value;
-  downloadFile(`converted.${EXT[lang]||'txt'}`, code);
+  if (code) downloadFile('converted.' + (EXT[lang] || 'txt'), code);
 });
+
 document.getElementById('dlBoth').addEventListener('click', () => {
   const sc = document.getElementById('srcCode').value;
   const oc = document.getElementById('outCode').value;
   const sl = document.getElementById('srcLang').value;
   const tl = document.getElementById('tgtLang').value;
-  if (sc) downloadFile(`source.${EXT[sl==='auto'?'bash':sl]||'txt'}`, sc);
-  if (oc) downloadFile(`converted.${EXT[tl]||'txt'}`, oc);
+  if (sc) downloadFile('source.'    + (EXT[sl === 'auto' ? 'bash' : sl] || 'txt'), sc);
+  if (oc) downloadFile('converted.' + (EXT[tl] || 'txt'), oc);
 });
 
-// Refresh models
 document.getElementById('refreshBtn').addEventListener('click', async () => {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spin');
@@ -1369,6 +1243,7 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
 // Connection indicator → config modal
 document.getElementById('connIndicator').addEventListener('click', () => {
   document.getElementById('hostInput').value = ollamaHost;
+  updateModalError(lastError);
   document.getElementById('overlay').classList.add('show');
 });
 document.getElementById('cancelModal').addEventListener('click', () => {
@@ -1386,34 +1261,62 @@ document.getElementById('overlay').addEventListener('click', e => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
 });
 
-// Keyboard
+// Test connection button in modal
+document.getElementById('testConnBtn') && document.getElementById('testConnBtn').addEventListener('click', async () => {
+  const host = document.getElementById('hostInput').value.trim().replace(/\/$/, '');
+  const lbl  = document.getElementById('testConnBtn');
+  lbl.textContent = 'Testing…';
+  lbl.disabled    = true;
+  try {
+    const ctrl = new AbortController();
+    const id   = setTimeout(() => ctrl.abort(), 5000);
+    const r    = await fetch(host + '/api/tags', { mode: 'cors', signal: ctrl.signal });
+    clearTimeout(id);
+    if (r.ok) {
+      const d = await r.json();
+      const n = (d.models || []).length;
+      updateModalError('');
+      document.getElementById('testResult').textContent = '✓ Connected! ' + n + ' model(s) found.';
+      document.getElementById('testResult').style.color = 'var(--success)';
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
+  } catch (e) {
+    let m = e.message || String(e);
+    if (m.includes('abort')) m = 'Timeout — Ollama not reachable at ' + host;
+    else if (m.includes('Failed to fetch') || m.includes('CORS')) m = 'CORS blocked. See setup instructions below.';
+    document.getElementById('testResult').textContent = '✗ ' + m;
+    document.getElementById('testResult').style.color = 'var(--danger)';
+    updateModalError(m);
+  } finally {
+    lbl.textContent = 'Test Connection';
+    lbl.disabled    = false;
+  }
+});
+
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doConvert(); }
   if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show');
 });
 
-// Tab in source editor
 document.getElementById('srcCode').addEventListener('keydown', e => {
   if (e.key === 'Tab') {
     e.preventDefault();
     const s = e.target, p = s.selectionStart;
-    s.value = s.value.slice(0,p) + '  ' + s.value.slice(s.selectionEnd);
+    s.value = s.value.slice(0, p) + '  ' + s.value.slice(s.selectionEnd);
     s.selectionStart = s.selectionEnd = p + 2;
   }
 });
 
-// Live line count
-['srcCode','outCode'].forEach(id => {
-  document.getElementById(id).addEventListener('input', updateLineCounts);
-});
+['srcCode', 'outCode'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateLineCounts)
+);
 
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
-(async () => {
-  updateLineCounts();
-  await checkConnection();
-})();
+updateLineCounts();
+checkConnection();
 </script>
 </body>
 </html>
