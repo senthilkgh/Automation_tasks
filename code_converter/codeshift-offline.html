@@ -520,7 +520,64 @@ body {
 .modal-btn.secondary { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border2); }
 .modal-btn.secondary:hover { color: var(--text); }
 
-/* ── Scrollbar ── */
+/* ── Progress bar ── */
+.progress-wrap {
+  position: relative;
+  flex: 1;
+  display: flex; flex-direction: column;
+  gap: 4px;
+}
+.progress-bar-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  display: none;
+}
+.progress-bar-track.show { display: block; }
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+.progress-bar-fill::after {
+  content: '';
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  animation: shimmer 1s ease infinite;
+}
+@keyframes shimmer { 0%,100%{opacity:0} 50%{opacity:1} }
+
+/* ── Abort button ── */
+.abort-btn {
+  display: none;
+  align-items: center; gap: 8px;
+  padding: 10px 22px;
+  background: rgba(255,95,95,0.12);
+  border: 1px solid rgba(255,95,95,0.4);
+  border-radius: 8px;
+  color: var(--danger);
+  font-family: var(--sans); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+}
+.abort-btn:hover { background: rgba(255,95,95,0.22); border-color: var(--danger); }
+.abort-btn.show { display: flex; }
+
+/* stats in status bar */
+.status-stats {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  display: none;
+}
+.status-stats.show { display: block; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
@@ -754,9 +811,18 @@ body {
       <div class="spinner" id="spinner"></div>
       <span id="btnLabel">⇄ Convert</span>
     </button>
-    <div class="status" id="status">
-      <div class="status-dot"></div>
-      <span id="statusTxt">Connecting to Ollama…</span>
+    <button class="abort-btn" id="abortBtn">
+      ◼ Abort
+    </button>
+    <div class="progress-wrap">
+      <div class="status" id="status">
+        <div class="status-dot"></div>
+        <span id="statusTxt">Connecting to Ollama…</span>
+        <span class="status-stats" id="statusStats"></span>
+      </div>
+      <div class="progress-bar-track" id="progressTrack">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
     </div>
     <button class="dl-btn" id="dlOut" disabled>⬇ Download</button>
     <button class="dl-btn" id="dlBoth" disabled>⬇ Both Files</button>
@@ -798,10 +864,12 @@ body {
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-let ollamaHost   = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
-let modelList    = [];
-let isConverting = false;
-let lastError    = '';
+let ollamaHost    = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
+let modelList     = [];
+let isConverting  = false;
+let lastError     = '';
+let isCheckingConn = false;  // guard against concurrent checkConnection calls
+let convertAbortCtrl = null; // AbortController for active conversion
 
 const EXT = {
   bash:'sh',shell:'sh',perl:'pl',python:'py',ruby:'rb',php:'php',
@@ -813,12 +881,283 @@ const EXT = {
 };
 
 const SAMPLES = {
-  bash: "#!/bin/bash\n# System health monitor\nHOSTNAME=$(hostname)\nDATE=$(date +\"%Y-%m-%d %H:%M:%S\")\n\ncheck_disk() {\n  local part=\"$1\"\n  local usage\n  usage=$(df -h \"$part\" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')\n  [ -z \"$usage\" ] && return\n  if [ \"$usage\" -gt 85 ]; then\n    echo \"[$DATE] WARN: $part on $HOSTNAME is ${usage}% full\"\n  fi\n}\n\ncheck_memory() {\n  local free_pct\n  free_pct=$(free | awk '/^Mem:/{printf \"%.0f\", $4/$2*100}')\n  if [ \"$free_pct\" -lt 10 ]; then\n    echo \"[$DATE] WARN: Low memory - only ${free_pct}% free\"\n  fi\n}\n\ncheck_load() {\n  local load\n  load=$(uptime | awk -F'load average:' '{print $2}' | cut -d, -f1 | xargs)\n  echo \"[$DATE] Load: $load / CPUs: $(nproc)\"\n}\n\nfor p in / /var /tmp /home; do\n  mountpoint -q \"$p\" 2>/dev/null && check_disk \"$p\"\ndone\ncheck_memory\ncheck_load\n",
-  c: "#include <stdio.h>\n#include <stdlib.h>\n\ntypedef struct Node {\n  int data;\n  struct Node *next;\n} Node;\n\nNode* node_new(int val) {\n  Node *n = malloc(sizeof(Node));\n  if (!n) { perror(\"malloc\"); exit(1); }\n  n->data = val; n->next = NULL;\n  return n;\n}\n\nvoid list_push(Node **head, int val) {\n  Node *n = node_new(val);\n  n->next = *head;\n  *head = n;\n}\n\nvoid list_print(Node *head) {\n  while (head) {\n    printf(\"%d%s\", head->data, head->next ? \" -> \" : \"\\n\");\n    head = head->next;\n  }\n}\n\nint main(void) {\n  Node *list = NULL;\n  for (int i = 1; i <= 6; i++) list_push(&list, i * 5);\n  list_print(list);\n  return 0;\n}\n",
-  python: "#!/usr/bin/env python3\nimport re, sys\nfrom pathlib import Path\nfrom collections import Counter\n\nLOG_RE = re.compile(\n    r\"(?P<mon>\\w+)\\s+(?P<day>\\d+)\\s+(?P<time>[\\d:]+)\\s+\"\n    r\"(?P<host>\\S+)\\s+(?P<proc>\\S+?)(?:\\[\\d+\\])?:\\s+(?P<msg>.+)\"\n)\nSEV = {\"error\": 3, \"warn\": 2, \"crit\": 4, \"emerg\": 5}\n\ndef parse_log(path):\n    entries = []\n    for line in Path(path).read_text(errors=\"ignore\").splitlines():\n        if m := LOG_RE.match(line):\n            d = m.groupdict()\n            d[\"level\"] = next((k for k in SEV if k in d[\"msg\"].lower()), \"info\")\n            entries.append(d)\n    return entries\n\ndef summarise(entries):\n    by_level = Counter(e[\"level\"] for e in entries)\n    by_proc  = Counter(e[\"proc\"]  for e in entries)\n    print(f\"Total: {len(entries)}\")\n    for lv, cnt in sorted(by_level.items(), key=lambda x: -SEV.get(x[0], 0)):\n        print(f\"  {lv:8s}: {cnt}\")\n    print(\"Top processes:\")\n    for proc, cnt in by_proc.most_common(5):\n        print(f\"  {proc:20s}: {cnt}\")\n\nif __name__ == \"__main__\":\n    f = sys.argv[1] if len(sys.argv) > 1 else \"/var/log/syslog\"\n    summarise(parse_log(f))\n",
-  perl: "#!/usr/bin/perl\nuse strict; use warnings;\nuse File::Find;\nuse POSIX qw(strftime);\n\nmy %stats = (files => 0, size => 0);\nmy @large;\n\nsub wanted {\n    return if -d $_;\n    $stats{files}++;\n    my $sz = -s $_;\n    $stats{size} += $sz;\n    push @large, { path => $File::Find::name, sz => $sz, mt => (stat)[9] }\n        if $sz > 5_242_880;\n}\n\nfind(\\&wanted, \"/var/log\");\nprintf \"Scanned : %d files\\n\",        $stats{files};\nprintf \"Total   : %.1f MB\\n\",         $stats{size}/1048576;\nprintf \"Large   : %d files (>5MB)\\n\", scalar @large;\nfor my $f (sort { $b->{sz} <=> $a->{sz} } @large) {\n    printf \"  %-30s %5.1fMB  %s\\n\",\n        (split /\\//, $f->{path})[-1], $f->{sz}/1048576,\n        strftime(\"%Y-%m-%d\", localtime $f->{mt});\n}\n",
-  java: "import java.util.*;\nimport java.util.stream.*;\n\npublic class ProcessMonitor {\n    record Process(String name, int pid, double cpu, long mem) {}\n\n    static List<Process> getProcesses() {\n        return List.of(\n            new Process(\"nginx\",    1001,  1.2,  48_000_000L),\n            new Process(\"postgres\", 2002,  9.4, 384_000_000L),\n            new Process(\"java\",     3003, 18.7, 768_000_000L),\n            new Process(\"redis\",    4004,  0.3,  24_000_000L)\n        );\n    }\n\n    public static void main(String[] args) {\n        System.out.printf(\"%-14s %6s %7s %10s%n\",\"NAME\",\"PID\",\"CPU%\",\"MEM\");\n        System.out.println(\"-\".repeat(42));\n        getProcesses().stream()\n            .sorted(Comparator.comparingDouble(Process::cpu).reversed())\n            .forEach(p -> System.out.printf(\n                \"%-14s %6d %6.1f%% %8.1fMB%n\",\n                p.name(), p.pid(), p.cpu(), p.mem()/1e6));\n    }\n}\n",
+  bash: `#!/bin/bash
+# System health monitor
+HOSTNAME=$(hostname)
+DATE=$(date +"%Y-%m-%d %H:%M:%S")
+
+check_disk() {
+  local part="$1"
+  local usage
+  usage=$(df -h "$part" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')
+  [ -z "$usage" ] && return
+  if [ "$usage" -gt 85 ]; then
+    echo "[$DATE] WARNING: $part is \${usage}% full"
+  else
+    echo "[$DATE] OK: $part is \${usage}% full"
+  fi
+}
+
+check_mem() {
+  local free total pct
+  free=$(free -m | awk 'NR==2 {print $4}')
+  total=$(free -m | awk 'NR==2 {print $2}')
+  pct=$(( (total - free) * 100 / total ))
+  echo "[$DATE] Memory: \${pct}% used (\${free}MB free of \${total}MB)"
+}
+
+echo "=== Health Report: $HOSTNAME @ $DATE ==="
+check_disk "/"
+check_disk "/tmp"
+check_mem`,
+
+  python: `#!/usr/bin/env python3
+"""System health monitor"""
+import shutil, psutil, datetime
+
+def check_disk(path="/"):
+    usage = shutil.disk_usage(path)
+    pct = usage.used * 100 // usage.total
+    status = "WARNING" if pct > 85 else "OK"
+    print(f"[{now()}] {status}: {path} is {pct}% full")
+
+def check_mem():
+    m = psutil.virtual_memory()
+    print(f"[{now()}] Memory: {m.percent}% used ({m.available // 1024**2}MB free of {m.total // 1024**2}MB)")
+
+def now():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+if __name__ == "__main__":
+    import socket
+    print(f"=== Health Report: {socket.gethostname()} @ {now()} ===")
+    check_disk("/")
+    check_disk("/tmp")
+    check_mem()`,
+
+  javascript: `// System health monitor (Node.js)
+const os = require('os');
+const { execSync } = require('child_process');
+
+function now() {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+}
+
+function checkMem() {
+  const total = os.totalmem();
+  const free  = os.freemem();
+  const pct   = Math.round((total - free) / total * 100);
+  console.log(\`[\${now()}] Memory: \${pct}% used (\${Math.round(free/1024**2)}MB free of \${Math.round(total/1024**2)}MB)\`);
+}
+
+function checkDisk(path = '/') {
+  try {
+    const out = execSync(\`df -h \${path}\`).toString().split('\\n')[1].split(/\\s+/);
+    console.log(\`[\${now()}] Disk \${path}: \${out[4]} used\`);
+  } catch (e) {
+    console.error(\`Disk check failed: \${e.message}\`);
+  }
+}
+
+console.log(\`=== Health Report: \${os.hostname()} @ \${now()} ===\`);
+checkDisk('/');
+checkMem();`,
+
+  go: `package main
+
+import (
+  "fmt"
+  "os"
+  "syscall"
+  "time"
+)
+
+func now() string {
+  return time.Now().Format("2006-01-02 15:04:05")
+}
+
+func checkDisk(path string) {
+  var stat syscall.Statfs_t
+  if err := syscall.Statfs(path, &stat); err != nil {
+    fmt.Fprintf(os.Stderr, "disk check failed: %v\\n", err)
+    return
+  }
+  total := stat.Blocks * uint64(stat.Bsize)
+  free  := stat.Bfree  * uint64(stat.Bsize)
+  pct   := (total - free) * 100 / total
+  status := "OK"
+  if pct > 85 { status = "WARNING" }
+  fmt.Printf("[%s] %s: %s is %d%% full\\n", now(), status, path, pct)
+}
+
+func main() {
+  host, _ := os.Hostname()
+  fmt.Printf("=== Health Report: %s @ %s ===\\n", host, now())
+  checkDisk("/")
+}`,
+
+  rust: `use std::time::{SystemTime, UNIX_EPOCH};
+
+fn now() -> String {
+    // Simple timestamp via system time
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    format!("T+{}s", secs)
+}
+
+fn check_disk(path: &str) {
+    // Requires 'statvfs' on Unix; shown as placeholder
+    println!("[{}] Disk check for: {}", now(), path);
+}
+
+fn main() {
+    println!("=== Health Report @ {} ===", now());
+    check_disk("/");
+    println!("[{}] Memory: (use sysinfo crate for full stats)", now());
+}`,
+
+  typescript: `import * as os from 'os';
+import { execSync } from 'child_process';
+
+const now = (): string =>
+  new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+function checkMem(): void {
+  const total = os.totalmem();
+  const free  = os.freemem();
+  const pct   = Math.round((total - free) / total * 100);
+  console.log(\`[\${now()}] Memory: \${pct}% used (\${Math.round(free / 1024 ** 2)}MB free)\`);
+}
+
+function checkDisk(path: string = '/'): void {
+  try {
+    const out = execSync(\`df -h \${path}\`).toString().split('\\n')[1].split(/\\s+/);
+    console.log(\`[\${now()}] Disk \${path}: \${out[4]} used\`);
+  } catch (e: unknown) {
+    console.error(\`Disk check failed: \${(e as Error).message}\`);
+  }
+}
+
+console.log(\`=== Health Report: \${os.hostname()} @ \${now()} ===\`);
+checkDisk('/');
+checkMem();`,
+
+  java: `import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.io.File;
+
+public class HealthMonitor {
+    static final DateTimeFormatter FMT =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    static String now() {
+        return LocalDateTime.now().format(FMT);
+    }
+
+    static void checkDisk(String path) {
+        File f = new File(path);
+        long total = f.getTotalSpace();
+        long free  = f.getFreeSpace();
+        if (total == 0) { System.out.println("[" + now() + "] Cannot read: " + path); return; }
+        long pct = (total - free) * 100 / total;
+        String status = pct > 85 ? "WARNING" : "OK";
+        System.out.printf("[%s] %s: %s is %d%% full%n", now(), status, path, pct);
+    }
+
+    public static void main(String[] args) throws Exception {
+        String host = java.net.InetAddress.getLocalHost().getHostName();
+        System.out.printf("=== Health Report: %s @ %s ===%n", host, now());
+        checkDisk("/");
+    }
+}`,
+
+  perl: `#!/usr/bin/perl
+use strict;
+use warnings;
+use POSIX qw(strftime);
+use Sys::Hostname;
+
+sub now { strftime "%Y-%m-%d %H:%M:%S", localtime }
+
+sub check_disk {
+    my ($path) = @_;
+    open my $fh, '-|', "df -h $path" or return;
+    <$fh>; # skip header
+    my $line = <$fh>;
+    chomp $line;
+    my @f = split /\\s+/, $line;
+    my $pct = $f[4]; $pct =~ s/%//;
+    my $status = $pct > 85 ? 'WARNING' : 'OK';
+    printf "[%s] %s: %s is %d%%%\\n", now(), $status, $path, $pct;
+}
+
+printf "=== Health Report: %s @ %s ===\\n", hostname(), now();
+check_disk('/');`,
+
+  sql: `-- Health snapshot schema
+CREATE TABLE IF NOT EXISTS health_snapshots (
+  id         SERIAL PRIMARY KEY,
+  hostname   TEXT        NOT NULL,
+  checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  disk_path  TEXT        NOT NULL,
+  disk_pct   INTEGER     NOT NULL,
+  mem_pct    INTEGER     NOT NULL
+);
+
+-- Insert a sample snapshot
+INSERT INTO health_snapshots (hostname, disk_path, disk_pct, mem_pct)
+VALUES ('web-01', '/', 42, 67);
+
+-- Query snapshots with warnings
+SELECT hostname, disk_path, disk_pct, mem_pct, checked_at
+FROM   health_snapshots
+WHERE  disk_pct > 85 OR mem_pct > 90
+ORDER  BY checked_at DESC
+LIMIT  50;`,
+
+  c: `#include <stdio.h>
+#include <sys/statvfs.h>
+#include <time.h>
+#include <unistd.h>
+
+void now(char *buf, size_t n) {
+    time_t t = time(NULL);
+    strftime(buf, n, "%Y-%m-%d %H:%M:%S", localtime(&t));
+}
+
+void check_disk(const char *path) {
+    struct statvfs s;
+    char ts[32];
+    now(ts, sizeof ts);
+    if (statvfs(path, &s) != 0) {
+        fprintf(stderr, "[%s] Cannot stat %s\\n", ts, path);
+        return;
+    }
+    unsigned long total = s.f_blocks * s.f_frsize;
+    unsigned long free_ = s.f_bfree  * s.f_frsize;
+    int pct = (int)((total - free_) * 100UL / total);
+    printf("[%s] %s: %s is %d%% full\\n", ts, pct > 85 ? "WARNING" : "OK", path, pct);
+}
+
+int main(void) {
+    char ts[32], host[256];
+    now(ts, sizeof ts);
+    gethostname(host, sizeof host);
+    printf("=== Health Report: %s @ %s ===\\n", host, ts);
+    check_disk("/");
+    return 0;
+}`,
 };
+
+// ══════════════════════════════════════════════════════
+//  OLLAMA API  — robust fetch with CORS + fallback
+// ══════════════════════════════════════════════════════
+
+// Fetch with manual timeout (AbortSignal.timeout not in all browsers)
+function fetchWithTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
   const id   = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { ...opts, signal: ctrl.signal })
     .finally(() => clearTimeout(id));
@@ -838,6 +1177,10 @@ async function ollamaGet(path, timeoutMs) {
 
 // Try localhost, then 127.0.0.1 as fallback
 async function checkConnection() {
+  // Prevent concurrent calls from racing each other
+  if (isCheckingConn) return;
+  isCheckingConn = true;
+
   const dot = document.getElementById('connDot');
   const txt = document.getElementById('connText');
   const btn = document.getElementById('convertBtn');
@@ -846,22 +1189,25 @@ async function checkConnection() {
   txt.textContent = 'Checking…';
   setStatus('', 'Connecting to ' + ollamaHost + ' …');
 
-  // If host is localhost, also try 127.0.0.1 as fallback
-  const hostsToTry = [ollamaHost];
-  if (ollamaHost.includes('localhost')) {
-    hostsToTry.push(ollamaHost.replace('localhost', '127.0.0.1'));
+  // Build the list of hosts to try WITHOUT mutating ollamaHost during the loop
+  const baseHost = ollamaHost;
+  const hostsToTry = [baseHost];
+  if (baseHost.includes('localhost')) {
+    hostsToTry.push(baseHost.replace('localhost', '127.0.0.1'));
   }
 
   let lastErr = '';
+  let connected = false;
+
   for (const host of hostsToTry) {
     try {
-      const savedHost = ollamaHost;
+      // Temporarily point requests at this candidate host
       ollamaHost = host;
       const data = await ollamaGet('/api/tags', 8000);
       modelList  = (data.models || []).map(m => m.name);
 
-      // Persist working host
-      if (host !== savedHost) {
+      // Persist working host if different from the original
+      if (host !== baseHost) {
         localStorage.setItem('ollamaHost', host);
         document.getElementById('hostInput').value = host;
       }
@@ -877,34 +1223,42 @@ async function checkConnection() {
         setStatus('warn', '⚠ Connected but no models — run: ollama pull phi3:latest');
       }
       lastError = '';
-      return; // success
+      connected = true;
+      break; // success — stop trying further hosts
     } catch (e) {
       lastErr = e.message || String(e);
-      ollamaHost = hostsToTry[0]; // reset for next try
+      // Reset to base host before trying the next candidate
+      ollamaHost = baseHost;
     }
   }
 
-  // All hosts failed
-  lastError = lastErr;
-  dot.className = 'conn-dot offline';
-  txt.textContent = 'Offline';
-  btn.disabled = true;
-  modelList = [];
-  populateModels([]);
+  if (!connected) {
+    // Restore base host so the user's configured value is preserved
+    ollamaHost = baseHost;
+    lastError  = lastErr;
 
-  // Diagnose error type
-  let hint = '';
-  if (lastErr.includes('abort') || lastErr.includes('timeout')) {
-    hint = 'Timeout — Ollama may not be running. Run: ollama serve';
-  } else if (lastErr.includes('Failed to fetch') || lastErr.includes('NetworkError') || lastErr.includes('CORS')) {
-    hint = 'CORS blocked — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
-  } else if (lastErr.includes('refused') || lastErr.includes('ECONNREFUSED')) {
-    hint = 'Connection refused — is Ollama running on port 11434?';
-  } else {
-    hint = lastErr;
+    dot.className = 'conn-dot offline';
+    txt.textContent = 'Offline';
+    btn.disabled = true;
+    modelList = [];
+    populateModels([]);
+
+    // Diagnose error type
+    let hint = '';
+    if (lastErr.includes('abort') || lastErr.includes('timeout')) {
+      hint = 'Timeout — Ollama may not be running. Run: ollama serve';
+    } else if (lastErr.includes('Failed to fetch') || lastErr.includes('NetworkError') || lastErr.includes('CORS')) {
+      hint = 'CORS blocked — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+    } else if (lastErr.includes('refused') || lastErr.includes('ECONNREFUSED')) {
+      hint = 'Connection refused — is Ollama running on port 11434?';
+    } else {
+      hint = lastErr;
+    }
+    setStatus('err', '✗ ' + hint + ' — click indicator to configure');
+    updateModalError(hint);
   }
-  setStatus('err', '✗ ' + hint + ' — click indicator to configure');
-  updateModalError(hint);
+
+  isCheckingConn = false;
 }
 
 function updateModalError(msg) {
@@ -914,7 +1268,7 @@ function updateModalError(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-async function ollamaGenerate(model, prompt, onChunk) {
+async function ollamaGenerate(model, prompt, onChunk, signal) {
   const url = ollamaHost + '/api/generate';
   let r;
   try {
@@ -922,12 +1276,15 @@ async function ollamaGenerate(model, prompt, onChunk) {
       method:  'POST',
       mode:    'cors',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model, prompt, stream: true })
+      body:    JSON.stringify({ model, prompt, stream: true }),
+      signal
     });
   } catch (e) {
+    // User aborted — rethrow as-is so doConvert can detect it
+    if (e.name === 'AbortError') throw e;
     // CORS or network error — try non-streaming fallback
     if (e.message && (e.message.includes('CORS') || e.message.includes('Failed to fetch'))) {
-      return ollamaGenerateNoStream(model, prompt, onChunk);
+      return ollamaGenerateNoStream(model, prompt, onChunk, signal);
     }
     throw e;
   }
@@ -942,6 +1299,7 @@ async function ollamaGenerate(model, prompt, onChunk) {
   let full = '';
 
   while (true) {
+    if (signal && signal.aborted) { reader.cancel(); break; }
     const { done, value } = await reader.read();
     if (done) break;
     for (const line of dec.decode(value, { stream: true }).split('\n')) {
@@ -959,12 +1317,13 @@ async function ollamaGenerate(model, prompt, onChunk) {
   return full;
 }
 
-async function ollamaGenerateNoStream(model, prompt, onChunk) {
+async function ollamaGenerateNoStream(model, prompt, onChunk, signal) {
   const r = await fetchWithTimeout(ollamaHost + '/api/generate', {
     method:  'POST',
     mode:    'cors',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ model, prompt, stream: false })
+    body:    JSON.stringify({ model, prompt, stream: false }),
+    signal
   }, 300000);
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
@@ -1010,6 +1369,84 @@ function populateModels(list) {
 }
 
 // ══════════════════════════════════════════════════════
+//  TARGET-SPECIFIC PROMPT EXTENSIONS
+// ══════════════════════════════════════════════════════
+
+// Returns extra rules injected into the prompt when the target is a specific language/format
+function targetRules(srcLang, tgtLang) {
+  // ── Bash/Shell → YAML (Ansible playbook) ──────────────────────────────────
+  if ((srcLang === 'bash' || srcLang === 'shell' || srcLang === 'auto') && tgtLang === 'yaml') {
+    return `
+TARGET FORMAT: Ansible Playbook (YAML)
+
+ANSIBLE MODULE MAPPING — you MUST use native Ansible modules, never shell: or command: when a module exists:
+  apt / apt-get install    → ansible.builtin.apt  (pkg, state: present/latest)
+  apt-get remove/purge     → ansible.builtin.apt  (state: absent/purged)
+  yum / dnf install        → ansible.builtin.yum or ansible.builtin.dnf
+  systemctl start/stop     → ansible.builtin.systemd (state: started/stopped)
+  systemctl enable/disable → ansible.builtin.systemd (enabled: true/false)
+  systemctl restart/reload → ansible.builtin.systemd (state: restarted/reloaded)
+  cp / rsync               → ansible.builtin.copy or ansible.builtin.synchronize
+  mv                       → ansible.builtin.command: mv  OR copy+file(state:absent)
+  mkdir -p                 → ansible.builtin.file (state: directory, recurse: yes)
+  rm / rm -rf              → ansible.builtin.file (state: absent)
+  chmod                    → ansible.builtin.file (mode: '0755')
+  chown                    → ansible.builtin.file (owner: x, group: y)
+  ln -s                    → ansible.builtin.file (state: link, src: x, dest: y)
+  useradd / adduser        → ansible.builtin.user
+  groupadd                 → ansible.builtin.group
+  echo "..." > file        → ansible.builtin.copy (content: "...", dest: path)
+  echo "..." >> file       → ansible.builtin.lineinfile (line: "...", path: path)
+  sed -i                   → ansible.builtin.lineinfile or ansible.builtin.replace
+  grep -q                  → ansible.builtin.lineinfile (check only) or stat+when
+  curl / wget (download)   → ansible.builtin.get_url (url: x, dest: y)
+  curl (API call)          → ansible.builtin.uri
+  tar / unzip / unarchive  → ansible.builtin.unarchive
+  git clone                → ansible.builtin.git
+  pip install              → ansible.builtin.pip
+  crontab                  → ansible.builtin.cron
+  iptables                 → ansible.builtin.iptables
+  hostname                 → ansible.builtin.hostname
+  reboot                   → ansible.builtin.reboot
+  source / .               → ansible.builtin.include_vars (if sourcing env/vars file)
+  export VAR=val           → vars: section at play or task level
+  if/else logic            → when: conditions using Ansible facts / registered vars
+  for loops                → loop: or with_items:
+  function definitions     → ansible.builtin.include_tasks (separate task file)
+  [ -f / -d / -e ]        → ansible.builtin.stat + register, then when: stat.stat.exists
+
+STRUCTURE RULES:
+- Start with: ---
+- Use a single play: - name: <descriptive name derived from the script purpose>
+      hosts: all
+      become: yes   (only if script uses sudo/root operations)
+      vars:         (any shell variables → Ansible vars)
+      tasks:
+- Each logical step → a separate named task with a clear name: describing WHAT it does
+- Register output of commands that are checked later: register: result
+- Use when: to replicate if/else and exit conditions
+- Use ignore_errors: yes only where the script explicitly ignores failures (|| true, 2>/dev/null)
+- Add notify: + handlers: for service restarts triggered by config changes
+- NEVER use shell: or command: if a native module exists for the operation
+- Only use shell: as last resort for complex pipelines with no module equivalent
+- Last comment must be: # DEPS: ansible-core (or list extra collections needed)
+`;
+  }
+
+  // ── Python → YAML (GitHub Actions / generic) ──────────────────────────────
+  if (tgtLang === 'yaml' && srcLang === 'python') {
+    return `
+TARGET FORMAT: Generic YAML configuration.
+- Represent Python dicts/lists as YAML mappings/sequences
+- Use proper YAML scalar types (booleans unquoted, numbers unquoted, strings quoted if ambiguous)
+- Last comment: # DEPS: stdlib-only
+`;
+  }
+
+  return ''; // no special rules for this pair
+}
+
+// ══════════════════════════════════════════════════════
 //  PROMPT
 // ══════════════════════════════════════════════════════
 function buildPrompt(srcLang, tgtLang, srcCode) {
@@ -1023,13 +1460,15 @@ function buildPrompt(srcLang, tgtLang, srcCode) {
   if (on('idiomatic')) reqs.push('- Use idiomatic ' + tgtLang.toUpperCase() + ' patterns and conventions');
   if (on('strict'))    reqs.push('- Use strict typing and type annotations');
 
+  const extra = targetRules(srcLang, tgtLang);
+
   return 'You are an expert polyglot programmer specialising in code conversion.\n\n'
     + 'TASK: Convert the ' + src + ' code below to ' + tgtLang.toUpperCase() + '.\n\n'
+    + (extra ? extra + '\n' : '')
     + 'STRICT RULES:\n'
     + '- Output ONLY the converted code — no explanations, no markdown, no triple backticks\n'
-    + '- Code must be complete and immediately runnable or compilable\n'
+    + '- Code must be complete and immediately runnable\n'
     + '- Preserve ALL logic and functionality exactly\n'
-    + '- Map every library to the closest equivalent in ' + tgtLang.toUpperCase() + '\n'
     + (reqs.length ? reqs.join('\n') + '\n' : '')
     + '- Last line must be a comment: DEPS: pkg1, pkg2  (or DEPS: stdlib-only)\n\n'
     + 'SOURCE ' + src + ' CODE:\n'
@@ -1040,6 +1479,25 @@ function buildPrompt(srcLang, tgtLang, srcCode) {
 // ══════════════════════════════════════════════════════
 //  CONVERSION
 // ══════════════════════════════════════════════════════
+function setConverting(active) {
+  const convertBtn = document.getElementById('convertBtn');
+  const abortBtn   = document.getElementById('abortBtn');
+  const track      = document.getElementById('progressTrack');
+  const stats      = document.getElementById('statusStats');
+  if (active) {
+    convertBtn.style.display = 'none';
+    abortBtn.classList.add('show');
+    track.classList.add('show');
+  } else {
+    convertBtn.style.display = '';
+    abortBtn.classList.remove('show');
+    track.classList.remove('show');
+    document.getElementById('progressFill').style.width = '0%';
+    stats.classList.remove('show');
+    stats.textContent = '';
+  }
+}
+
 async function doConvert() {
   if (isConverting) return;
   const src  = document.getElementById('srcCode').value.trim();
@@ -1054,10 +1512,13 @@ async function doConvert() {
   }
 
   isConverting = true;
-  const btn    = document.getElementById('convertBtn');
-  btn.disabled = true;
-  document.getElementById('spinner').style.display  = 'block';
-  document.getElementById('btnLabel').textContent   = 'Converting…';
+  convertAbortCtrl = new AbortController();
+
+  const convertBtn = document.getElementById('convertBtn');
+  convertBtn.disabled = true;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('btnLabel').textContent  = 'Converting…';
+  setConverting(true);
 
   const out = document.getElementById('outCode');
   out.value  = '';
@@ -1065,18 +1526,47 @@ async function doConvert() {
   document.getElementById('copyBtn').disabled = true;
   document.getElementById('dlOut').disabled   = true;
   document.getElementById('dlBoth').disabled  = true;
+
+  // Progress tracking state
+  const startTime  = Date.now();
+  let   tokenCount = 0;
+  let   progressTimer = null;
+  const stats      = document.getElementById('statusStats');
+  const fill       = document.getElementById('progressFill');
+
+  // Animate progress bar with an estimate (we don't know total tokens)
+  // Use a logarithmic approach so it never quite reaches 100% until done
+  function updateProgress() {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const tps     = elapsed > 0 ? (tokenCount / elapsed).toFixed(1) : '0.0';
+    const elStr   = elapsed < 60
+      ? elapsed.toFixed(0) + 's'
+      : Math.floor(elapsed / 60) + 'm ' + (elapsed % 60).toFixed(0) + 's';
+
+    // Soft progress: asymptotically approaches 95%
+    const softPct = 95 * (1 - Math.exp(-elapsed / 45));
+    fill.style.width = softPct.toFixed(1) + '%';
+
+    stats.textContent = tokenCount + ' tokens · ' + tps + ' t/s · ' + elStr;
+    stats.classList.add('show');
+  }
+
   setStatus('loading', 'Converting ' + sLng.toUpperCase() + ' → ' + tLng.toUpperCase() + ' using ' + mdl + '…');
+  progressTimer = setInterval(updateProgress, 500);
+
+  let aborted = false;
 
   try {
     const prompt = buildPrompt(sLng, tLng, src);
     let full     = '';
 
     await ollamaGenerate(mdl, prompt, chunk => {
+      tokenCount += chunk.length; // approximate; good enough for display
       full += chunk;
       out.value = full.replace(/^```[\w]*\n?/gm, '').replace(/```\s*$/gm, '').trim();
       out.scrollTop = out.scrollHeight;
       updateLineCounts();
-    });
+    }, convertAbortCtrl.signal);
 
     let result = full.replace(/^```[\w]*\n?/gm, '').replace(/```\s*$/gm, '').trim();
     out.value  = result;
@@ -1091,26 +1581,45 @@ async function doConvert() {
       }
     }
 
+    fill.style.width = '100%';
     document.getElementById('copyBtn').disabled = false;
     document.getElementById('dlOut').disabled   = false;
     document.getElementById('dlBoth').disabled  = false;
     localStorage.setItem('preferredModel', mdl);
-    setStatus('ok', '✓ Done — ' + result.split('\n').length + ' lines | model: ' + mdl);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const tps     = (tokenCount / parseFloat(elapsed)).toFixed(1);
+    setStatus('ok', '✓ Done — ' + result.split('\n').length + ' lines · ' + tokenCount + ' tokens · ' + tps + ' t/s · ' + elapsed + 's');
 
   } catch (e) {
-    let msg = e.message || String(e);
-    if (msg.includes('abort') || msg.includes('timeout')) {
-      msg = 'Timeout — model is too slow or overloaded. Try a smaller model.';
-    } else if (msg.includes('CORS') || msg.includes('Failed to fetch')) {
-      msg = 'CORS error — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+    if (e.name === 'AbortError') {
+      aborted = true;
+      const partial = out.value.trim();
+      if (partial) {
+        // Keep partial output — useful to see what was generated
+        out.value = partial + '\n\n// ── Aborted by user ──';
+        document.getElementById('copyBtn').disabled = false;
+        document.getElementById('dlOut').disabled   = false;
+        document.getElementById('dlBoth').disabled  = false;
+      }
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      setStatus('warn', '◼ Aborted after ' + elapsed + 's · ' + tokenCount + ' tokens received');
+    } else {
+      let msg = e.message || String(e);
+      if (msg.includes('CORS') || msg.includes('Failed to fetch')) {
+        msg = 'CORS error — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+      }
+      setStatus('err', '✗ ' + msg);
+      out.value = '// Conversion failed\n// ' + msg;
     }
-    setStatus('err', '✗ ' + msg);
-    out.value = '// Conversion failed\n// ' + msg;
   } finally {
-    isConverting = false;
-    btn.disabled = false;
+    clearInterval(progressTimer);
+    isConverting     = false;
+    convertAbortCtrl = null;
+    convertBtn.disabled = false;
     document.getElementById('spinner').style.display = 'none';
     document.getElementById('btnLabel').textContent  = '⇄ Convert';
+    setConverting(false);
     updateLineCounts();
   }
 }
@@ -1218,6 +1727,10 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
 
 document.getElementById('convertBtn').addEventListener('click', doConvert);
 
+document.getElementById('abortBtn').addEventListener('click', () => {
+  if (convertAbortCtrl) convertAbortCtrl.abort();
+});
+
 document.getElementById('dlOut').addEventListener('click', () => {
   const code = document.getElementById('outCode').value;
   const lang = document.getElementById('tgtLang').value;
@@ -1234,6 +1747,7 @@ document.getElementById('dlBoth').addEventListener('click', () => {
 });
 
 document.getElementById('refreshBtn').addEventListener('click', async () => {
+  if (isCheckingConn) return;   // already in progress — ignore extra clicks
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spin');
   await checkConnection();
