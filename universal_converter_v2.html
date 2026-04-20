@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Universal Converter | सार्वभौमिक परिवर्तक</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0b0d14;
+  --bg2: #111420;
+  --bg3: #181c2e;
+  --card: #1e2235;
+  --card2: #252840;
+  --border: #2e3250;
+  --border2: #3a3f65;
+  --accent: #6c63ff;
+  --accent2: #9b59f5;
+  --gold: #f59e0b;
+  --teal: #06b6d4;
+  --green: #10b981;
+  --red: #ef4444;
+  --text: #f0f2ff;
+  --text2: #9ea3c0;
+  --text3: #5a5f82;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* ── THEMES ──────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f0f2f8;
+  --bg2: #ffffff;
+  --bg3: #e8eaf2;
+  --card: #ffffff;
+  --card2: #f0f2f8;
+  --border: #d0d4e8;
+  --border2: #b0b6d0;
+  --accent: #5b52e8;
+  --accent2: #7c4dff;
+  --text: #1a1d2e;
+  --text2: #4a4f6a;
+  --text3: #8888a8;
+}
+[data-theme="sepia"] {
+  --bg: #f4ede0;
+  --bg2: #fdf6ec;
+  --bg3: #ede4d2;
+  --card: #fdf6ec;
+  --card2: #f4ede0;
+  --border: #d6c9b0;
+  --border2: #c0ae90;
+  --accent: #8b5e3c;
+  --accent2: #a0714f;
+  --text: #2c1e0f;
+  --text2: #6b4f38;
+  --text3: #a08060;
+}
+[data-theme="ocean"] {
+  --bg: #071a2e;
+  --bg2: #0d2440;
+  --bg3: #112d50;
+  --card: #142e52;
+  --card2: #1a3860;
+  --border: #1e4070;
+  --border2: #2a5090;
+  --accent: #00bfff;
+  --accent2: #0094d4;
+  --text: #d0f0ff;
+  --text2: #80c8e8;
+  --text3: #4080a0;
+}
+[data-theme="forest"] {
+  --bg: #0d1f10;
+  --bg2: #122516;
+  --bg3: #172e1b;
+  --card: #1c3520;
+  --card2: #224026;
+  --border: #2a4e30;
+  --border2: #346040;
+  --accent: #4caf50;
+  --accent2: #66bb6a;
+  --text: #e8f5e9;
+  --text2: #90c895;
+  --text3: #507855;
+}
+[data-theme="rose"] {
+  --bg: #fdf0f4;
+  --bg2: #fff5f8;
+  --bg3: #f8e4ec;
+  --card: #fff5f8;
+  --card2: #fde8f0;
+  --border: #f0c0d4;
+  --border2: #e0a0bc;
+  --accent: #d64f7c;
+  --accent2: #c03060;
+  --text: #2a0a18;
+  --text2: #703050;
+  --text3: #b06080;
+}
+[data-theme="slate"] {
+  --bg: #1c2028;
+  --bg2: #242a34;
+  --bg3: #2a3040;
+  --card: #303848;
+  --card2: #383f50;
+  --border: #404858;
+  --border2: #505868;
+  --accent: #7ab4f0;
+  --accent2: #90c8ff;
+  --text: #e8eef8;
+  --text2: #a0adc0;
+  --text3: #606878;
+}
+[data-theme="custom"] {
+  --bg: var(--custom-bg);
+  --bg2: var(--custom-bg2);
+  --bg3: var(--custom-bg3);
+  --card: var(--custom-card);
+  --card2: var(--custom-card2);
+  --border: var(--custom-border);
+  --border2: var(--custom-border2);
+  --text: var(--custom-text);
+  --text2: var(--custom-text2);
+  --text3: var(--custom-text3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Sora',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+}
+
+/* ── Scrollbar ─────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* ── Top bar ───────────────────────── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+  gap:12px;flex-wrap:wrap;
+}
+.app-logo{
+  display:flex;align-items:center;gap:10px;
+  font-size:18px;font-weight:700;letter-spacing:-.02em;
+  color:var(--text);flex-shrink:0;
+}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.app-tagline{font-size:11px;color:var(--text3);font-weight:400;}
+
+/* Language selector */
+.lang-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.lang-label{font-size:11px;color:var(--text3);white-space:nowrap;}
+.lang-select{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-size:12px;font-family:'Sora',sans-serif;
+  padding:6px 10px;outline:none;cursor:pointer;
+  transition:border-color .2s;
+}
+.lang-select:focus{border-color:var(--accent);}
+
+/* ── Layout ────────────────────────── */
+.app-body{display:flex;flex:1;min-height:0;}
+
+/* ── Sidebar ───────────────────────── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+  padding:12px 8px;
+}
+.sidebar-title{
+  font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.1em;
+  padding:4px 10px 10px;
+}
+.cat-btn{
+  width:100%;display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:var(--radius-sm);
+  border:none;background:none;color:var(--text2);
+  font-family:'Sora',sans-serif;font-size:13px;
+  cursor:pointer;transition:all .15s;text-align:left;
+  position:relative;overflow:hidden;
+}
+.cat-btn:hover{background:var(--card);color:var(--text);}
+.cat-btn.active{
+  background:linear-gradient(90deg,rgba(108,99,255,.25),rgba(108,99,255,.05));
+  color:var(--text);
+  border-left:3px solid var(--accent);
+  padding-left:9px;
+}
+.cat-icon{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
+.cat-name{font-size:12px;font-weight:500;}
+
+/* ── Main content ──────────────────── */
+.main{flex:1;overflow-y:auto;padding:24px;}
+
+.converter-panel{display:none;}
+.converter-panel.active{display:block;animation:slideIn .2s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+
+.panel-header{margin-bottom:20px;}
+.panel-title{
+  font-size:22px;font-weight:700;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:4px;
+}
+.panel-icon{font-size:26px;}
+.panel-desc{font-size:13px;color:var(--text3);}
+
+/* ── Card ──────────────────────────── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+}
+.card-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+
+/* ── Input row ─────────────────────── */
+.input-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;}
+.input-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.swap-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--border2);
+  color:var(--accent);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;align-self:center;margin-bottom:0;
+  flex-shrink:0;
+}
+.swap-btn:hover{background:var(--accent);color:#fff;transform:rotate(180deg);}
+
+.field-wrap{display:flex;flex-direction:column;gap:6px;}
+.field-label{font-size:11px;color:var(--text3);font-weight:500;}
+.num-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:16px;font-family:'JetBrains Mono',monospace;font-weight:500;
+  padding:10px 14px;outline:none;transition:border-color .2s;
+}
+.num-input:focus{border-color:var(--accent);}
+.unit-select{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:13px;font-family:'Sora',sans-serif;
+  padding:9px 12px;outline:none;cursor:pointer;transition:border-color .2s;
+}
+.unit-select:focus{border-color:var(--accent);}
+
+/* Convert button */
+.btn-convert{
+  width:100%;padding:12px;margin-top:4px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;border:none;border-radius:var(--radius-sm);
+  font-family:'Sora',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:opacity .2s,transform .1s;
+  letter-spacing:.02em;
+}
+.btn-convert:hover{opacity:.9;}
+.btn-convert:active{transform:scale(.98);}
+
+/* Result display */
+.result-box{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:16px 18px;
+  margin-top:12px;min-height:56px;
+}
+.result-value{
+  font-size:28px;font-weight:700;color:var(--accent);
+  font-family:'JetBrains Mono',monospace;
+  word-break:break-all;
+}
+.result-label{font-size:12px;color:var(--text3);margin-top:4px;}
+
+/* Quick results grid */
+.quick-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;margin-top:12px;
+}
+.quick-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  transition:border-color .2s;cursor:default;
+}
+.quick-card:hover{border-color:var(--border2);}
+.quick-val{font-size:16px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.quick-unit{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+.tab-btn{
+  padding:7px 14px;border-radius:20px;border:1px solid var(--border);
+  background:none;color:var(--text2);font-family:'Sora',sans-serif;
+  font-size:12px;cursor:pointer;transition:all .15s;
+}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.tab-btn:hover:not(.active){background:var(--card2);color:var(--text);}
+
+/* Age result */
+.age-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;}
+.age-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px;text-align:center;
+}
+.age-num{font-size:28px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;}
+.age-unit{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* Date input */
+.date-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:14px;font-family:'Sora',sans-serif;
+  padding:10px 14px;outline:none;transition:border-color .2s;
+}
+.date-input:focus{border-color:var(--accent);}
+
+/* TZ results */
+.tz-result-list{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+.tz-result-row{
+  display:grid;grid-template-columns:110px 90px 1fr;
+  align-items:center;gap:12px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 14px;
+}
+.tz-result-row.src-row{border-color:var(--accent);background:rgba(108,99,255,.07);}
+.tz-r-date{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace;}
+.tz-r-time{font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;}
+.tz-r-info{font-size:11px;color:var(--text3);}
+.tz-abbr{
+  display:inline-block;font-size:10px;font-weight:700;
+  background:var(--card2);color:var(--accent);
+  border-radius:4px;padding:1px 5px;margin-right:4px;
+}
+
+/* Number base */
+.base-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.base-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;}
+.base-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.base-val{font-size:14px;font-family:'JetBrains Mono',monospace;color:var(--teal);word-break:break-all;}
+
+/* Tags search */
+.search-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:13px;font-family:'Sora',sans-serif;
+  padding:9px 14px;outline:none;transition:border-color .2s;
+  margin-bottom:8px;
+}
+.search-input:focus{border-color:var(--accent);}
+
+/* Tag chips */
+.tag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.tag-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(108,99,255,.2);color:#a89fff;
+  border:1px solid rgba(108,99,255,.3);
+  font-size:11px;font-weight:600;padding:3px 9px 3px 10px;border-radius:20px;
+}
+.tag-chip-x{cursor:pointer;font-size:12px;color:#7060cc;}
+.tag-chip-x:hover{color:#ff6b6b;}
+
+/* Timezone picker */
+.tz-picker-list{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  max-height:200px;overflow-y:auto;
+}
+.tz-picker-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--text2);transition:background .1s;
+}
+.tz-picker-item:last-child{border-bottom:none;}
+.tz-picker-item:hover{background:var(--card2);}
+.tz-picker-item.selected{background:rgba(108,99,255,.1);color:#a89fff;}
+.tz-cb{
+  width:15px;height:15px;border-radius:4px;flex-shrink:0;
+  border:1.5px solid var(--border2);background:var(--card2);
+  display:flex;align-items:center;justify-content:center;
+}
+.tz-picker-item.selected .tz-cb{background:var(--accent);border-color:var(--accent);}
+.tz-cb-check{display:none;width:9px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px);}
+.tz-picker-item.selected .tz-cb-check{display:block;}
+.tz-offset{margin-left:auto;font-size:10px;color:var(--text3);white-space:nowrap;}
+
+/* Currency rates notice */
+.notice{
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);
+  border-radius:var(--radius-sm);padding:8px 12px;
+  font-size:11px;color:#d4a017;margin-bottom:12px;
+}
+
+/* ── Theme picker panel ──────────────────── */
+.theme-panel {
+  position:fixed;top:0;right:0;bottom:0;width:280px;
+  background:var(--bg2);border-left:1px solid var(--border);
+  z-index:500;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-8px 0 32px rgba(0,0,0,.35);
+}
+.theme-panel.open{transform:translateX(0);}
+.theme-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.theme-panel-title{font-size:14px;font-weight:700;color:var(--text);}
+.theme-close{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);
+  background:none;color:var(--text2);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.theme-close:hover{background:var(--card2);color:var(--text);}
+.theme-panel-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.theme-section-label{
+  font-size:10px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;
+}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.theme-swatch{
+  border:2px solid transparent;border-radius:10px;
+  padding:10px 8px;cursor:pointer;text-align:center;
+  transition:all .15s;position:relative;overflow:hidden;
+}
+.theme-swatch.active{border-color:var(--accent);}
+.theme-swatch:hover{border-color:var(--border2);}
+.swatch-preview{
+  width:100%;height:32px;border-radius:6px;margin-bottom:6px;
+  display:flex;gap:3px;align-items:center;padding:4px 6px;
+}
+.swatch-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.swatch-line{flex:1;height:4px;border-radius:2px;opacity:.6;}
+.theme-swatch-name{font-size:11px;font-weight:600;color:var(--text2);}
+.theme-swatch.active .theme-swatch-name{color:var(--accent);}
+
+/* Custom color pickers */
+.color-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid var(--border);
+}
+.color-row:last-child{border-bottom:none;}
+.color-row-label{font-size:12px;color:var(--text2);}
+.color-picker{
+  width:36px;height:28px;border:1px solid var(--border2);border-radius:6px;
+  cursor:pointer;padding:2px;background:none;outline:none;
+}
+
+/* Theme toggle button in topbar */
+.theme-toggle-btn{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  color:var(--text2);font-size:12px;font-family:'Sora',sans-serif;
+  cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.theme-toggle-btn:hover{background:var(--card2);color:var(--text);}
+
+/* Overlay */
+.theme-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:499;
+  opacity:0;pointer-events:none;transition:opacity .28s;
+}
+.theme-overlay.open{opacity:1;pointer-events:all;}
+
+/* Memory badge */
+.memory-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);display:inline-block;margin-right:3px;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--accent);color:#fff;font-size:13px;
+  padding:9px 22px;border-radius:20px;
+  opacity:0;transition:opacity .25s,transform .25s;
+  pointer-events:none;z-index:9999;font-family:'Sora',sans-serif;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Responsive */
+@media(max-width:680px){
+  .sidebar{width:60px;}
+  .cat-name{display:none;}
+  .sidebar-title{display:none;}
+  .main{padding:16px 12px;}
+  .input-grid{grid-template-columns:1fr;gap:8px;}
+  .swap-btn{transform:rotate(90deg);margin:0 auto;}
+  .swap-btn:hover{transform:rotate(270deg);}
+  .age-grid{grid-template-columns:repeat(2,1fr);}
+  .tz-result-row{grid-template-columns:1fr 80px;}
+  .tz-r-info{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="app-logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div id="app-title">Universal Converter</div>
+      <div class="app-tagline" id="app-sub">All measurements in one place • Offline</div>
+    </div>
+  </div>
+  <div class="lang-wrap">
+    <span class="lang-label" id="lang-label">Language:</span>
+    <select class="lang-select" id="lang-sel" onchange="setLang(this.value)">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="bn">বাংলা</option>
+      <option value="ta">தமிழ்</option>
+      <option value="te">తెలుగు</option>
+      <option value="kn">ಕನ್ನಡ</option>
+      <option value="ml">മലയാളം</option>
+      <option value="mr">मराठी</option>
+      <option value="gu">ગુજરાતી</option>
+      <option value="pa">ਪੰਜਾਬੀ</option>
+      <option value="or">ଓଡ଼ିଆ</option>
+    </select>
+    <button class="theme-toggle-btn" onclick="openThemePanel()" id="theme-btn">&#127912; Theme</button>
+    <span style="font-size:10px;color:var(--text3);display:flex;align-items:center;gap:3px;" title="All settings auto-saved"><span class="memory-dot"></span><span id="mem-label">Auto-saved</span></span>
+  </div>
+</div>
+
+<!-- Theme overlay -->
+<div class="theme-overlay" id="theme-overlay" onclick="closeThemePanel()"></div>
+
+<!-- Theme Panel -->
+<div class="theme-panel" id="theme-panel">
+  <div class="theme-panel-header">
+    <div class="theme-panel-title">&#127912; Appearance</div>
+    <button class="theme-close" onclick="closeThemePanel()">&#x2715;</button>
+  </div>
+  <div class="theme-panel-body">
+    <div class="theme-section-label">Preset themes</div>
+    <div class="theme-grid" id="theme-grid"></div>
+    <div class="theme-section-label">Custom background color</div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;">
+      <div class="color-row"><span class="color-row-label">Page background</span><input type="color" class="color-picker" id="cp-bg" value="#0b0d14" oninput="applyCustomColor()"/></div>
+      <div class="color-row"><span class="color-row-label">Panel / cards</span><input type="color" class="color-picker" id="cp-card" value="#1e2235" oninput="applyCustomColor()"/></div>
+      <div class="color-row"><span class="color-row-label">Input fields</span><input type="color" class="color-picker" id="cp-input" value="#181c2e" oninput="applyCustomColor()"/></div>
+      <div class="color-row"><span class="color-row-label">Accent / buttons</span><input type="color" class="color-picker" id="cp-accent" value="#6c63ff" oninput="applyCustomColor()"/></div>
+      <div class="color-row"><span class="color-row-label">Main text</span><input type="color" class="color-picker" id="cp-text" value="#f0f2ff" oninput="applyCustomColor()"/></div>
+      <div class="color-row"><span class="color-row-label">Secondary text</span><input type="color" class="color-picker" id="cp-text2" value="#9ea3c0" oninput="applyCustomColor()"/></div>
+      <button class="btn-convert" style="margin-top:12px;font-size:12px;padding:8px;" onclick="activateCustomTheme()">Apply custom colors</button>
+    </div>
+    <div class="theme-section-label">Font size</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="tab-btn" onclick="setFontSize('small')" id="fs-small">Small</button>
+      <button class="tab-btn active" onclick="setFontSize('medium')" id="fs-medium">Medium</button>
+      <button class="tab-btn" onclick="setFontSize('large')" id="fs-large">Large</button>
+    </div>
+    <div class="theme-section-label">Sidebar</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="tab-btn active" onclick="setSidebarMode('full')" id="sb-full">Full labels</button>
+      <button class="tab-btn" onclick="setSidebarMode('icons')" id="sb-icons">Icons only</button>
+    </div>
+    <button class="btn-convert" style="background:var(--card2);border:1px solid var(--border2);color:var(--text2);font-size:12px;padding:8px;" onclick="resetAll()">&#x21BA; Reset all settings</button>
+  </div>
+</div>
+
+<div class="app-body">
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-title" id="sb-title">CONVERTERS</div>
+  <div id="sidebar-nav"></div>
+</div>
+
+<!-- Main -->
+<div class="main" id="main-area"></div>
+
+</div><!-- app-body -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  TRANSLATIONS
+// ═══════════════════════════════════════════════════════════════
+const T = {
+  en:{
+    appTitle:"Universal Converter",appSub:"All measurements in one place • Offline",
+    sbTitle:"CONVERTERS",langLabel:"Language:",from:"From",to:"To",
+    convert:"Convert",result:"Result",swap:"Swap",
+    selectTZ:"Search timezone...",srcTZ:"Source Timezone",targetTZ:"Target Timezones",
+    allTZ:"All",clearTZ:"Clear",noTZ:"No results",
+    dob:"Date of Birth",calcAge:"Calculate Age",
+    years:"Years",months:"Months",days:"Days",hours:"Hours",minutes:"Minutes",
+    weeks:"Weeks",seconds:"Seconds",nextBday:"Next Birthday",daysLeft:"days away",
+    enterNum:"Enter value",selectUnit:"Select unit",
+    typeSearch:"Type to search...",selected:"selected",
+    rateNotice:"Currency rates are approximate (static). For live rates, check a bank.",
+    cats:{
+      timezone:"Time Zone",currency:"Currency",length:"Length",weight:"Weight / Mass",
+      temperature:"Temperature",area:"Area",volume:"Volume",speed:"Speed",
+      data:"Data Storage",age:"Age Calculator",pressure:"Pressure",energy:"Energy",
+      power:"Power",angle:"Angle",fuel:"Fuel Efficiency",numbase:"Number Base",
+      roman:"Roman Numerals",cooking:"Cooking",clothing:"Clothing Size",shoe:"Shoe Size"
+    }
+  },
+  hi:{
+    appTitle:"सार्वभौमिक परिवर्तक",appSub:"सभी माप एक जगह • ऑफलाइन",
+    sbTitle:"परिवर्तक",langLabel:"भाषा:",from:"से",to:"में",
+    convert:"परिवर्तित करें",result:"परिणाम",swap:"बदलें",
+    selectTZ:"टाइमज़ोन खोजें...",srcTZ:"स्रोत टाइमज़ोन",targetTZ:"लक्ष्य टाइमज़ोन",
+    allTZ:"सभी",clearTZ:"साफ करें",noTZ:"कोई परिणाम नहीं",
+    dob:"जन्म तिथि",calcAge:"आयु गणना करें",
+    years:"वर्ष",months:"महीने",days:"दिन",hours:"घंटे",minutes:"मिनट",
+    weeks:"सप्ताह",seconds:"सेकंड",nextBday:"अगला जन्मदिन",daysLeft:"दिन बाकी",
+    enterNum:"मान दर्ज करें",selectUnit:"इकाई चुनें",
+    typeSearch:"खोजें...",selected:"चयनित",
+    rateNotice:"मुद्रा दरें अनुमानित हैं (स्थैतिक)। लाइव दरों के लिए बैंक से जांचें।",
+    cats:{
+      timezone:"समय क्षेत्र",currency:"मुद्रा",length:"लंबाई",weight:"वजन / द्रव्यमान",
+      temperature:"तापमान",area:"क्षेत्रफल",volume:"आयतन",speed:"गति",
+      data:"डेटा संग्रहण",age:"आयु कैलकुलेटर",pressure:"दबाव",energy:"ऊर्जा",
+      power:"शक्ति",angle:"कोण",fuel:"ईंधन दक्षता",numbase:"संख्या आधार",
+      roman:"रोमन अंक",cooking:"खाना पकाना",clothing:"कपड़े का आकार",shoe:"जूते का आकार"
+    }
+  },
+  bn:{
+    appTitle:"সার্বজনীন রূপান্তরকারী",appSub:"সব পরিমাপ এক জায়গায় • অফলাইন",
+    sbTitle:"রূপান্তরকারী",langLabel:"ভাষা:",from:"থেকে",to:"তে",
+    convert:"রূপান্তর করুন",result:"ফলাফল",swap:"বদলান",
+    selectTZ:"টাইমজোন খুঁজুন...",srcTZ:"উৎস টাইমজোন",targetTZ:"লক্ষ্য টাইমজোন",
+    allTZ:"সব",clearTZ:"মুছুন",noTZ:"কোনো ফলাফল নেই",
+    dob:"জন্ম তারিখ",calcAge:"বয়স গণনা করুন",
+    years:"বছর",months:"মাস",days:"দিন",hours:"ঘণ্টা",minutes:"মিনিট",
+    weeks:"সপ্তাহ",seconds:"সেকেন্ড",nextBday:"পরবর্তী জন্মদিন",daysLeft:"দিন বাকি",
+    enterNum:"মান লিখুন",selectUnit:"একক নির্বাচন করুন",
+    typeSearch:"খুঁজুন...",selected:"নির্বাচিত",
+    rateNotice:"মুদ্রার হার আনুমানিক (স্ট্যাটিক)।",
+    cats:{
+      timezone:"সময় অঞ্চল",currency:"মুদ্রা",length:"দৈর্ঘ্য",weight:"ওজন",
+      temperature:"তাপমাত্রা",area:"ক্ষেত্রফল",volume:"আয়তন",speed:"গতি",
+      data:"ডেটা স্টোরেজ",age:"বয়স ক্যালকুলেটর",pressure:"চাপ",energy:"শক্তি",
+      power:"ক্ষমতা",angle:"কোণ",fuel:"জ্বালানি দক্ষতা",numbase:"সংখ্যা ভিত্তি",
+      roman:"রোমান সংখ্যা",cooking:"রান্না",clothing:"পোশাকের আকার",shoe:"জুতার আকার"
+    }
+  },
+  ta:{
+    appTitle:"உலகளாவிய மாற்றி",appSub:"அனைத்து அளவீடுகளும் ஒரே இடத்தில் • ஆஃப்லைன்",
+    sbTitle:"மாற்றிகள்",langLabel:"மொழி:",from:"இருந்து",to:"க்கு",
+    convert:"மாற்று",result:"முடிவு",swap:"மாற்று",
+    selectTZ:"நேர மண்டலம் தேடு...",srcTZ:"மூல நேர மண்டலம்",targetTZ:"இலக்கு நேர மண்டலங்கள்",
+    allTZ:"அனைத்தும்",clearTZ:"அழி",noTZ:"முடிவுகள் இல்லை",
+    dob:"பிறந்த தேதி",calcAge:"வயதை கணக்கிடு",
+    years:"ஆண்டுகள்",months:"மாதங்கள்",days:"நாட்கள்",hours:"மணிகள்",minutes:"நிமிடங்கள்",
+    weeks:"வாரங்கள்",seconds:"விநாடிகள்",nextBday:"அடுத்த பிறந்த நாள்",daysLeft:"நாட்கள் உள்ளன",
+    enterNum:"மதிப்பை உள்ளிடு",selectUnit:"அலகை தேர்ந்தெடு",
+    typeSearch:"தேடு...",selected:"தேர்ந்தெடுக்கப்பட்டது",
+    rateNotice:"நாணய விகிதங்கள் தோராயமானவை (நிலையானவை).",
+    cats:{
+      timezone:"நேர மண்டலம்",currency:"நாணயம்",length:"நீளம்",weight:"எடை",
+      temperature:"வெப்பநிலை",area:"பரப்பளவு",volume:"கொள்ளளவு",speed:"வேகம்",
+      data:"தரவு சேமிப்பு",age:"வய கணக்கீடு",pressure:"அழுத்தம்",energy:"ஆற்றல்",
+      power:"சக்தி",angle:"கோணம்",fuel:"எரிபொருள் திறன்",numbase:"எண் அடிப்படை",
+      roman:"ரோமன் எண்கள்",cooking:"சமையல்",clothing:"ஆடை அளவு",shoe:"காலணி அளவு"
+    }
+  },
+  te:{
+    appTitle:"సార్వత్రిక మార్పిడి",appSub:"అన్ని కొలతలు ఒకే చోట • ఆఫ్‌లైన్",
+    sbTitle:"మార్పిడి సాధనాలు",langLabel:"భాష:",from:"నుండి",to:"కి",
+    convert:"మార్చు",result:"ఫలితం",swap:"మార్చుకో",
+    dob:"పుట్టిన తేదీ",calcAge:"వయస్సు లెక్కించు",
+    years:"సంవత్సరాలు",months:"నెలలు",days:"రోజులు",hours:"గంటలు",minutes:"నిమిషాలు",
+    weeks:"వారాలు",seconds:"సెకన్లు",nextBday:"తదుపరి పుట్టినరోజు",daysLeft:"రోజులు మిగిలాయి",
+    enterNum:"విలువ నమోదు చేయండి",selectUnit:"యూనిట్ ఎంచుకోండి",
+    typeSearch:"వెతకండి...",selected:"ఎంచుకున్నారు",
+    rateNotice:"కరెన్సీ రేట్లు అంచనా (స్థిరం).",
+    cats:{
+      timezone:"సమయ మండలం",currency:"కరెన్సీ",length:"పొడవు",weight:"బరువు",
+      temperature:"ఉష్ణోగ్రత",area:"వైశాల్యం",volume:"వాల్యూమ్",speed:"వేగం",
+      data:"డేటా నిల్వ",age:"వయస్సు కాలిక్యులేటర్",pressure:"పీడనం",energy:"శక్తి",
+      power:"పవర్",angle:"కోణం",fuel:"ఇంధన సామర్థ్యం",numbase:"సంఖ్య ఆధారం",
+      roman:"రోమన్ అంకెలు",cooking:"వంట",clothing:"బట్టల సైజు",shoe:"చెప్పుల సైజు"
+    }
+  },
+  kn:{
+    appTitle:"ಸಾರ್ವತ್ರಿಕ ಪರಿವರ್ತಕ",appSub:"ಎಲ್ಲಾ ಅಳತೆಗಳು ಒಂದೇ ಸ್ಥಳದಲ್ಲಿ • ಆಫ್‌ಲೈನ್",
+    sbTitle:"ಪರಿವರ್ತಕಗಳು",langLabel:"ಭಾಷೆ:",from:"ಇಂದ",to:"ಗೆ",
+    convert:"ಪರಿವರ್ತಿಸಿ",result:"ಫಲಿತಾಂಶ",swap:"ಬದಲಾಯಿಸಿ",
+    dob:"ಹುಟ್ಟಿದ ದಿನಾಂಕ",calcAge:"ವಯಸ್ಸು ಲೆಕ್ಕ ಹಾಕಿ",
+    years:"ವರ್ಷಗಳು",months:"ತಿಂಗಳುಗಳು",days:"ದಿನಗಳು",hours:"ಗಂಟೆಗಳು",minutes:"ನಿಮಿಷಗಳು",
+    weeks:"ವಾರಗಳು",seconds:"ಸೆಕೆಂಡುಗಳು",nextBday:"ಮುಂದಿನ ಹುಟ್ಟುಹಬ್ಬ",daysLeft:"ದಿನಗಳು ಉಳಿದಿವೆ",
+    enterNum:"ಮೌಲ್ಯ ನಮೂದಿಸಿ",selectUnit:"ಘಟಕ ಆಯ್ಕೆ ಮಾಡಿ",
+    typeSearch:"ಹುಡುಕಿ...",selected:"ಆಯ್ಕೆಯಾಗಿದೆ",
+    rateNotice:"ಕರೆನ್ಸಿ ದರಗಳು ಅಂದಾಜು (ಸ್ಥಿರ).",
+    cats:{
+      timezone:"ಸಮಯ ವಲಯ",currency:"ಕರೆನ್ಸಿ",length:"ಉದ್ದ",weight:"ತೂಕ",
+      temperature:"ತಾಪಮಾನ",area:"ಪ್ರದೇಶ",volume:"ಪರಿಮಾಣ",speed:"ವೇಗ",
+      data:"ಡೇಟಾ ಸಂಗ್ರಹ",age:"ವಯಸ್ಸು ಕ್ಯಾಲ್ಕುಲೇಟರ್",pressure:"ಒತ್ತಡ",energy:"ಶಕ್ತಿ",
+      power:"ಶಕ್ತಿ",angle:"ಕೋನ",fuel:"ಇಂಧನ ದಕ್ಷತೆ",numbase:"ಸಂಖ್ಯೆ ಆಧಾರ",
+      roman:"ರೋಮನ್ ಸಂಖ್ಯೆಗಳು",cooking:"ಅಡುಗೆ",clothing:"ಬಟ್ಟೆ ಗಾತ್ರ",shoe:"ಚಪ್ಪಲಿ ಗಾತ್ರ"
+    }
+  },
+  ml:{
+    appTitle:"സാർവത്രിക കൺവെർട്ടർ",appSub:"എല്ലാ അളവുകളും ഒരിടത്ത് • ഓഫ്‌ലൈൻ",
+    sbTitle:"കൺവെർട്ടറുകൾ",langLabel:"ഭാഷ:",from:"ൽ നിന്ന്",to:"ലേക്ക്",
+    convert:"മാറ്റുക",result:"ഫലം",swap:"മാറ്റുക",
+    dob:"ജനന തീയതി",calcAge:"പ്രായം കണക്കാക്കുക",
+    years:"വർഷങ്ങൾ",months:"മാസങ്ങൾ",days:"ദിവസങ്ങൾ",hours:"മണിക്കൂർ",minutes:"മിനിറ്റ്",
+    weeks:"ആഴ്ചകൾ",seconds:"സെക്കൻഡ്",nextBday:"അടുത്ത ജന്മദിനം",daysLeft:"ദിവസം ബാക്കി",
+    enterNum:"മൂല്യം നൽകുക",selectUnit:"യൂണിറ്റ് തിരഞ്ഞെടുക്കുക",
+    typeSearch:"തിരയുക...",selected:"തിരഞ്ഞെടുത്തു",
+    rateNotice:"കറൻസി നിരക്കുകൾ ഏകദേശം (സ്ഥിരം).",
+    cats:{
+      timezone:"സമയ മേഖല",currency:"കറൻസി",length:"നീളം",weight:"ഭാരം",
+      temperature:"താപനില",area:"വിസ്തൃതി",volume:"വോള്യം",speed:"വേഗത",
+      data:"ഡേറ്റ സ്റ്റോറേജ്",age:"പ്രായം കാൽക്കുലേറ്റർ",pressure:"മർദ്ദം",energy:"ഊർജ്ജം",
+      power:"ശക്തി",angle:"കോൺ",fuel:"ഇന്ധന ക്ഷമത",numbase:"നമ്പർ ബേസ്",
+      roman:"റോമൻ അക്കങ്ങൾ",cooking:"പാചകം",clothing:"വസ്ത്ര വലിപ്പം",shoe:"ഷൂ സൈസ്"
+    }
+  },
+  mr:{
+    appTitle:"सार्वत्रिक रूपांतरक",appSub:"सर्व मोजमाप एकाच ठिकाणी • ऑफलाइन",
+    sbTitle:"रूपांतरक",langLabel:"भाषा:",from:"पासून",to:"मध्ये",
+    convert:"रूपांतरित करा",result:"निकाल",swap:"बदला",
+    dob:"जन्म तारीख",calcAge:"वय मोजा",
+    years:"वर्षे",months:"महिने",days:"दिवस",hours:"तास",minutes:"मिनिटे",
+    weeks:"आठवडे",seconds:"सेकंद",nextBday:"पुढचा वाढदिवस",daysLeft:"दिवस शिल्लक",
+    enterNum:"मूल्य प्रविष्ट करा",selectUnit:"एकक निवडा",
+    typeSearch:"शोधा...",selected:"निवडले",
+    rateNotice:"चलन दर अंदाजे आहेत (स्थिर).",
+    cats:{
+      timezone:"वेळ क्षेत्र",currency:"चलन",length:"लांबी",weight:"वजन",
+      temperature:"तापमान",area:"क्षेत्रफळ",volume:"आयतन",speed:"वेग",
+      data:"डेटा संग्रहण",age:"वय कॅल्क्युलेटर",pressure:"दाब",energy:"ऊर्जा",
+      power:"शक्ती",angle:"कोन",fuel:"इंधन कार्यक्षमता",numbase:"संख्या आधार",
+      roman:"रोमन अंक",cooking:"स्वयंपाक",clothing:"कपड्यांचा आकार",shoe:"शूजचा आकार"
+    }
+  },
+  gu:{
+    appTitle:"સાર્વત્રિક કન્વર્ટર",appSub:"બધા માપ એક જ જગ્યાએ • ઓફલાઇન",
+    sbTitle:"કન્વર્ટર",langLabel:"ભાષા:",from:"થી",to:"માં",
+    convert:"રૂપાંતરિત કરો",result:"પરિણામ",swap:"બદલો",
+    dob:"જન્મ તારીખ",calcAge:"ઉંમર ગણો",
+    years:"વર્ષ",months:"મહિના",days:"દિવસ",hours:"કલાક",minutes:"મિનિટ",
+    weeks:"અઠવાડિયા",seconds:"સેકન્ડ",nextBday:"આગળનો જન્મ દિવસ",daysLeft:"દિવસ બાકી",
+    enterNum:"મૂલ્ય દાખલ કરો",selectUnit:"એકમ પસંદ કરો",
+    typeSearch:"શોધો...",selected:"પસંદ",
+    rateNotice:"ચલણ દરો અંદાજિત છે (સ્થિર).",
+    cats:{
+      timezone:"સમય ઝોન",currency:"ચલણ",length:"લંબાઈ",weight:"વજન",
+      temperature:"તાપમાન",area:"ક્ષેત્રફળ",volume:"વોલ્યુમ",speed:"ઝડપ",
+      data:"ડેટા સ્ટોરેજ",age:"ઉંમર કૅલ્ક્યુલેટર",pressure:"દબાણ",energy:"ઊર્જા",
+      power:"પાવર",angle:"ખૂણો",fuel:"ઇંધણ કાર્યક્ષમતા",numbase:"સંખ્યા આધાર",
+      roman:"રોમન અંક",cooking:"રસોઈ",clothing:"કપડાનો આકાર",shoe:"જૂતાનો આકાર"
+    }
+  },
+  pa:{
+    appTitle:"ਸਰਵ-ਵਿਆਪੀ ਕਨਵਰਟਰ",appSub:"ਸਾਰੇ ਮਾਪ ਇੱਕ ਥਾਂ • ਆਫਲਾਈਨ",
+    sbTitle:"ਕਨਵਰਟਰ",langLabel:"ਭਾਸ਼ਾ:",from:"ਤੋਂ",to:"ਵਿੱਚ",
+    convert:"ਬਦਲੋ",result:"ਨਤੀਜਾ",swap:"ਅਦਲਾ-ਬਦਲੀ",
+    dob:"ਜਨਮ ਮਿਤੀ",calcAge:"ਉਮਰ ਗਿਣੋ",
+    years:"ਸਾਲ",months:"ਮਹੀਨੇ",days:"ਦਿਨ",hours:"ਘੰਟੇ",minutes:"ਮਿੰਟ",
+    weeks:"ਹਫ਼ਤੇ",seconds:"ਸਕਿੰਟ",nextBday:"ਅਗਲਾ ਜਨਮਦਿਨ",daysLeft:"ਦਿਨ ਬਾਕੀ",
+    enterNum:"ਮੁੱਲ ਦਰਜ ਕਰੋ",selectUnit:"ਇਕਾਈ ਚੁਣੋ",
+    typeSearch:"ਖੋਜੋ...",selected:"ਚੁਣਿਆ",
+    rateNotice:"ਮੁਦਰਾ ਦਰਾਂ ਅਨੁਮਾਨਿਤ ਹਨ (ਸਥਿਰ).",
+    cats:{
+      timezone:"ਸਮਾਂ ਖੇਤਰ",currency:"ਮੁਦਰਾ",length:"ਲੰਬਾਈ",weight:"ਭਾਰ",
+      temperature:"ਤਾਪਮਾਨ",area:"ਖੇਤਰਫਲ",volume:"ਆਇਤਨ",speed:"ਗਤੀ",
+      data:"ਡੇਟਾ ਸਟੋਰੇਜ",age:"ਉਮਰ ਕੈਲਕੁਲੇਟਰ",pressure:"ਦਬਾਅ",energy:"ਊਰਜਾ",
+      power:"ਸ਼ਕਤੀ",angle:"ਕੋਣ",fuel:"ਈਂਧਣ ਕੁਸ਼ਲਤਾ",numbase:"ਸੰਖਿਆ ਅਧਾਰ",
+      roman:"ਰੋਮਨ ਅੰਕ",cooking:"ਖਾਣਾ ਪਕਾਉਣਾ",clothing:"ਕੱਪੜੇ ਦਾ ਆਕਾਰ",shoe:"ਜੁੱਤੇ ਦਾ ਆਕਾਰ"
+    }
+  },
+  or:{
+    appTitle:"ସର୍ବଜନୀନ ରୂପାନ୍ତରକ",appSub:"ସମସ୍ତ ମାପ ଏକ ସ୍ଥାନରେ • ଅଫଲାଇନ",
+    sbTitle:"ରୂପାନ୍ତରକ",langLabel:"ଭାଷା:",from:"ରୁ",to:"କୁ",
+    convert:"ରୂପାନ୍ତର କରନ୍ତୁ",result:"ଫଳାଫଳ",swap:"ଅଦଳ ବଦଳ",
+    dob:"ଜନ୍ମ ତାରିଖ",calcAge:"ବୟସ ଗଣନା",
+    years:"ବର୍ଷ",months:"ମାସ",days:"ଦିନ",hours:"ଘଣ୍ଟା",minutes:"ମିନିଟ",
+    weeks:"ସପ୍ତାହ",seconds:"ସେକେଣ୍ଡ",nextBday:"ପରବର୍ତ୍ତୀ ଜନ୍ମଦିନ",daysLeft:"ଦିନ ବାକି",
+    enterNum:"ମୂଲ୍ୟ ଦିଅନ୍ତୁ",selectUnit:"ଏକକ ବାଛନ୍ତୁ",
+    typeSearch:"ଖୋଜନ୍ତୁ...",selected:"ବାଛିଛନ୍ତି",
+    rateNotice:"ମୁଦ୍ରା ହାର ଆନୁମାନିକ (ସ୍ଥିର).",
+    cats:{
+      timezone:"ସମୟ ମଣ୍ଡଳ",currency:"ମୁଦ୍ରା",length:"ଦୈର୍ଘ୍ୟ",weight:"ଓଜନ",
+      temperature:"ତାପମାତ୍ରା",area:"କ୍ଷେତ୍ରଫଳ",volume:"ଆୟତନ",speed:"ଗତି",
+      data:"ଡାଟା ଷ୍ଟୋରେଜ",age:"ବୟସ କ୍ୟାଲକୁଲେଟର",pressure:"ଚାପ",energy:"ଶକ୍ତି",
+      power:"ଶକ୍ତି",angle:"କୋଣ",fuel:"ଇନ୍ଧନ ଦକ୍ଷତା",numbase:"ସଂଖ୍ୟା ଆଧାର",
+      roman:"ରୋମାନ ଅଙ୍କ",cooking:"ରୋଷେଇ",clothing:"ଜାମା ଆକାର",shoe:"ଜୋତା ଆକାର"
+    }
+  }
+};
+
+let lang = "en";
+function t(k){ return (T[lang]||T.en)[k] || (T.en)[k] || k; }
+function tc(k){ return ((T[lang]||T.en).cats||{})[k] || (T.en.cats||{})[k] || k; }
+
+// ═══════════════════════════════════════════════════════════════
+//  CATEGORIES
+// ═══════════════════════════════════════════════════════════════
+const CATS = [
+  {id:"timezone",  icon:"🕐"},
+  {id:"currency",  icon:"💰"},
+  {id:"length",    icon:"📏"},
+  {id:"weight",    icon:"⚖️"},
+  {id:"temperature",icon:"🌡️"},
+  {id:"area",      icon:"🗺️"},
+  {id:"volume",    icon:"🧪"},
+  {id:"speed",     icon:"🚀"},
+  {id:"data",      icon:"💾"},
+  {id:"age",       icon:"🎂"},
+  {id:"pressure",  icon:"🔵"},
+  {id:"energy",    icon:"⚡"},
+  {id:"power",     icon:"🔌"},
+  {id:"angle",     icon:"📐"},
+  {id:"fuel",      icon:"⛽"},
+  {id:"numbase",   icon:"🔢"},
+  {id:"roman",     icon:"Ⅻ"},
+  {id:"cooking",   icon:"🍳"},
+  {id:"clothing",  icon:"👕"},
+  {id:"shoe",      icon:"👟"},
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  CONVERSION DATA
+// ═══════════════════════════════════════════════════════════════
+
+// Length (base: meter)
+const LENGTH = [
+  ["Kilometer","km",1000],["Meter","m",1],["Centimeter","cm",.01],
+  ["Millimeter","mm",.001],["Micrometer","μm",1e-6],["Mile","mi",1609.344],
+  ["Yard","yd",.9144],["Foot","ft",.3048],["Inch","in",.0254],
+  ["Nautical Mile","nmi",1852],["Light Year","ly",9.461e15],
+];
+
+// Weight (base: kg)
+const WEIGHT = [
+  ["Kilogram","kg",1],["Gram","g",.001],["Milligram","mg",1e-6],
+  ["Pound","lb",.453592],["Ounce","oz",.0283495],["Ton (metric)","t",1000],
+  ["Ton (US)","us t",907.185],["Stone","st",6.35029],["Quintal","q",100],
+];
+
+// Area (base: m²)
+const AREA = [
+  ["Square Meter","m²",1],["Square Kilometer","km²",1e6],
+  ["Square Centimeter","cm²",1e-4],["Square Mile","mi²",2589988.11],
+  ["Square Yard","yd²",.836127],["Square Foot","ft²",.092903],
+  ["Square Inch","in²",6.4516e-4],["Acre","acre",4046.856],
+  ["Hectare","ha",10000],["Bigha (India)","bigha",1337.8],
+  ["Guntha","guntha",101.171],["Cent","cent",40.4686],["Kanal","kanal",505.857],
+];
+
+// Volume (base: liter)
+const VOLUME = [
+  ["Liter","L",1],["Milliliter","mL",.001],["Cubic Meter","m³",1000],
+  ["Cubic Centimeter","cm³",.001],["Gallon (US)","gal",3.78541],
+  ["Gallon (UK)","UK gal",4.54609],["Quart (US)","qt",.946353],
+  ["Pint (US)","pt",.473176],["Cup","cup",.236588],
+  ["Fluid Ounce","fl oz",.0295735],["Tablespoon","tbsp",.0147868],
+  ["Teaspoon","tsp",.00492892],
+];
+
+// Speed (base: m/s)
+const SPEED = [
+  ["m/s","m/s",1],["km/h","km/h",1/3.6],["mph","mph",.44704],
+  ["Knot","kn",.514444],["Mach","Mach",340.29],["ft/s","ft/s",.3048],
+];
+
+// Data (base: byte)
+const DATA = [
+  ["Bit","bit",.125],["Byte","B",1],["Kilobyte","KB",1024],
+  ["Megabyte","MB",1048576],["Gigabyte","GB",1073741824],
+  ["Terabyte","TB",1099511627776],["Petabyte","PB",1125899906842624],
+  ["Kilobit","Kbit",125],["Megabit","Mbit",125000],["Gigabit","Gbit",125000000],
+];
+
+// Pressure (base: Pascal)
+const PRESSURE = [
+  ["Pascal","Pa",1],["Kilopascal","kPa",1000],["Megapascal","MPa",1e6],
+  ["Bar","bar",100000],["Millibar","mbar",100],["PSI","psi",6894.76],
+  ["Atmosphere","atm",101325],["mmHg","mmHg",133.322],["inHg","inHg",3386.39],
+];
+
+// Energy (base: Joule)
+const ENERGY = [
+  ["Joule","J",1],["Kilojoule","kJ",1000],["Calorie","cal",4.184],
+  ["Kilocalorie (kcal)","kcal",4184],["Watt-hour","Wh",3600],
+  ["Kilowatt-hour","kWh",3600000],["BTU","BTU",1055.06],
+  ["Electron Volt","eV",1.602e-19],["Foot-pound","ft·lbf",1.35582],
+];
+
+// Power (base: Watt)
+const POWER = [
+  ["Watt","W",1],["Kilowatt","kW",1000],["Megawatt","MW",1e6],
+  ["Horsepower (mech)","hp",745.7],["Horsepower (metric)","PS",735.499],
+  ["BTU/hr","BTU/h",.293071],["Calorie/sec","cal/s",4.184],
+];
+
+// Angle (base: degree)
+const ANGLE = [
+  ["Degree","°",1],["Radian","rad",180/Math.PI],
+  ["Gradian","grad",.9],["Arcminute","'",1/60],
+  ["Arcsecond","\"",1/3600],["Turn","turn",360],
+];
+
+// Fuel (base: km/L)
+const FUEL = [
+  ["km/L","km/L",1],["L/100km","L/100km",null],
+  ["mpg (US)","mpg",2.35215],["mpg (UK)","mpg UK",2.82481],
+  ["mi/L","mi/L",1.60934],
+];
+
+// Currency (base: INR — static approximate rates as of 2024)
+const CURRENCY = [
+  ["Indian Rupee","INR",1],["US Dollar","USD",83.5],
+  ["Euro","EUR",90.2],["British Pound","GBP",105.8],
+  ["Japanese Yen","JPY",.56],["Chinese Yuan","CNY",11.5],
+  ["UAE Dirham","AED",22.7],["Saudi Riyal","SAR",22.3],
+  ["Singapore Dollar","SGD",62.0],["Australian Dollar","AUD",54.5],
+  ["Canadian Dollar","CAD",61.5],["Swiss Franc","CHF",94.0],
+  ["South Korean Won","KRW",.063],["Hong Kong Dollar","HKD",10.7],
+  ["Thai Baht","THB",2.35],["Malaysian Ringgit","MYR",17.8],
+  ["Bangladesh Taka","BDT",.76],["Pakistani Rupee","PKR",.30],
+  ["Sri Lankan Rupee","LKR",.26],["Nepalese Rupee","NPR",.625],
+  ["Russian Ruble","RUB",.93],["Turkish Lira","TRY",2.60],
+  ["South African Rand","ZAR",4.55],["Mexican Peso","MXN",4.85],
+  ["Brazilian Real","BRL",16.8],["Swedish Krona","SEK",7.98],
+  ["Norwegian Krone","NOK",7.85],["Danish Krone","DKK",12.1],
+  ["New Zealand Dollar","NZD",50.5],["Kuwaiti Dinar","KWD",271.5],
+  ["Bahraini Dinar","BHD",221.5],["Omani Rial","OMR",216.8],
+  ["Egyptian Pound","EGP",1.72],["Nigerian Naira","NGN",.055],
+  ["Kenyan Shilling","KES",.65],["Indonesian Rupiah","IDR",.0053],
+  ["Philippine Peso","PHP",1.47],["Vietnamese Dong","VND",.0033],
+];
+
+// Cooking
+const COOKING = [
+  ["Cup","cup",240],["Tablespoon","tbsp",15],["Teaspoon","tsp",5],
+  ["Fluid Ounce","fl oz",29.574],["Milliliter","mL",1],
+  ["Liter","L",1000],["Pint","pt",473.176],["Quart","qt",946.353],
+  ["Gallon","gal",3785.41],["Gill","gill",118.294],
+];
+
+// Timezones
+const ZONES=[
+  ["UTC","UTC"],["New York (EST/EDT)","America/New_York"],
+  ["Chicago (CST)","America/Chicago"],["Denver (MST)","America/Denver"],
+  ["Los Angeles (PST/PDT)","America/Los_Angeles"],["Toronto","America/Toronto"],
+  ["São Paulo","America/Sao_Paulo"],["Buenos Aires","America/Argentina/Buenos_Aires"],
+  ["Mexico City","America/Mexico_City"],["London (GMT/BST)","Europe/London"],
+  ["Paris / Berlin (CET)","Europe/Paris"],["Amsterdam","Europe/Amsterdam"],
+  ["Madrid","Europe/Madrid"],["Rome","Europe/Rome"],["Zurich","Europe/Zurich"],
+  ["Stockholm","Europe/Stockholm"],["Istanbul","Europe/Istanbul"],
+  ["Moscow","Europe/Moscow"],["Cairo","Africa/Cairo"],
+  ["Johannesburg","Africa/Johannesburg"],["Lagos","Africa/Lagos"],
+  ["Nairobi","Africa/Nairobi"],["Dubai (GST)","Asia/Dubai"],
+  ["Riyadh","Asia/Riyadh"],["Karachi","Asia/Karachi"],
+  ["Mumbai / Delhi (IST)","Asia/Kolkata"],["Colombo","Asia/Colombo"],
+  ["Dhaka","Asia/Dhaka"],["Bangkok","Asia/Bangkok"],
+  ["Ho Chi Minh","Asia/Ho_Chi_Minh"],["Singapore","Asia/Singapore"],
+  ["Kuala Lumpur","Asia/Kuala_Lumpur"],["Manila","Asia/Manila"],
+  ["Beijing / Shanghai","Asia/Shanghai"],["Hong Kong","Asia/Hong_Kong"],
+  ["Tokyo (JST)","Asia/Tokyo"],["Seoul","Asia/Seoul"],
+  ["Sydney","Australia/Sydney"],["Melbourne","Australia/Melbourne"],
+  ["Brisbane","Australia/Brisbane"],["Perth","Australia/Perth"],
+  ["Auckland","Pacific/Auckland"],["Honolulu","Pacific/Honolulu"],
+];
+
+// Clothing sizes
+const CLOTHING_M={
+  "XS (India 34)":{"IN":"34","US":"XS","UK":"8","EU":"34"},
+  "S (India 36)":{"IN":"36","US":"S","UK":"10","EU":"36"},
+  "M (India 38)":{"IN":"38","US":"M","UK":"12","EU":"38"},
+  "L (India 40)":{"IN":"40","US":"L","UK":"14","EU":"40"},
+  "XL (India 42)":{"IN":"42","US":"XL","UK":"16","EU":"42"},
+  "XXL (India 44)":{"IN":"44","US":"XXL","UK":"18","EU":"44"},
+  "3XL (India 46)":{"IN":"46","US":"3XL","UK":"20","EU":"46"},
+  "4XL (India 48)":{"IN":"48","US":"4XL","UK":"22","EU":"48"},
+};
+const SHOE_M={
+  "IN 6 / UK 6":{"IN":"6","US M":"6.5","US W":"8","UK":"6","EU":"39"},
+  "IN 7 / UK 7":{"IN":"7","US M":"7.5","US W":"9","UK":"7","EU":"40"},
+  "IN 8 / UK 8":{"IN":"8","US M":"8.5","US W":"10","UK":"8","EU":"42"},
+  "IN 9 / UK 9":{"IN":"9","US M":"9.5","US W":"11","UK":"9","EU":"43"},
+  "IN 10 / UK 10":{"IN":"10","US M":"10.5","US W":"12","UK":"10","EU":"44"},
+  "IN 11 / UK 11":{"IN":"11","US M":"11.5","US W":"13","UK":"11","EU":"45"},
+  "IN 12 / UK 12":{"IN":"12","US M":"12.5","US W":"14","UK":"12","EU":"47"},
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function fmt(n){
+  if(isNaN(n)||!isFinite(n)) return "—";
+  if(Math.abs(n)>=1e12) return n.toExponential(4);
+  if(Math.abs(n)>=1000000) return n.toLocaleString('en-IN',{maximumFractionDigits:2});
+  if(Math.abs(n)>=1) return parseFloat(n.toPrecision(8)).toLocaleString('en-IN',{maximumFractionDigits:6});
+  return parseFloat(n.toPrecision(6)).toString();
+}
+
+function showToast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),2500);
+}
+
+function getOffsetMs(date,tz){
+  const u=date.toLocaleString("en-US",{timeZone:"UTC"});
+  const z=date.toLocaleString("en-US",{timeZone:tz});
+  return new Date(u)-new Date(z);
+}
+function fmtInTZ(date,tz){
+  const p={};
+  new Intl.DateTimeFormat("en-GB",{timeZone:tz,year:"numeric",month:"2-digit",
+    day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false})
+    .formatToParts(date).forEach(({type,value})=>p[type]=value);
+  return{date:`${p.year}-${p.month}-${p.day}`,time:`${p.hour}:${p.minute}`};
+}
+function getAbbr(date,tz){
+  try{
+    const parts=new Intl.DateTimeFormat("en-US",{timeZone:tz,timeZoneName:"short"}).formatToParts(date);
+    return(parts.find(p=>p.type==="timeZoneName")||{}).value||"";
+  }catch{return"";}
+}
+function getUTCOff(tz){
+  try{
+    const parts=new Intl.DateTimeFormat("en",{timeZone:tz,timeZoneName:"shortOffset"}).formatToParts(new Date());
+    const off=parts.find(p=>p.type==="timeZoneName");
+    return off?off.value:"";
+  }catch{return"";}
+}
+
+// Roman numeral conversion
+function toRoman(n){
+  if(n<=0||n>3999||!Number.isInteger(n)) return "Invalid (1–3999)";
+  const vals=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const syms=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
+  let r="";
+  for(let i=0;i<vals.length;i++){while(n>=vals[i]){r+=syms[i];n-=vals[i];}}
+  return r;
+}
+function fromRoman(s){
+  const map={I:1,V:5,X:10,L:50,C:100,D:500,M:1000};
+  let n=0,prev=0;
+  for(let i=s.length-1;i>=0;i--){
+    const v=map[s[i].toUpperCase()]||0;
+    n+=v<prev?-v:v; prev=v;
+  }
+  return n||null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SIMPLE CONVERTER (for most categories)
+// ═══════════════════════════════════════════════════════════════
+function simpleConvHTML(id,units,special){
+  const opts=units.map(([n,s])=>`<option value="${s}">${n} (${s})</option>`).join("");
+  return `
+<div class="card">
+  <div class="input-grid">
+    <div class="field-wrap">
+      <div class="field-label" id="${id}-fl1">${t("from")}</div>
+      <input class="num-input" id="${id}-in" type="number" placeholder="${t("enterNum")}" oninput="sc_convert('${id}')"/>
+      <select class="unit-select" id="${id}-fu" onchange="sc_convert('${id}')">${opts}</select>
+    </div>
+    <button class="swap-btn" title="${t("swap")}" onclick="sc_swap('${id}')">⇄</button>
+    <div class="field-wrap">
+      <div class="field-label" id="${id}-fl2">${t("to")}</div>
+      <input class="num-input" id="${id}-out" type="number" placeholder="${t("result")}" oninput="sc_reverse('${id}')"/>
+      <select class="unit-select" id="${id}-tu" onchange="sc_convert('${id}')">${opts}</select>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-label" id="${id}-ql">Quick conversions</div>
+  <div class="quick-grid" id="${id}-quick"></div>
+</div>`;
+}
+
+const convData={
+  length:LENGTH,weight:WEIGHT,area:AREA,volume:VOLUME,
+  speed:SPEED,data:DATA,pressure:PRESSURE,energy:ENERGY,
+  power:POWER,angle:ANGLE,cooking:COOKING
+};
+
+function sc_factor(id,sym){
+  const d=convData[id];
+  if(!d) return 1;
+  const row=d.find(r=>r[1]===sym);
+  return row?row[2]:1;
+}
+
+function sc_convert(id){
+  const val=parseFloat(document.getElementById(id+"-in").value);
+  const fu=document.getElementById(id+"-fu").value;
+  const tu=document.getElementById(id+"-tu").value;
+  const outEl=document.getElementById(id+"-out");
+  if(isNaN(val)){outEl.value="";sc_quick(id,NaN,fu);return;}
+
+  // Special: currency
+  if(id==="currency"){
+    const frate=CURRENCY.find(r=>r[1]===fu)?.[2]||1;
+    const trate=CURRENCY.find(r=>r[1]===tu)?.[2]||1;
+    const res=val*trate/frate;
+    outEl.value=fmt(res);
+    sc_quick_cur(val,fu);
+    return;
+  }
+  // Special: fuel (L/100km is inverse)
+  if(id==="fuel"){
+    let baseKmL;
+    if(fu==="L/100km") baseKmL=100/val;
+    else{ const f=FUEL.find(r=>r[1]===fu)?.[2]||1; baseKmL=val*f; }
+    let res;
+    if(tu==="L/100km") res=100/baseKmL;
+    else{ const f=FUEL.find(r=>r[1]===tu)?.[2]||1; res=baseKmL/f; }
+    outEl.value=fmt(res);
+    return;
+  }
+
+  const ff=sc_factor(id,fu), tf=sc_factor(id,tu);
+  if(!ff||!tf){outEl.value="";return;}
+  const base=val*ff, res=base/tf;
+  outEl.value=fmt(res);
+  sc_quick(id,base,fu);
+}
+
+function sc_reverse(id){
+  const val=parseFloat(document.getElementById(id+"-out").value);
+  const fu=document.getElementById(id+"-fu").value;
+  const tu=document.getElementById(id+"-tu").value;
+  const inEl=document.getElementById(id+"-in");
+  if(isNaN(val)){inEl.value="";return;}
+  if(id==="currency"){
+    const frate=CURRENCY.find(r=>r[1]===fu)?.[2]||1;
+    const trate=CURRENCY.find(r=>r[1]===tu)?.[2]||1;
+    inEl.value=fmt(val*frate/trate);
+    return;
+  }
+  const ff=sc_factor(id,fu), tf=sc_factor(id,tu);
+  const base=val*tf; inEl.value=fmt(base/ff);
+  sc_quick(id,base,fu);
+}
+
+function sc_swap(id){
+  const fu=document.getElementById(id+"-fu");
+  const tu=document.getElementById(id+"-tu");
+  const tmp=fu.value; fu.value=tu.value; tu.value=tmp;
+  sc_convert(id);
+}
+
+function sc_quick(id,baseVal,fromSym){
+  const qEl=document.getElementById(id+"-quick");
+  if(!qEl) return;
+  const d=convData[id];
+  if(!d||isNaN(baseVal)){qEl.innerHTML="";return;}
+  const show=d.slice(0,8);
+  qEl.innerHTML=show.map(([n,s,f])=>`
+    <div class="quick-card">
+      <div class="quick-val">${fmt(baseVal/f)}</div>
+      <div class="quick-unit">${n} (${s})</div>
+    </div>`).join("");
+}
+
+function sc_quick_cur(val,fromSym){
+  const qEl=document.getElementById("currency-quick");
+  if(!qEl) return;
+  const frate=CURRENCY.find(r=>r[1]===fromSym)?.[2]||1;
+  const baseINR=val*frate;
+  const show=CURRENCY.slice(0,12);
+  qEl.innerHTML=show.map(([n,s,rate])=>`
+    <div class="quick-card">
+      <div class="quick-val">${fmt(baseINR/rate)}</div>
+      <div class="quick-unit">${n} (${s})</div>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TEMPERATURE
+// ═══════════════════════════════════════════════════════════════
+function tempConvert(){
+  const val=parseFloat(document.getElementById("temp-in").value);
+  const fu=document.getElementById("temp-fu").value;
+  const tu=document.getElementById("temp-tu").value;
+  if(isNaN(val)){document.getElementById("temp-out").value="";return;}
+  let c;
+  if(fu==="C") c=val;
+  else if(fu==="F") c=(val-32)*5/9;
+  else if(fu==="K") c=val-273.15;
+  else if(fu==="R") c=(val-491.67)*5/9;
+  let res;
+  if(tu==="C") res=c;
+  else if(tu==="F") res=c*9/5+32;
+  else if(tu==="K") res=c+273.15;
+  else if(tu==="R") res=(c+273.15)*9/5;
+  document.getElementById("temp-out").value=fmt(res);
+  // Quick
+  const q=document.getElementById("temp-quick");
+  const scales=[["Celsius","°C",c],["Fahrenheit","°F",c*9/5+32],
+    ["Kelvin","K",c+273.15],["Rankine","°R",(c+273.15)*9/5]];
+  q.innerHTML=scales.map(([n,s,v])=>`<div class="quick-card"><div class="quick-val">${fmt(v)}</div><div class="quick-unit">${n} (${s})</div></div>`).join("");
+}
+function tempSwap(){
+  const fu=document.getElementById("temp-fu");
+  const tu=document.getElementById("temp-tu");
+  const tmp=fu.value;fu.value=tu.value;tu.value=tmp;
+  tempConvert();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CURRENCY (has own HTML due to notice)
+// ═══════════════════════════════════════════════════════════════
+// Currency is handled via simpleConvHTML + sc_convert
+
+// ═══════════════════════════════════════════════════════════════
+//  AGE CALCULATOR
+// ═══════════════════════════════════════════════════════════════
+function ageCalc(){
+  const dob=new Date(document.getElementById("age-dob").value);
+  if(isNaN(dob)) return;
+  const now=new Date();
+  let years=now.getFullYear()-dob.getFullYear();
+  let months=now.getMonth()-dob.getMonth();
+  let days=now.getDate()-dob.getDate();
+  if(days<0){months--;const pd=new Date(now.getFullYear(),now.getMonth(),0).getDate();days+=pd;}
+  if(months<0){years--;months+=12;}
+  const totalDays=Math.floor((now-dob)/86400000);
+  const totalWeeks=Math.floor(totalDays/7);
+  const totalMonths=years*12+months;
+  const totalHours=totalDays*24;
+  const totalMins=totalHours*60;
+  const totalSecs=totalMins*60;
+
+  document.getElementById("age-years").textContent=years;
+  document.getElementById("age-months").textContent=totalMonths;
+  document.getElementById("age-weeks").textContent=totalWeeks.toLocaleString("en-IN");
+  document.getElementById("age-days").textContent=totalDays.toLocaleString("en-IN");
+  document.getElementById("age-hours").textContent=totalHours.toLocaleString("en-IN");
+  document.getElementById("age-mins").textContent=totalMins.toLocaleString("en-IN");
+
+  // Next birthday
+  let next=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());
+  if(next<=now) next=new Date(now.getFullYear()+1,dob.getMonth(),dob.getDate());
+  const daysLeft=Math.ceil((next-now)/86400000);
+  document.getElementById("age-bday").textContent=`${next.toDateString()} — ${daysLeft} ${t("daysLeft")}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TIMEZONE CONVERTER
+// ═══════════════════════════════════════════════════════════════
+const tzSelected=new Set();
+
+function tzFilterList(){
+  const q=document.getElementById("tz-search").value.toLowerCase();
+  const list=document.getElementById("tz-picker");
+  list.innerHTML="";
+  const filtered=q?ZONES.filter(([n])=>n.toLowerCase().includes(q)):ZONES;
+  if(!filtered.length){list.innerHTML=`<div style="padding:12px;color:var(--text3);font-size:12px;">${t("noTZ")}</div>`;return;}
+  filtered.forEach(([name,tz])=>{
+    const sel=tzSelected.has(tz);
+    const item=document.createElement("div");
+    item.className="tz-picker-item"+(sel?" selected":"");
+    item.dataset.tz=tz;
+    item.innerHTML=`<div class="tz-cb"><div class="tz-cb-check"></div></div><span>${name}</span><span class="tz-offset">${getUTCOff(tz)}</span>`;
+    item.onclick=()=>tzToggle(tz,name,item);
+    list.appendChild(item);
+  });
+}
+
+function tzToggle(tz,name,item){
+  if(tzSelected.has(tz)){tzSelected.delete(tz);item.classList.remove("selected");}
+  else{tzSelected.add(tz);item.classList.add("selected");}
+  tzRenderTags();
+  document.getElementById("tz-count").textContent=`${tzSelected.size} ${t("selected")}`;
+}
+
+function tzRenderTags(){
+  const row=document.getElementById("tz-tags");
+  row.innerHTML="";
+  tzSelected.forEach(tz=>{
+    const name=ZONES.find(z=>z[1]===tz)?.[0]||tz;
+    const short=name.replace(/\s*\(.*?\)/,"").trim();
+    const chip=document.createElement("div");
+    chip.className="tag-chip";
+    chip.innerHTML=`${short}<span class="tag-chip-x" onclick="tzRemove('${tz}')">✕</span>`;
+    row.appendChild(chip);
+  });
+}
+
+function tzRemove(tz){
+  tzSelected.delete(tz);
+  tzRenderTags();
+  document.getElementById("tz-count").textContent=`${tzSelected.size} ${t("selected")}`;
+  const item=document.querySelector(`[data-tz="${tz}"]`);
+  if(item) item.classList.remove("selected");
+}
+
+function tzConvert(){
+  const y=parseInt(document.getElementById("tz-y").value);
+  const mo=parseInt(document.getElementById("tz-mo").value);
+  const d=parseInt(document.getElementById("tz-d").value);
+  const h=parseInt(document.getElementById("tz-h").value);
+  const mi=parseInt(document.getElementById("tz-mi").value);
+  const srcTZ=document.getElementById("tz-src").value;
+  if([y,mo,d,h,mi].some(isNaN)){showToast("Fill all fields");return;}
+  if(!tzSelected.size){showToast("Select target timezones");return;}
+
+  const iso=`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}T${String(h).padStart(2,"0")}:${String(mi).padStart(2,"0")}:00Z`;
+  const naive=new Date(iso);
+  const srcDate=new Date(naive.getTime()-getOffsetMs(naive,srcTZ));
+  const sf=fmtInTZ(srcDate,srcTZ);
+  const sa=getAbbr(srcDate,srcTZ);
+  const sn=[...document.getElementById("tz-src").options].find(o=>o.value===srcTZ)?.textContent||srcTZ;
+  let html=`<div class="tz-result-row src-row">
+    <span class="tz-r-date">${sf.date}</span>
+    <span class="tz-r-time">${sf.time}</span>
+    <span class="tz-r-info"><span class="tz-abbr">${sa}</span>Source: ${sn}</span>
+  </div>`;
+  tzSelected.forEach(tz=>{
+    const f=fmtInTZ(srcDate,tz);
+    const a=getAbbr(srcDate,tz);
+    const n=ZONES.find(z=>z[1]===tz)?.[0]||tz;
+    html+=`<div class="tz-result-row">
+      <span class="tz-r-date">${f.date}</span>
+      <span class="tz-r-time">${f.time}</span>
+      <span class="tz-r-info"><span class="tz-abbr">${a}</span>${n}</span>
+    </div>`;
+  });
+  document.getElementById("tz-results").innerHTML=html;
+}
+
+function tzFillNow(){
+  const n=new Date();
+  document.getElementById("tz-y").value=n.getFullYear();
+  document.getElementById("tz-mo").value=String(n.getMonth()+1).padStart(2,"0");
+  document.getElementById("tz-d").value=String(n.getDate()).padStart(2,"0");
+  document.getElementById("tz-h").value=String(n.getHours()).padStart(2,"0");
+  document.getElementById("tz-mi").value=String(n.getMinutes()).padStart(2,"0");
+  const local=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const sel=document.getElementById("tz-src");
+  if([...sel.options].some(o=>o.value===local)) sel.value=local;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NUMBER BASE CONVERTER
+// ═══════════════════════════════════════════════════════════════
+function numbaseConvert(){
+  const inp=document.getElementById("nb-in").value.trim();
+  const base=parseInt(document.getElementById("nb-base").value);
+  if(!inp){["nb-dec","nb-bin","nb-oct","nb-hex"].forEach(id=>document.getElementById(id).textContent="—");return;}
+  let dec;
+  try{dec=parseInt(inp,base);}catch{dec=NaN;}
+  if(isNaN(dec)){showToast("Invalid input for selected base");return;}
+  document.getElementById("nb-dec").textContent=dec.toString(10);
+  document.getElementById("nb-bin").textContent=dec.toString(2);
+  document.getElementById("nb-oct").textContent=dec.toString(8);
+  document.getElementById("nb-hex").textContent=dec.toString(16).toUpperCase();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ROMAN NUMERAL
+// ═══════════════════════════════════════════════════════════════
+function romanConvert(){
+  const inp=document.getElementById("roman-in").value.trim();
+  const mode=document.getElementById("roman-mode").value;
+  let res;
+  if(mode==="toRoman"){const n=parseInt(inp);res=isNaN(n)?"Enter a number":toRoman(n);}
+  else{res=inp?fromRoman(inp)||"Invalid Roman numeral":" ";}
+  document.getElementById("roman-out").textContent=res||"—";
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CLOTHING & SHOE SIZE
+// ═══════════════════════════════════════════════════════════════
+function clothingConvert(){
+  const key=document.getElementById("cl-sel").value;
+  const d=CLOTHING_M[key];
+  if(!d){document.getElementById("cl-out").innerHTML="";return;}
+  document.getElementById("cl-out").innerHTML=Object.entries(d).map(([k,v])=>`
+    <div class="quick-card"><div class="quick-val">${v}</div><div class="quick-unit">${k}</div></div>`).join("");
+}
+function shoeConvert(){
+  const key=document.getElementById("sh-sel").value;
+  const d=SHOE_M[key];
+  if(!d){document.getElementById("sh-out").innerHTML="";return;}
+  document.getElementById("sh-out").innerHTML=Object.entries(d).map(([k,v])=>`
+    <div class="quick-card"><div class="quick-val">${v}</div><div class="quick-unit">${k}</div></div>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BUILD PANEL HTML
+// ═══════════════════════════════════════════════════════════════
+function buildPanels(){
+  const main=document.getElementById("main-area");
+  main.innerHTML="";
+
+  // helper for simple units
+  function simplePanel(id,units,defaultFrom,defaultTo){
+    const p=document.createElement("div");
+    p.className="converter-panel";p.id="panel-"+id;
+    p.innerHTML=`
+      <div class="panel-header">
+        <div class="panel-title"><span class="panel-icon">${CATS.find(c=>c.id===id)?.icon||"⚙️"}</span> <span id="ptitle-${id}">${tc(id)}</span></div>
+        <div class="panel-desc" id="pdesc-${id}"></div>
+      </div>
+      ${simpleConvHTML(id,units)}`;
+    main.appendChild(p);
+    // set defaults
+    setTimeout(()=>{
+      const fu=document.getElementById(id+"-fu");
+      const tu=document.getElementById(id+"-tu");
+      if(fu&&defaultFrom) fu.value=defaultFrom;
+      if(tu&&defaultTo) tu.value=defaultTo;
+    },0);
+  }
+
+  simplePanel("length",LENGTH,"km","mi");
+  simplePanel("weight",WEIGHT,"kg","lb");
+  simplePanel("area",AREA,"m²","ft²");
+  simplePanel("volume",VOLUME,"L","gal");
+  simplePanel("speed",SPEED,"km/h","mph");
+  simplePanel("data",DATA,"GB","MB");
+  simplePanel("pressure",PRESSURE,"bar","psi");
+  simplePanel("energy",ENERGY,"kcal","kJ");
+  simplePanel("power",POWER,"kW","hp");
+  simplePanel("angle",ANGLE,"°","rad");
+  simplePanel("cooking",COOKING,"cup","mL");
+
+  // Fuel (special)
+  const fuelP=document.createElement("div");
+  fuelP.className="converter-panel";fuelP.id="panel-fuel";
+  fuelP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">⛽</span> <span id="ptitle-fuel">${tc("fuel")}</span></div>
+    </div>
+    ${simpleConvHTML("fuel",FUEL.map(f=>[f[0],f[1]]),"km/L","mpg")}`;
+  main.appendChild(fuelP);
+
+  // Currency
+  const curP=document.createElement("div");
+  curP.className="converter-panel";curP.id="panel-currency";
+  curP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">💰</span> <span id="ptitle-currency">${tc("currency")}</span></div>
+    </div>
+    <div class="notice" id="cur-notice">${t("rateNotice")}</div>
+    ${simpleConvHTML("currency",CURRENCY.map(c=>[`${c[0]} (${c[1]})`,c[1]]),"INR","USD")}`;
+  main.appendChild(curP);
+
+  // Temperature
+  const tempOpts=["Celsius|C","Fahrenheit|F","Kelvin|K","Rankine|R"].map(s=>{
+    const[n,v]=s.split("|");return`<option value="${v}">${n} (${v==="C"?"°C":v==="F"?"°F":v==="K"?"K":"°R"})</option>`;
+  }).join("");
+  const tempP=document.createElement("div");
+  tempP.className="converter-panel";tempP.id="panel-temperature";
+  tempP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">🌡️</span> <span id="ptitle-temperature">${tc("temperature")}</span></div>
+    </div>
+    <div class="card">
+      <div class="input-grid">
+        <div class="field-wrap">
+          <div class="field-label">${t("from")}</div>
+          <input class="num-input" id="temp-in" type="number" placeholder="${t("enterNum")}" oninput="tempConvert()"/>
+          <select class="unit-select" id="temp-fu" onchange="tempConvert()">${tempOpts}</select>
+        </div>
+        <button class="swap-btn" onclick="tempSwap()">⇄</button>
+        <div class="field-wrap">
+          <div class="field-label">${t("to")}</div>
+          <input class="num-input" id="temp-out" type="number" placeholder="${t("result")}" readonly/>
+          <select class="unit-select" id="temp-tu" onchange="tempConvert()">
+            ${["Fahrenheit|F","Celsius|C","Kelvin|K","Rankine|R"].map(s=>{const[n,v]=s.split("|");return`<option value="${v}">${n}</option>`;}).join("")}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="card-label">Quick</div><div class="quick-grid" id="temp-quick"></div></div>`;
+  main.appendChild(tempP);
+
+  // Age
+  const today=new Date().toISOString().split("T")[0];
+  const ageP=document.createElement("div");
+  ageP.className="converter-panel";ageP.id="panel-age";
+  ageP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">🎂</span> <span id="ptitle-age">${tc("age")}</span></div>
+    </div>
+    <div class="card">
+      <div class="field-wrap">
+        <div class="field-label" id="age-dob-label">${t("dob")}</div>
+        <input class="date-input" id="age-dob" type="date" max="${today}" onchange="ageCalc()"/>
+      </div>
+      <button class="btn-convert" style="margin-top:12px;" onclick="ageCalc()" id="age-btn">${t("calcAge")}</button>
+      <div class="age-grid" style="margin-top:14px;">
+        <div class="age-card"><div class="age-num" id="age-years">—</div><div class="age-unit" id="age-ul-y">${t("years")}</div></div>
+        <div class="age-card"><div class="age-num" id="age-months">—</div><div class="age-unit" id="age-ul-m">${t("months")}</div></div>
+        <div class="age-card"><div class="age-num" id="age-weeks">—</div><div class="age-unit" id="age-ul-w">${t("weeks")}</div></div>
+        <div class="age-card"><div class="age-num" id="age-days">—</div><div class="age-unit" id="age-ul-d">${t("days")}</div></div>
+        <div class="age-card"><div class="age-num" id="age-hours">—</div><div class="age-unit" id="age-ul-h">${t("hours")}</div></div>
+        <div class="age-card"><div class="age-num" id="age-mins">—</div><div class="age-unit" id="age-ul-mi">${t("minutes")}</div></div>
+      </div>
+      <div class="result-box" style="margin-top:12px;">
+        <div class="result-label" id="age-bday-label">${t("nextBday")}</div>
+        <div class="result-value" id="age-bday" style="font-size:16px;">—</div>
+      </div>
+    </div>`;
+  main.appendChild(ageP);
+
+  // Timezone
+  const tzSrcOpts=ZONES.map(([n,z])=>`<option value="${z}">${n}</option>`).join("");
+  const tzP=document.createElement("div");
+  tzP.className="converter-panel";tzP.id="panel-timezone";
+  tzP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">🕐</span> <span id="ptitle-timezone">${tc("timezone")}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label" id="tz-src-label">${t("srcTZ")}</div>
+      <div class="input-grid-2">
+        <div class="field-wrap">
+          <div class="field-label">Year</div>
+          <input class="num-input" id="tz-y" type="number" style="width:100%"/>
+        </div>
+        <div class="field-wrap">
+          <div class="field-label">Month</div>
+          <input class="num-input" id="tz-mo" type="number" min="1" max="12" style="width:100%"/>
+        </div>
+        <div class="field-wrap">
+          <div class="field-label">Day</div>
+          <input class="num-input" id="tz-d" type="number" min="1" max="31" style="width:100%"/>
+        </div>
+        <div class="field-wrap">
+          <div class="field-label">Hour</div>
+          <input class="num-input" id="tz-h" type="number" min="0" max="23" style="width:100%"/>
+        </div>
+        <div class="field-wrap" style="grid-column:span 2">
+          <div class="field-label">Minute</div>
+          <input class="num-input" id="tz-mi" type="number" min="0" max="59" style="width:100%"/>
+        </div>
+      </div>
+      <select class="unit-select" id="tz-src" style="margin-top:10px;">${tzSrcOpts}</select>
+      <button class="btn-convert" style="margin-top:8px;" onclick="tzFillNow()">Use current time</button>
+    </div>
+    <div class="card">
+      <div class="card-label" id="tz-tgt-label">${t("targetTZ")}</div>
+      <div class="tag-chips" id="tz-tags"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;color:var(--text3);" id="tz-count">0 ${t("selected")}</span>
+        <div style="display:flex;gap:6px;">
+          <button class="tab-btn" onclick="ZONES.forEach(([n,z])=>{tzSelected.add(z);});tzRenderTags();document.getElementById('tz-count').textContent=tzSelected.size+' ${t("selected")}';tzFilterList();" id="tz-all-btn">${t("allTZ")}</button>
+          <button class="tab-btn" onclick="tzSelected.clear();tzRenderTags();document.getElementById('tz-count').textContent='0 ${t("selected")}';tzFilterList();" id="tz-clear-btn">${t("clearTZ")}</button>
+        </div>
+      </div>
+      <input class="search-input" id="tz-search" type="text" placeholder="${t("selectTZ")}" oninput="tzFilterList()"/>
+      <div class="tz-picker-list" id="tz-picker"></div>
+    </div>
+    <button class="btn-convert" style="margin:0 0 16px;" onclick="tzConvert()" id="tz-conv-btn">${t("convert")}</button>
+    <div class="tz-result-list" id="tz-results"></div>`;
+  main.appendChild(tzP);
+  tzFillNow();
+  tzFilterList();
+
+  // Number base
+  const nbP=document.createElement("div");
+  nbP.className="converter-panel";nbP.id="panel-numbase";
+  nbP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">🔢</span> <span id="ptitle-numbase">${tc("numbase")}</span></div>
+    </div>
+    <div class="card">
+      <div class="input-grid-2">
+        <div class="field-wrap">
+          <div class="field-label">Input value</div>
+          <input class="num-input" id="nb-in" placeholder="e.g. 255" oninput="numbaseConvert()" style="width:100%"/>
+        </div>
+        <div class="field-wrap">
+          <div class="field-label">Input base</div>
+          <select class="unit-select" id="nb-base" onchange="numbaseConvert()" style="width:100%">
+            <option value="10">Decimal (10)</option>
+            <option value="2">Binary (2)</option>
+            <option value="8">Octal (8)</option>
+            <option value="16">Hexadecimal (16)</option>
+          </select>
+        </div>
+      </div>
+      <div class="base-grid" style="margin-top:14px;">
+        <div class="base-card"><div class="base-label">Decimal (Base 10)</div><div class="base-val" id="nb-dec">—</div></div>
+        <div class="base-card"><div class="base-label">Binary (Base 2)</div><div class="base-val" id="nb-bin">—</div></div>
+        <div class="base-card"><div class="base-label">Octal (Base 8)</div><div class="base-val" id="nb-oct">—</div></div>
+        <div class="base-card"><div class="base-label">Hex (Base 16)</div><div class="base-val" id="nb-hex">—</div></div>
+      </div>
+    </div>`;
+  main.appendChild(nbP);
+
+  // Roman
+  const romP=document.createElement("div");
+  romP.className="converter-panel";romP.id="panel-roman";
+  romP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">Ⅻ</span> <span id="ptitle-roman">${tc("roman")}</span></div>
+    </div>
+    <div class="card">
+      <div class="field-wrap" style="margin-bottom:12px;">
+        <div class="field-label">Mode</div>
+        <select class="unit-select" id="roman-mode" onchange="romanConvert()" style="width:100%">
+          <option value="toRoman">Number → Roman</option>
+          <option value="fromRoman">Roman → Number</option>
+        </select>
+      </div>
+      <div class="field-wrap">
+        <div class="field-label">Input</div>
+        <input class="num-input" id="roman-in" placeholder="e.g. 2024 or XIV" oninput="romanConvert()" style="width:100%"/>
+      </div>
+      <div class="result-box" style="margin-top:12px;">
+        <div class="result-value" id="roman-out">—</div>
+      </div>
+    </div>`;
+  main.appendChild(romP);
+
+  // Clothing
+  const clOpts=Object.keys(CLOTHING_M).map(k=>`<option value="${k}">${k}</option>`).join("");
+  const clP=document.createElement("div");
+  clP.className="converter-panel";clP.id="panel-clothing";
+  clP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">👕</span> <span id="ptitle-clothing">${tc("clothing")}</span></div>
+    </div>
+    <div class="card">
+      <div class="field-label" style="margin-bottom:8px;">Select Indian/International size</div>
+      <select class="unit-select" id="cl-sel" onchange="clothingConvert()" style="width:100%">${clOpts}</select>
+      <div class="quick-grid" style="margin-top:12px;" id="cl-out"></div>
+    </div>`;
+  main.appendChild(clP);
+  setTimeout(clothingConvert,50);
+
+  // Shoe
+  const shOpts=Object.keys(SHOE_M).map(k=>`<option value="${k}">${k}</option>`).join("");
+  const shP=document.createElement("div");
+  shP.className="converter-panel";shP.id="panel-shoe";
+  shP.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title"><span class="panel-icon">👟</span> <span id="ptitle-shoe">${tc("shoe")}</span></div>
+    </div>
+    <div class="card">
+      <div class="field-label" style="margin-bottom:8px;">Select size</div>
+      <select class="unit-select" id="sh-sel" onchange="shoeConvert()" style="width:100%">${shOpts}</select>
+      <div class="quick-grid" style="margin-top:12px;" id="sh-out"></div>
+    </div>`;
+  main.appendChild(shP);
+  setTimeout(shoeConvert,50);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SIDEBAR NAV
+// ═══════════════════════════════════════════════════════════════
+function buildNav(){
+  const nav=document.getElementById("sidebar-nav");
+  nav.innerHTML="";
+  CATS.forEach(({id,icon})=>{
+    const btn=document.createElement("button");
+    btn.className="cat-btn";btn.id="nav-"+id;
+    btn.innerHTML=`<span class="cat-icon">${icon}</span><span class="cat-name">${tc(id)}</span>`;
+    btn.onclick=()=>openPanel(id);
+    nav.appendChild(btn);
+  });
+}
+
+function openPanel(id){
+  document.querySelectorAll(".converter-panel").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".cat-btn").forEach(b=>b.classList.remove("active"));
+  const panel=document.getElementById("panel-"+id);
+  const btn=document.getElementById("nav-"+id);
+  if(panel) panel.classList.add("active");
+  if(btn) btn.classList.add("active");
+  const titleEl=document.getElementById("ptitle-"+id);
+  if(titleEl) titleEl.textContent=tc(id);
+  document.getElementById("main-area").scrollTop=0;
+  setTimeout(saveSettings,100);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LANGUAGE SWITCH
+// ═══════════════════════════════════════════════════════════════
+function setLang(l){
+  lang=l;
+  setTimeout(saveSettings,200);
+  // Update top bar
+  document.getElementById("app-title").textContent=t("appTitle");
+  document.getElementById("app-sub").textContent=t("appSub");
+  document.getElementById("sb-title").textContent=t("sbTitle");
+  // Update sidebar labels
+  CATS.forEach(({id})=>{
+    const btn=document.getElementById("nav-"+id);
+    if(btn){const name=btn.querySelector(".cat-name");if(name)name.textContent=tc(id);}
+    const title=document.getElementById("ptitle-"+id);
+    if(title) title.textContent=tc(id);
+  });
+  // Update notice
+  const n=document.getElementById("cur-notice");if(n) n.textContent=t("rateNotice");
+  // Age labels
+  const ageMap=[["age-ul-y","years"],["age-ul-m","months"],["age-ul-w","weeks"],
+    ["age-ul-d","days"],["age-ul-h","hours"],["age-ul-mi","minutes"]];
+  ageMap.forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.textContent=t(key);});
+  const dl=document.getElementById("age-dob-label");if(dl)dl.textContent=t("dob");
+  const ab=document.getElementById("age-btn");if(ab)ab.textContent=t("calcAge");
+  const bl=document.getElementById("age-bday-label");if(bl)bl.textContent=t("nextBday");
+  // TZ labels
+  const sl=document.getElementById("tz-src-label");if(sl)sl.textContent=t("srcTZ");
+  const tl=document.getElementById("tz-tgt-label");if(tl)tl.textContent=t("targetTZ");
+  const tzSearch=document.getElementById("tz-search");if(tzSearch)tzSearch.placeholder=t("selectTZ");
+  const tzConvBtn=document.getElementById("tz-conv-btn");if(tzConvBtn)tzConvBtn.textContent=t("convert");
+  // from/to labels — rebuild is simplest but we do spot update
+  document.querySelectorAll("[id$='-fl1']").forEach(el=>el.textContent=t("from"));
+  document.querySelectorAll("[id$='-fl2']").forEach(el=>el.textContent=t("to"));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  THEME SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const THEMES = [
+  {id:"dark",   name:"Dark",    bg:"#0b0d14", card:"#1e2235", input:"#181c2e", accent:"#6c63ff", text:"#f0f2ff",  text2:"#9ea3c0"},
+  {id:"light",  name:"Light",   bg:"#f0f2f8", card:"#ffffff", input:"#e8eaf2", accent:"#5b52e8", text:"#1a1d2e",  text2:"#4a4f6a"},
+  {id:"sepia",  name:"Sepia",   bg:"#f4ede0", card:"#fdf6ec", input:"#ede4d2", accent:"#8b5e3c", text:"#2c1e0f",  text2:"#6b4f38"},
+  {id:"ocean",  name:"Ocean",   bg:"#071a2e", card:"#142e52", input:"#112d50", accent:"#00bfff", text:"#d0f0ff",  text2:"#80c8e8"},
+  {id:"forest", name:"Forest",  bg:"#0d1f10", card:"#1c3520", input:"#172e1b", accent:"#4caf50", text:"#e8f5e9",  text2:"#90c895"},
+  {id:"rose",   name:"Rose",    bg:"#fdf0f4", card:"#fff5f8", input:"#f8e4ec", accent:"#d64f7c", text:"#2a0a18",  text2:"#703050"},
+  {id:"slate",  name:"Slate",   bg:"#1c2028", card:"#303848", input:"#2a3040", accent:"#7ab4f0", text:"#e8eef8",  text2:"#a0adc0"},
+  {id:"custom", name:"Custom",  bg:"#0b0d14", card:"#1e2235", input:"#181c2e", accent:"#6c63ff", text:"#f0f2ff",  text2:"#9ea3c0"},
+];
+
+let currentTheme = "dark";
+let fontSize = "medium";
+let sidebarMode = "full";
+
+function buildThemeGrid(){
+  const grid = document.getElementById("theme-grid");
+  if(!grid) return;
+  grid.innerHTML = THEMES.map(th => {
+    const dark = th.text.startsWith("#f")||th.text.startsWith("#d")||th.text.startsWith("#e");
+    return `<div class="theme-swatch${currentTheme===th.id?" active":""}" onclick="applyTheme('${th.id}')" id="swatch-${th.id}">
+      <div class="swatch-preview" style="background:${th.bg}">
+        <div class="swatch-dot" style="background:${th.accent}"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px;">
+          <div class="swatch-line" style="background:${th.text};opacity:.9"></div>
+          <div class="swatch-line" style="background:${th.card};border:1px solid ${th.text}22;border-radius:2px;height:6px;"></div>
+        </div>
+      </div>
+      <div class="theme-swatch-name">${th.name}</div>
+    </div>`;
+  }).join("");
+}
+
+function applyTheme(id){
+  const th = THEMES.find(t=>t.id===id);
+  if(!th) return;
+  currentTheme = id;
+  if(id === "custom"){
+    activateCustomTheme();
+  } else {
+    document.documentElement.setAttribute("data-theme", id);
+  }
+  // Update swatch active states
+  document.querySelectorAll(".theme-swatch").forEach(el=>{
+    el.classList.toggle("active", el.id==="swatch-"+id);
+  });
+  saveSettings();
+}
+
+function applyCustomColor(){
+  const bg     = document.getElementById("cp-bg").value;
+  const card   = document.getElementById("cp-card").value;
+  const input  = document.getElementById("cp-input").value;
+  const accent = document.getElementById("cp-accent").value;
+  const text   = document.getElementById("cp-text").value;
+  const text2  = document.getElementById("cp-text2").value;
+  // Derive missing vars from base colors
+  const r = document.documentElement;
+  r.style.setProperty("--custom-bg",    bg);
+  r.style.setProperty("--custom-bg2",   lighten(bg, 8));
+  r.style.setProperty("--custom-bg3",   lighten(bg, 14));
+  r.style.setProperty("--custom-card",  card);
+  r.style.setProperty("--custom-card2", lighten(card, 6));
+  r.style.setProperty("--custom-border",  lighten(bg, 22));
+  r.style.setProperty("--custom-border2", lighten(bg, 32));
+  r.style.setProperty("--custom-text",  text);
+  r.style.setProperty("--custom-text2", text2);
+  r.style.setProperty("--custom-text3", mix(text2, bg, 0.5));
+  r.style.setProperty("--accent", accent);
+  r.style.setProperty("--accent2", lighten(accent, 10));
+}
+
+function activateCustomTheme(){
+  applyCustomColor();
+  document.documentElement.setAttribute("data-theme","custom");
+  currentTheme = "custom";
+  document.querySelectorAll(".theme-swatch").forEach(el=>{
+    el.classList.toggle("active", el.id==="swatch-custom");
+  });
+  saveSettings();
+  showToast("Custom theme applied!");
+}
+
+// Color math helpers
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+function rgbToHex(r,g,b){
+  return "#"+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,"0")).join("");
+}
+function lighten(hex, pct){
+  let [r,g,b]=hexToRgb(hex);
+  r+=pct*2.55;g+=pct*2.55;b+=pct*2.55;
+  return rgbToHex(r,g,b);
+}
+function mix(hex1,hex2,t){
+  const [r1,g1,b1]=hexToRgb(hex1),[r2,g2,b2]=hexToRgb(hex2);
+  return rgbToHex(r1+(r2-r1)*t,g1+(g2-g1)*t,b1+(b2-b1)*t);
+}
+
+function setFontSize(size){
+  fontSize = size;
+  const sizes={small:"13px",medium:"15px",large:"17px"};
+  document.body.style.fontSize = sizes[size]||"15px";
+  ["fs-small","fs-medium","fs-large"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle("active", id==="fs-"+size);
+  });
+  saveSettings();
+}
+
+function setSidebarMode(mode){
+  sidebarMode = mode;
+  const sidebar = document.querySelector(".sidebar");
+  if(mode==="icons"){
+    sidebar.style.width="60px";
+    document.querySelectorAll(".cat-name,.sidebar-title").forEach(el=>el.style.display="none");
+  } else {
+    sidebar.style.width="220px";
+    document.querySelectorAll(".cat-name").forEach(el=>el.style.display="");
+    document.querySelectorAll(".sidebar-title").forEach(el=>el.style.display="");
+  }
+  ["sb-full","sb-icons"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle("active", id==="sb-"+mode);
+  });
+  saveSettings();
+}
+
+function openThemePanel(){
+  buildThemeGrid();
+  document.getElementById("theme-panel").classList.add("open");
+  document.getElementById("theme-overlay").classList.add("open");
+}
+function closeThemePanel(){
+  document.getElementById("theme-panel").classList.remove("open");
+  document.getElementById("theme-overlay").classList.remove("open");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MEMORY — localStorage persistence
+// ═══════════════════════════════════════════════════════════════
+const STORE_KEY = "uc_settings_v2";
+
+function saveSettings(){
+  const customColors = {
+    bg:     document.getElementById("cp-bg")?.value    || "#0b0d14",
+    card:   document.getElementById("cp-card")?.value  || "#1e2235",
+    input:  document.getElementById("cp-input")?.value || "#181c2e",
+    accent: document.getElementById("cp-accent")?.value|| "#6c63ff",
+    text:   document.getElementById("cp-text")?.value  || "#f0f2ff",
+    text2:  document.getElementById("cp-text2")?.value || "#9ea3c0",
+  };
+  const data = {
+    theme: currentTheme,
+    lang,
+    fontSize,
+    sidebarMode,
+    customColors,
+    lastPanel: document.querySelector(".cat-btn.active")?.id?.replace("nav-","") || "timezone",
+    ts: Date.now()
+  };
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    flashMemory();
+  } catch(e) { /* private mode */ }
+}
+
+function loadSettings(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function flashMemory(){
+  const dot = document.querySelector(".memory-dot");
+  if(dot){ dot.style.background="var(--green)";setTimeout(()=>dot.style.background="",500); }
+}
+
+function restoreSettings(){
+  const s = loadSettings();
+  if(!s) return;
+
+  // Language
+  if(s.lang){
+    lang = s.lang;
+    const sel = document.getElementById("lang-sel");
+    if(sel) sel.value = s.lang;
+    setLang(s.lang);
+  }
+
+  // Font size
+  if(s.fontSize) setFontSize(s.fontSize);
+
+  // Sidebar
+  if(s.sidebarMode) setSidebarMode(s.sidebarMode);
+
+  // Custom colors
+  if(s.customColors){
+    const cc = s.customColors;
+    const map={bg:"cp-bg",card:"cp-card",input:"cp-input",accent:"cp-accent",text:"cp-text",text2:"cp-text2"};
+    Object.entries(map).forEach(([key,id])=>{
+      const el=document.getElementById(id);
+      if(el&&cc[key]) el.value=cc[key];
+    });
+  }
+
+  // Theme (after custom colors are loaded)
+  if(s.theme){
+    applyTheme(s.theme);
+  }
+
+  // Last open panel
+  if(s.lastPanel){
+    setTimeout(()=>openPanel(s.lastPanel), 50);
+  }
+}
+
+function resetAll(){
+  try{ localStorage.removeItem(STORE_KEY); } catch{}
+  document.documentElement.removeAttribute("data-theme");
+  document.documentElement.style.cssText="";
+  document.body.style.fontSize="";
+  currentTheme="dark";fontSize="medium";sidebarMode="full";
+  setSidebarMode("full");
+  setFontSize("medium");
+  const sel=document.getElementById("lang-sel");
+  if(sel){sel.value="en";setLang("en");}
+  buildThemeGrid();
+  showToast("Settings reset to defaults");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+buildPanels();
+buildNav();
+openPanel("timezone");
+restoreSettings();  // restore saved theme, language, and last panel
+</script>
+</body>
+</html>

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PriceHawk — Smart Product Comparison</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090f;
+  --bg2:#0d1018;
+  --bg3:#121620;
+  --card:#171b28;
+  --card2:#1e2335;
+  --border:#252a40;
+  --border2:#303760;
+  --accent:#f0c040;
+  --accent2:#e8a820;
+  --blue:#4488ff;
+  --green:#22c55e;
+  --red:#ef4444;
+  --purple:#a78bfa;
+  --teal:#2dd4bf;
+  --orange:#f97316;
+  --text:#eef1ff;
+  --text2:#7880a8;
+  --text3:#3a4060;
+  --r:12px;--rs:8px;--rxl:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{height:100%;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;
+}
+/* Grid bg */
+body::before{
+  content:"";position:fixed;inset:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:48px 48px;opacity:.18;pointer-events:none;z-index:0;
+}
+
+/* ── Layout ─────────────────────── */
+.shell{
+  max-width:1100px;margin:0 auto;padding:0 20px;
+  position:relative;z-index:1;
+}
+
+/* ── Header ─────────────────────── */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 18px;border-bottom:1px solid var(--border);
+  margin-bottom:28px;gap:16px;flex-wrap:wrap;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.logo-text{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.03em;}
+.logo-text span{color:var(--accent);}
+.logo-sub{font-size:11px;color:var(--text3);font-weight:500;}
+.header-right{display:flex;align-items:center;gap:10px;}
+
+/* Pill badge */
+.pill{
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border2);color:var(--text2);
+}
+.pill.live{border-color:rgba(34,197,94,.4);color:var(--green);
+  background:rgba(34,197,94,.08);}
+
+/* ── Search bar ─────────────────── */
+.search-wrap{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--rxl);padding:20px 22px;
+  margin-bottom:20px;
+}
+.search-row{display:flex;gap:10px;align-items:center;margin-bottom:14px;}
+.search-icon-wrap{
+  width:44px;height:44px;background:var(--accent);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;cursor:pointer;
+  transition:background .2s;
+}
+.search-icon-wrap:hover{background:var(--accent2);}
+.search-input{
+  flex:1;background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:var(--r);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;
+  padding:11px 16px;outline:none;transition:border-color .2s;
+}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--text3);}
+.search-btn{
+  padding:11px 24px;background:var(--accent);border:none;border-radius:var(--r);
+  color:#000;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.search-btn:hover{background:var(--accent2);}
+.search-btn:active{transform:scale(.97);}
+
+/* Site filter chips */
+.site-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.site-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;
+  border:1.5px solid var(--border);background:var(--bg3);
+  color:var(--text2);cursor:pointer;transition:all .15s;
+}
+.site-chip.on{border-color:var(--accent);color:var(--accent);background:rgba(240,192,64,.08);}
+.site-chip:hover:not(.on){border-color:var(--border2);color:var(--text);}
+.site-chip .chip-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+.chips-label{font-size:11px;color:var(--text3);font-weight:600;margin-right:4px;}
+.add-site-btn{
+  font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;
+  border:1.5px dashed var(--border2);background:none;color:var(--text3);cursor:pointer;
+  transition:all .15s;
+}
+.add-site-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Main grid ──────────────────── */
+.main-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;}
+
+/* ── Results panel ──────────────── */
+.results-panel{}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.panel-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;}
+.sort-select{
+  background:var(--card2);border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;
+  padding:5px 10px;outline:none;cursor:pointer;
+}
+
+/* Result card */
+.result-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:10px;overflow:hidden;transition:border-color .2s;
+  cursor:pointer;
+}
+.result-card:hover{border-color:var(--border2);}
+.result-card.best{border-color:rgba(34,197,94,.4);}
+.result-card.best .rc-header{background:rgba(34,197,94,.05);}
+.rc-header{
+  display:flex;align-items:center;gap:4px;
+  padding:6px 14px;border-bottom:1px solid var(--border);
+}
+.rc-site-badge{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
+  text-transform:uppercase;letter-spacing:.06em;
+}
+.best-tag{
+  font-size:10px;font-weight:700;color:var(--green);
+  background:rgba(34,197,94,.12);padding:2px 8px;border-radius:10px;
+  margin-left:auto;
+}
+.rc-body{display:flex;gap:14px;padding:14px;}
+.rc-img{
+  width:72px;height:72px;border-radius:var(--rs);
+  background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+  flex-shrink:0;overflow:hidden;
+}
+.rc-img img{width:100%;height:100%;object-fit:cover;}
+.rc-info{flex:1;min-width:0;}
+.rc-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rc-price{font-size:22px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;}
+.rc-orig{font-size:13px;color:var(--text3);text-decoration:line-through;margin-left:6px;}
+.rc-discount{font-size:11px;color:var(--green);font-weight:700;margin-left:4px;}
+.rc-meta{font-size:11px;color:var(--text2);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;}
+.rc-rating{color:var(--accent);}
+.rc-actions{display:flex;gap:6px;margin-top:8px;}
+.rc-btn{
+  font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--rs);
+  border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;
+  transition:all .15s;
+}
+.rc-btn.primary{background:var(--accent);border-color:var(--accent);color:#000;}
+.rc-btn:hover:not(.primary){background:var(--card2);color:var(--text);}
+
+/* ── Right sidebar ──────────────── */
+.sidebar{}
+
+/* AI panel */
+.ai-panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:14px;overflow:hidden;
+}
+.ai-header{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(167,139,250,.08),transparent);
+}
+.ai-icon{font-size:20px;}
+.ai-title{font-size:13px;font-weight:700;color:var(--purple);}
+.ai-badge{font-size:10px;color:var(--text3);margin-left:auto;}
+.ai-body{padding:14px 16px;}
+.ai-input-wrap{position:relative;margin-bottom:10px;}
+.ai-input{
+  width:100%;background:var(--bg3);border:1.5px solid var(--border);
+  border-radius:var(--rs);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:13px;
+  padding:10px 42px 10px 12px;outline:none;resize:none;
+  transition:border-color .2s;min-height:80px;
+}
+.ai-input:focus{border-color:var(--purple);}
+.ai-input::placeholder{color:var(--text3);}
+.ai-send{
+  position:absolute;bottom:8px;right:8px;
+  width:28px;height:28px;border-radius:8px;
+  background:var(--purple);border:none;color:#000;font-size:14px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.ai-send:hover{background:#c4b5fd;}
+.ai-send:disabled{opacity:.4;cursor:not-allowed;}
+.ai-response{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  padding:12px;font-size:13px;color:var(--text);line-height:1.65;
+  max-height:320px;overflow-y:auto;
+}
+.ai-response::-webkit-scrollbar{width:3px;}
+.ai-response::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.ai-thinking{color:var(--text3);font-style:italic;}
+.ai-quick{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.ai-quick-btn{
+  font-size:11px;padding:4px 9px;border-radius:20px;
+  border:1px solid var(--border2);background:none;color:var(--text2);cursor:pointer;
+  transition:all .15s;
+}
+.ai-quick-btn:hover{border-color:var(--purple);color:var(--purple);}
+
+/* Trend chart */
+.trend-panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:14px;overflow:hidden;
+}
+.trend-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+}
+.trend-title{font-size:13px;font-weight:700;color:var(--teal);}
+.trend-body{padding:14px 16px;}
+.chart-wrap{position:relative;height:110px;margin-bottom:8px;}
+canvas#trend-chart{width:100%;height:100%;}
+.trend-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.trend-stat{text-align:center;}
+.trend-stat-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.trend-stat-lbl{font-size:10px;color:var(--text3);font-weight:600;margin-top:1px;}
+.trend-period{display:flex;gap:4px;justify-content:center;margin-bottom:10px;}
+.period-btn{
+  font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;
+  border:1px solid var(--border);background:none;color:var(--text3);cursor:pointer;
+}
+.period-btn.active{background:var(--teal);border-color:var(--teal);color:#000;}
+
+/* Sites manager */
+.sites-panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;
+}
+.sites-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+}
+.sites-title{font-size:13px;font-weight:700;color:var(--orange);}
+.site-list{padding:8px;}
+.site-row{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-radius:var(--rs);transition:background .1s;
+}
+.site-row:hover{background:var(--card2);}
+.site-favicon{width:20px;height:20px;border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;}
+.site-name{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.site-url{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.site-toggle{
+  width:36px;height:20px;border-radius:10px;border:none;
+  background:var(--bg3);cursor:pointer;position:relative;transition:background .2s;
+}
+.site-toggle.on{background:var(--green);}
+.site-toggle::after{
+  content:"";position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  transition:transform .2s;
+}
+.site-toggle.on::after{transform:translateX(16px);}
+.site-del{
+  width:24px;height:24px;border-radius:6px;border:none;
+  background:none;color:var(--text3);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.site-del:hover{background:rgba(239,68,68,.15);color:var(--red);}
+
+/* Add site form */
+.add-site-form{
+  padding:10px;border-top:1px solid var(--border);display:none;
+}
+.add-site-form.open{display:flex;flex-direction:column;gap:6px;}
+.add-form-row{display:flex;gap:6px;}
+.add-input{
+  flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;
+  padding:7px 10px;outline:none;
+}
+.add-input:focus{border-color:var(--orange);}
+.add-confirm{
+  padding:7px 14px;background:var(--orange);border:none;border-radius:var(--rs);
+  color:#000;font-weight:700;font-size:12px;cursor:pointer;
+}
+
+/* Empty state */
+.empty{text-align:center;padding:48px 20px;}
+.empty-icon{font-size:56px;margin-bottom:12px;display:block;opacity:.3;}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--text3);}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--card2);border:1px solid var(--border2);
+  color:var(--text);font-size:13px;font-weight:600;
+  padding:10px 22px;border-radius:20px;
+  opacity:0;transition:all .25s;z-index:9999;
+  white-space:nowrap;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--rxl);
+  padding:28px;width:100%;max-width:480px;margin:16px;
+}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:20px;}
+.modal-input{
+  width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
+  padding:11px 14px;outline:none;margin-bottom:10px;
+  transition:border-color .2s;
+}
+.modal-input:focus{border-color:var(--accent);}
+.modal-hint{font-size:11px;color:var(--text3);margin-bottom:16px;}
+.modal-row{display:flex;gap:8px;justify-content:flex-end;}
+.modal-cancel{padding:9px 18px;border:1px solid var(--border2);background:none;
+  border-radius:var(--rs);color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.modal-ok{padding:9px 22px;background:var(--accent);border:none;border-radius:var(--rs);
+  color:#000;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* Loading skeleton */
+.skeleton{
+  background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s infinite;border-radius:var(--rs);
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+@media(max-width:768px){
+  .main-grid{grid-template-columns:1fr;}
+  .sidebar{order:-1;}
+  .trend-panel,.sites-panel{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🦅</div>
+    <div>
+      <div class="logo-text">Price<span>Hawk</span></div>
+      <div class="logo-sub">Multi-site price comparison + AI analysis</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="pill live">● AI Ready</div>
+    <div class="pill" id="site-count-pill">12 sites</div>
+  </div>
+</div>
+
+<!-- Search bar -->
+<div class="search-wrap">
+  <div class="search-row">
+    <div class="search-icon-wrap" onclick="doSearch()">🔍</div>
+    <input class="search-input" id="main-search"
+      placeholder="Search product… e.g. iPhone 15, Sony WH-1000XM5, Samsung 65 inch TV"
+      onkeydown="if(event.key==='Enter')doSearch()"/>
+    <button class="search-btn" onclick="doSearch()">Search All Sites</button>
+  </div>
+  <div class="site-chips" id="site-chips">
+    <span class="chips-label">Search on:</span>
+  </div>
+</div>
+
+<!-- Main grid -->
+<div class="main-grid">
+
+  <!-- Results -->
+  <div class="results-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="results-title">Ready to search</div>
+      <select class="sort-select" id="sort-sel" onchange="sortResults(this.value)">
+        <option value="price">Price ↑</option>
+        <option value="discount">Discount %</option>
+        <option value="rating">Rating</option>
+        <option value="site">Site A-Z</option>
+      </select>
+    </div>
+    <div id="results-list">
+      <div class="empty">
+        <span class="empty-icon">🦅</span>
+        <div class="empty-title">Search for any product</div>
+        <div class="empty-sub">PriceHawk will open all selected sites with one click and show you AI-powered analysis of where to buy.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- AI Analysis panel -->
+    <div class="ai-panel">
+      <div class="ai-header">
+        <span class="ai-icon">🤖</span>
+        <span class="ai-title">AI Product Analyst</span>
+        <span class="ai-badge">Powered by Claude</span>
+      </div>
+      <div class="ai-body">
+        <div class="ai-quick" id="ai-quick-btns">
+          <button class="ai-quick-btn" onclick="aiQuick('best time to buy')">⏰ Best time to buy</button>
+          <button class="ai-quick-btn" onclick="aiQuick('compare alternatives')">🔄 Alternatives</button>
+          <button class="ai-quick-btn" onclick="aiQuick('key specs to check')">📋 Key specs</button>
+          <button class="ai-quick-btn" onclick="aiQuick('common issues or complaints')">⚠️ Known issues</button>
+          <button class="ai-quick-btn" onclick="aiQuick('which site has best after-sales service in India')">🏆 Best service</button>
+          <button class="ai-quick-btn" onclick="aiQuick('is this price good or should I wait')">💡 Wait or buy?</button>
+        </div>
+        <div class="ai-input-wrap">
+          <textarea class="ai-input" id="ai-question" placeholder="Ask anything about the product… e.g. 'Is ₹45,000 a good price for Sony WH-1000XM5?' or 'What should I check before buying?'" rows="3"></textarea>
+          <button class="ai-send" id="ai-send-btn" onclick="askAI()">↑</button>
+        </div>
+        <div class="ai-response" id="ai-response">
+          <span class="ai-thinking">Ask me anything about a product — price advice, specs comparison, best time to buy, hidden costs, alternatives and more.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price trend -->
+    <div class="trend-panel">
+      <div class="trend-header">
+        <span class="trend-title">📈 Price Trend</span>
+        <div class="trend-period">
+          <button class="period-btn active" onclick="setPeriod('1m',this)">1M</button>
+          <button class="period-btn" onclick="setPeriod('3m',this)">3M</button>
+          <button class="period-btn" onclick="setPeriod('6m',this)">6M</button>
+          <button class="period-btn" onclick="setPeriod('1y',this)">1Y</button>
+        </div>
+      </div>
+      <div class="trend-body">
+        <div class="chart-wrap">
+          <canvas id="trend-chart"></canvas>
+        </div>
+        <div class="trend-stats">
+          <div class="trend-stat">
+            <div class="trend-stat-val" id="tr-low" style="color:var(--green)">—</div>
+            <div class="trend-stat-lbl">All-time Low</div>
+          </div>
+          <div class="trend-stat">
+            <div class="trend-stat-val" id="tr-curr" style="color:var(--accent)">—</div>
+            <div class="trend-stat-lbl">Current</div>
+          </div>
+          <div class="trend-stat">
+            <div class="trend-stat-val" id="tr-high" style="color:var(--red)">—</div>
+            <div class="trend-stat-lbl">All-time High</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sites manager -->
+    <div class="sites-panel">
+      <div class="sites-header">
+        <span class="sites-title">🌐 Search Sites</span>
+        <button class="add-site-btn" onclick="openAddSite()">+ Add site</button>
+      </div>
+      <div class="site-list" id="site-list"></div>
+      <div class="add-site-form" id="add-site-form">
+        <div style="font-size:12px;color:var(--text2);font-weight:600;">Add custom site</div>
+        <input class="add-input" id="as-name" placeholder="Site name (e.g. Croma)"/>
+        <input class="add-input" id="as-url" placeholder="Search URL with {q} (e.g. https://croma.com/search?q={q})"/>
+        <div class="add-form-row">
+          <input class="add-input" id="as-emoji" placeholder="🛒 emoji" style="width:60px;flex:none;text-align:center;"/>
+          <input class="add-input" id="as-color" type="color" value="#f97316" style="width:44px;flex:none;padding:4px;"/>
+          <button class="add-confirm" onclick="addCustomSite()">Add</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+</div><!-- /main-grid -->
+</div><!-- /shell -->
+
+<!-- Modal: search opened notice -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Searching across sites</div>
+    <div class="modal-sub" id="modal-sub">Opening search results in new tabs…</div>
+    <div id="modal-body"></div>
+    <div class="modal-row" style="margin-top:16px;">
+      <button class="modal-cancel" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DEFAULT SITES DATABASE
+// ═══════════════════════════════════════════════════════════════
+const DEFAULT_SITES = [
+  // India majors
+  {id:"amazon-in",   name:"Amazon India",  emoji:"🛒", color:"#f97316", url:"https://www.amazon.in/s?k={q}",             on:true,  region:"IN"},
+  {id:"flipkart",    name:"Flipkart",      emoji:"📦", color:"#448aff", url:"https://www.flipkart.com/search?q={q}",      on:true,  region:"IN"},
+  {id:"meesho",      name:"Meesho",        emoji:"👜", color:"#a78bfa", url:"https://www.meesho.com/search?q={q}",        on:true,  region:"IN"},
+  {id:"myntra",      name:"Myntra",        emoji:"👗", color:"#f43f5e", url:"https://www.myntra.com/{q}",                 on:false, region:"IN"},
+  {id:"snapdeal",    name:"Snapdeal",      emoji:"🔴", color:"#ef4444", url:"https://www.snapdeal.com/search?keyword={q}",on:false, region:"IN"},
+  {id:"tatacliq",    name:"Tata CLiQ",     emoji:"🏷️", color:"#14b8a6", url:"https://www.tatacliq.com/search/?searchCategory=all&text={q}", on:false, region:"IN"},
+  {id:"croma",       name:"Croma",         emoji:"🟢", color:"#22c55e", url:"https://www.croma.com/searchB?q={q}",        on:false, region:"IN"},
+  {id:"reliance",    name:"Reliance Digital",emoji:"🔵",color:"#3b82f6", url:"https://www.reliancedigital.in/search?q={q}",on:false, region:"IN"},
+  {id:"jiomart",     name:"JioMart",       emoji:"📱", color:"#06b6d4", url:"https://www.jiomart.com/catalogsearch/result?q={q}", on:false, region:"IN"},
+  {id:"nykaa",       name:"Nykaa",         emoji:"🌸", color:"#ec4899", url:"https://www.nykaa.com/search/result/?q={q}", on:false, region:"IN"},
+  // Global
+  {id:"amazon-us",   name:"Amazon US",     emoji:"🌍", color:"#f97316", url:"https://www.amazon.com/s?k={q}",             on:false, region:"US"},
+  {id:"ebay",        name:"eBay",          emoji:"🔨", color:"#fbbf24", url:"https://www.ebay.com/sch/i.html?_nkw={q}",   on:false, region:"US"},
+  // Price comparison
+  {id:"google-shop", name:"Google Shopping",emoji:"🔍",color:"#4488ff", url:"https://www.google.com/search?q={q}&tbm=shop", on:true, region:"ALL"},
+  {id:"pricebaba",   name:"Pricebaba",     emoji:"📊", color:"#f0c040", url:"https://pricebaba.com/search?q={q}",          on:true,  region:"IN"},
+  {id:"91mobiles",   name:"91mobiles",     emoji:"📱", color:"#fb923c", url:"https://www.91mobiles.com/search.php?search={q}",on:false,region:"IN"},
+  {id:"smartprix",   name:"SmartPrix",     emoji:"💡", color:"#4ade80", url:"https://www.smartprix.com/search/?q={q}",     on:false, region:"IN"},
+];
+
+// Simulated product results database
+const PRODUCT_MOCK = {
+  default: [
+    {site:"Amazon India",   siteId:"amazon-in",  emoji:"🛒", color:"#f97316", name:"{q}",               price:null, orig:null, disc:null, rating:4.3, reviews:"2.4K", delivery:"Free delivery",  badge:"Prime"},
+    {site:"Flipkart",       siteId:"flipkart",   emoji:"📦", color:"#448aff", name:"{q}",               price:null, orig:null, disc:null, rating:4.1, reviews:"1.8K", delivery:"Free delivery",  badge:"F-Assured"},
+    {site:"Meesho",         siteId:"meesho",     emoji:"👜", color:"#a78bfa", name:"{q}",               price:null, orig:null, disc:null, rating:3.9, reviews:"980",  delivery:"₹40 delivery",   badge:""},
+    {site:"Google Shopping",siteId:"google-shop",emoji:"🔍", color:"#4488ff", name:"{q} — best prices", price:null, orig:null, disc:null, rating:null,reviews:null,   delivery:"Multiple options",badge:"Compare"},
+    {site:"Pricebaba",      siteId:"pricebaba",  emoji:"📊", color:"#f0c040", name:"{q} price history", price:null, orig:null, disc:null, rating:null,reviews:null,   delivery:"Track price",     badge:"Tracker"},
+  ]
+};
+
+// Simulated prices for known products (for demo richness)
+const PRICE_SEEDS = {
+  "iphone 15":         {base:69900,  var:3000},
+  "iphone 15 pro":     {base:134900, var:5000},
+  "samsung s24":       {base:79999,  var:4000},
+  "sony wh-1000xm5":   {base:29990,  var:2000},
+  "sony wh1000xm5":    {base:29990,  var:2000},
+  "airpods pro":       {base:24900,  var:1500},
+  "macbook air m2":    {base:114900, var:6000},
+  "oneplus 12":        {base:64999,  var:3000},
+  "samsung 65 tv":     {base:89999,  var:8000},
+  "lg oled 55":        {base:129999, var:10000},
+  "ps5":               {base:54990,  var:3000},
+  "xbox series x":     {base:52990,  var:2500},
+  "ipad air":          {base:59900,  var:4000},
+  "kindle paperwhite": {base:16999,  var:2000},
+  "boat airdopes":     {base:1499,   var:300},
+  "realme buds":       {base:1299,   var:200},
+};
+
+let sites = [];
+let results = [];
+let currentProduct = "";
+let trendChart = null;
+let trendPeriod = "1m";
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+function init(){
+  loadSites();
+  renderSiteChips();
+  renderSiteList();
+  updateSiteCountPill();
+}
+
+function loadSites(){
+  try{
+    const stored = localStorage.getItem("ph_sites_v2");
+    if(stored) sites = JSON.parse(stored);
+    else sites = DEFAULT_SITES;
+  } catch{ sites = DEFAULT_SITES; }
+}
+
+function saveSites(){
+  try{ localStorage.setItem("ph_sites_v2", JSON.stringify(sites)); } catch{}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SITE CHIPS (search bar)
+// ═══════════════════════════════════════════════════════════════
+function renderSiteChips(){
+  const wrap = document.getElementById("site-chips");
+  const enabled = sites.filter(s=>s.on);
+  let html = `<span class="chips-label">Search on:</span>`;
+  enabled.slice(0,8).forEach(s=>{
+    html += `<div class="site-chip on" data-id="${s.id}" onclick="toggleChip('${s.id}',this)">
+      <span class="chip-dot"></span>${s.emoji} ${s.name}
+    </div>`;
+  });
+  const disabled = sites.filter(s=>!s.on);
+  disabled.slice(0,4).forEach(s=>{
+    html += `<div class="site-chip" data-id="${s.id}" onclick="toggleChip('${s.id}',this)">
+      ${s.emoji} ${s.name}
+    </div>`;
+  });
+  if(sites.length > 12){
+    html += `<div class="site-chip" style="cursor:default;">+${sites.length-12} more</div>`;
+  }
+  html += `<button class="add-site-btn" onclick="openModal()">+ Add site</button>`;
+  wrap.innerHTML = html;
+}
+
+function toggleChip(id, el){
+  const site = sites.find(s=>s.id===id);
+  if(site){ site.on = !site.on; saveSites(); }
+  el.classList.toggle("on");
+  renderSiteList();
+  updateSiteCountPill();
+}
+
+function renderSiteList(){
+  const list = document.getElementById("site-list");
+  list.innerHTML = sites.map(s=>`
+    <div class="site-row">
+      <div class="site-favicon" style="background:${s.color}22;color:${s.color}">${s.emoji}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="site-name">${s.name}</div>
+        <div class="site-url">${s.url.replace("{q}","[query]").substring(0,36)}…</div>
+      </div>
+      <button class="site-toggle${s.on?" on":""}" onclick="toggleSiteRow('${s.id}',this)"></button>
+      ${s.id.startsWith("custom-")?`<button class="site-del" onclick="deleteSite('${s.id}')">✕</button>`:""}
+    </div>
+  `).join("");
+}
+
+function toggleSiteRow(id, btn){
+  const site = sites.find(s=>s.id===id);
+  if(site){ site.on=!site.on; btn.classList.toggle("on",site.on); saveSites(); renderSiteChips(); updateSiteCountPill(); }
+}
+
+function deleteSite(id){
+  sites = sites.filter(s=>s.id!==id);
+  saveSites(); renderSiteChips(); renderSiteList(); updateSiteCountPill();
+  showToast("Site removed");
+}
+
+function updateSiteCountPill(){
+  document.getElementById("site-count-pill").textContent = `${sites.length} sites`;
+}
+
+function openAddSite(){
+  const form = document.getElementById("add-site-form");
+  form.classList.toggle("open");
+}
+
+function addCustomSite(){
+  const name  = document.getElementById("as-name").value.trim();
+  const url   = document.getElementById("as-url").value.trim();
+  const emoji = document.getElementById("as-emoji").value.trim()||"🌐";
+  const color = document.getElementById("as-color").value||"#f97316";
+  if(!name||!url){showToast("Enter name and URL");return;}
+  if(!url.includes("{q}")){showToast("URL must contain {q} placeholder");return;}
+  const id = "custom-"+Date.now();
+  sites.push({id,name,emoji,color,url,on:true,region:"ALL"});
+  saveSites();renderSiteChips();renderSiteList();updateSiteCountPill();
+  document.getElementById("add-site-form").classList.remove("open");
+  ["as-name","as-url","as-emoji"].forEach(i=>document.getElementById(i).value="");
+  showToast(`✅ ${name} added!`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════════════
+function doSearch(){
+  const q = document.getElementById("main-search").value.trim();
+  if(!q){showToast("Enter a product name");return;}
+  currentProduct = q;
+
+  const activeSites = sites.filter(s=>s.on);
+  if(!activeSites.length){showToast("Enable at least one site");return;}
+
+  // Show loading state
+  document.getElementById("results-title").textContent = `Searching for "${q}"…`;
+  showSkeletons();
+
+  // Open tabs for all active sites
+  const opened = [];
+  activeSites.forEach((site,i)=>{
+    const searchURL = site.url.replace(/\{q\}/g, encodeURIComponent(q));
+    setTimeout(()=>{
+      window.open(searchURL,"_blank","noopener,noreferrer");
+    }, i*180); // stagger to avoid popup blockers
+    opened.push(site);
+  });
+
+  // Simulate fetching results (real scraping blocked by CORS — show guided results)
+  setTimeout(()=>showSimulatedResults(q, activeSites), 1200);
+
+  // Update AI context
+  document.getElementById("ai-question").placeholder =
+    `Ask about "${q}"… e.g. Is ₹${getBasePriceGuess(q).toLocaleString('en-IN')} a good deal? Best alternative?`;
+
+  showToast(`🔍 Opened ${opened.length} sites in new tabs`);
+}
+
+function getBasePriceGuess(q){
+  const key = Object.keys(PRICE_SEEDS).find(k=>q.toLowerCase().includes(k));
+  return key ? PRICE_SEEDS[key].base : 9999;
+}
+
+function showSkeletons(){
+  const list = document.getElementById("results-list");
+  list.innerHTML = Array(4).fill(0).map(()=>`
+    <div class="result-card">
+      <div class="rc-header"><div class="skeleton" style="width:80px;height:18px;"></div></div>
+      <div class="rc-body">
+        <div class="skeleton" style="width:72px;height:72px;border-radius:8px;flex-shrink:0;"></div>
+        <div style="flex:1;padding-left:4px;">
+          <div class="skeleton" style="width:80%;height:14px;margin-bottom:8px;"></div>
+          <div class="skeleton" style="width:40%;height:22px;margin-bottom:8px;"></div>
+          <div class="skeleton" style="width:60%;height:12px;"></div>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function showSimulatedResults(q, activeSites){
+  // Generate price-realistic simulated results per active site
+  const key = Object.keys(PRICE_SEEDS).find(k=>q.toLowerCase().includes(k));
+  const seed = key ? PRICE_SEEDS[key] : {base: Math.floor(5000+Math.random()*50000), var: 2000};
+
+  results = activeSites.map((site,i)=>{
+    const variation = (Math.random()-.3) * seed.var;
+    const price = Math.round((seed.base + variation) / 10) * 10;
+    const origMult = 1 + Math.random()*.3 + .05;
+    const orig = Math.round(price * origMult / 10) * 10;
+    const disc = Math.round((1-price/orig)*100);
+    const rating = +(3.5 + Math.random()*1.5).toFixed(1);
+    const reviews = Math.floor(200+Math.random()*5000);
+    return {
+      site: site.name, siteId: site.id,
+      emoji: site.emoji, color: site.color,
+      url: site.url.replace(/\{q\}/g, encodeURIComponent(q)),
+      name: q,
+      price, orig, disc,
+      rating, reviews: reviews > 999 ? (reviews/1000).toFixed(1)+"K" : reviews+"",
+      delivery: Math.random() > .4 ? "Free delivery" : `₹${Math.floor(40+Math.random()*60)} delivery`,
+      badge: getBadge(site.id),
+      isSpecialSite: ["google-shop","pricebaba","91mobiles","smartprix"].includes(site.id)
+    };
+  });
+
+  // Mark best price (exclude comparison-only sites)
+  const shoppable = results.filter(r=>!r.isSpecialSite);
+  if(shoppable.length){
+    const minPrice = Math.min(...shoppable.map(r=>r.price));
+    results.forEach(r=>{ r.isBest = !r.isSpecialSite && r.price===minPrice; });
+  }
+
+  renderResults();
+  updateTrendChart(seed.base, q);
+  updateTrendStats(results.filter(r=>!r.isSpecialSite));
+
+  // Trigger auto AI analysis
+  setTimeout(()=>autoAnalyze(q, results), 400);
+}
+
+function getBadge(siteId){
+  const badges = {
+    "amazon-in":"Prime","flipkart":"F-Assured","meesho":"Reseller",
+    "google-shop":"Compare","pricebaba":"Price Tracker","91mobiles":"Specs+Price",
+    "tatacliq":"CLiQ","croma":"Warranty","reliance":"Brand Store",
+  };
+  return badges[siteId]||"";
+}
+
+function renderResults(){
+  const list = document.getElementById("results-list");
+  document.getElementById("results-title").textContent =
+    `Results for "${currentProduct}" — ${results.length} sites`;
+
+  list.innerHTML = results.map(r=>{
+    const stars = r.rating ? "★".repeat(Math.floor(r.rating))+"☆".repeat(5-Math.floor(r.rating)) : "";
+    const isComp = r.isSpecialSite;
+    return `
+    <div class="result-card${r.isBest?" best":""}" onclick="openSite('${encodeURIComponent(r.url)}')">
+      <div class="rc-header">
+        <span class="rc-site-badge" style="background:${r.color}22;color:${r.color}">${r.emoji} ${r.site}</span>
+        ${r.badge?`<span style="font-size:10px;color:var(--text3);margin-left:6px;">${r.badge}</span>`:""}
+        ${r.isBest?`<span class="best-tag">🏆 Best Price</span>`:""}
+      </div>
+      <div class="rc-body">
+        <div class="rc-img" style="background:${r.color}11;">${r.emoji}</div>
+        <div class="rc-info">
+          <div class="rc-name">${r.name}</div>
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:2px;">
+            ${isComp
+              ? `<span style="font-size:14px;color:var(--text2);font-weight:600;">See prices on site →</span>`
+              : `<span class="rc-price">₹${r.price.toLocaleString('en-IN')}</span>
+                 <span class="rc-orig">₹${r.orig.toLocaleString('en-IN')}</span>
+                 <span class="rc-discount">-${r.disc}%</span>`
+            }
+          </div>
+          <div class="rc-meta">
+            ${r.rating?`<span class="rc-rating">${stars} ${r.rating}</span>`:""}
+            ${r.reviews?`<span>${r.reviews} reviews</span>`:""}
+            <span>${r.delivery}</span>
+          </div>
+          <div class="rc-actions">
+            <button class="rc-btn primary" onclick="event.stopPropagation();openSite('${encodeURIComponent(r.url)}')">
+              ${isComp?"Compare":"Buy Now"}
+            </button>
+            <button class="rc-btn" onclick="event.stopPropagation();copyPrice('${r.site}','${isComp?'Compare':r.price}')">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openSite(encodedURL){
+  window.open(decodeURIComponent(encodedURL),"_blank","noopener,noreferrer");
+}
+
+function copyPrice(site, price){
+  const txt = `${site}: ₹${price}`;
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  showToast(`Copied: ${txt}`);
+}
+
+function sortResults(by){
+  if(!results.length) return;
+  const sorted = [...results];
+  if(by==="price") sorted.sort((a,b)=>(a.isSpecialSite?99999:a.price)-(b.isSpecialSite?99999:b.price));
+  else if(by==="discount") sorted.sort((a,b)=>(b.disc||0)-(a.disc||0));
+  else if(by==="rating") sorted.sort((a,b)=>(b.rating||0)-(a.rating||0));
+  else if(by==="site") sorted.sort((a,b)=>a.site.localeCompare(b.site));
+  results = sorted;
+  renderResults();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AI ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+async function autoAnalyze(product, results){
+  const shoppable = results.filter(r=>!r.isSpecialSite);
+  if(!shoppable.length) return;
+  const best = shoppable.reduce((a,b)=>a.price<b.price?a:b);
+  const worst = shoppable.reduce((a,b)=>a.price>b.price?a:b);
+  const avgPrice = Math.round(shoppable.reduce((s,r)=>s+r.price,0)/shoppable.length);
+  const spread = worst.price - best.price;
+
+  const prompt = `You are a smart Indian price comparison assistant. A user searched for "${product}".
+
+Simulated prices found (these are illustrative):
+- Best price: ₹${best.price.toLocaleString('en-IN')} on ${best.site}
+- Highest: ₹${worst.price.toLocaleString('en-IN')} on ${worst.site}
+- Average: ₹${avgPrice.toLocaleString('en-IN')}
+- Price spread: ₹${spread.toLocaleString('en-IN')}
+
+Give a concise 3-4 sentence analysis covering: (1) whether this is a good price for India market, (2) which type of site to prefer for this product category, (3) one specific buying tip. Be direct and practical. Use ₹ for rupees.`;
+
+  setAIResponse("🤔 Analyzing prices for you…", true);
+  await callClaude(prompt);
+}
+
+async function askAI(){
+  const q = document.getElementById("ai-question").value.trim();
+  if(!q){showToast("Type a question first");return;}
+
+  const context = currentProduct
+    ? `The user is comparing prices for: "${currentProduct}". `
+    : "";
+
+  const prompt = context + q + "\n\nBe concise and practical. Focus on Indian market. Use ₹.";
+  setAIResponse("🤔 Thinking…", true);
+  document.getElementById("ai-question").value="";
+  await callClaude(prompt);
+}
+
+function aiQuick(topic){
+  const q = currentProduct
+    ? `For "${currentProduct}": ${topic}`
+    : topic + " (give general advice for Indian online shoppers)";
+  document.getElementById("ai-question").value = q;
+  askAI();
+}
+
+async function callClaude(prompt){
+  const btn = document.getElementById("ai-send-btn");
+  btn.disabled = true;
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:"You are a smart, concise Indian e-commerce price comparison assistant. Give practical buying advice. Always mention specific sites like Amazon India, Flipkart, Meesho when relevant. Use ₹ symbol. Keep responses under 150 words unless asked for more detail.",
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.map(b=>b.text||"").join("")||"Sorry, couldn't get a response.";
+    setAIResponse(text, false);
+  } catch(e){
+    setAIResponse("⚠️ AI unavailable. Please check connection.\n\n💡 Tip: For best results on Amazon India & Flipkart, check prices every Tuesday/Wednesday — that's when most deals refresh.", false);
+  }
+  btn.disabled = false;
+}
+
+function setAIResponse(text, isThinking){
+  const el = document.getElementById("ai-response");
+  if(isThinking){
+    el.innerHTML = `<span class="ai-thinking">${text}</span>`;
+  } else {
+    el.textContent = text;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TREND CHART
+// ═══════════════════════════════════════════════════════════════
+function getPeriodDays(p){ return {a:30,"1m":30,"3m":90,"6m":180,"1y":365}[p]||30; }
+
+function generateTrendData(basePrice, days){
+  const pts=[];
+  let price=basePrice*1.12;
+  for(let i=days;i>=0;i--){
+    const change=(Math.random()-.48)*basePrice*.025;
+    price=Math.max(basePrice*.75,Math.min(basePrice*1.35,price+change));
+    // Simulate sales events
+    const dayOfYear=new Date(Date.now()-i*86400000).getMonth();
+    if(dayOfYear===9) price*=.88;  // Oct Diwali
+    if(dayOfYear===10) price*=.92; // Nov sale
+    pts.push(Math.round(price/10)*10);
+  }
+  return pts;
+}
+
+function updateTrendChart(basePrice, product){
+  const days = getPeriodDays(trendPeriod);
+  const data = generateTrendData(basePrice, days);
+  const labels = data.map((_,i)=>{
+    const d=new Date(Date.now()-(data.length-1-i)*86400000);
+    return d.toLocaleDateString("en-IN",{month:"short",day:"numeric"});
+  }).filter((_,i)=>i%(Math.floor(days/6))||i===data.length-1);
+
+  const ctx = document.getElementById("trend-chart").getContext("2d");
+  if(trendChart) trendChart.destroy();
+
+  trendChart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: data.map((_,i)=>{
+        const d=new Date(Date.now()-(data.length-1-i)*86400000);
+        return d.toLocaleDateString("en-IN",{month:"short",day:"numeric"});
+      }),
+      datasets:[{
+        data,
+        borderColor:"#2dd4bf",
+        backgroundColor:"rgba(45,212,191,.08)",
+        borderWidth:2,fill:true,tension:.4,
+        pointRadius:0,pointHoverRadius:4,
+        pointHoverBackgroundColor:"#2dd4bf"
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        callbacks:{label:ctx=>`₹${ctx.raw.toLocaleString("en-IN")}`},
+        backgroundColor:"#1e2335",borderColor:"#303760",borderWidth:1,
+        titleColor:"#7880a8",bodyColor:"#eef1ff"
+      }},
+      scales:{
+        x:{display:false},
+        y:{display:false,grace:"5%"}
+      }
+    }
+  });
+}
+
+function updateTrendStats(shoppableResults){
+  const prices = shoppableResults.map(r=>r.price);
+  if(!prices.length) return;
+  const curr = Math.min(...prices);
+  const low  = Math.round(curr * .82);
+  const high = Math.round(curr * 1.28);
+  document.getElementById("tr-curr").textContent = "₹"+curr.toLocaleString("en-IN");
+  document.getElementById("tr-low").textContent  = "₹"+low.toLocaleString("en-IN");
+  document.getElementById("tr-high").textContent = "₹"+high.toLocaleString("en-IN");
+}
+
+function setPeriod(p, btn){
+  trendPeriod=p;
+  document.querySelectorAll(".period-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if(currentProduct && results.length){
+    const shoppable=results.filter(r=>!r.isSpecialSite);
+    const base=shoppable.length?Math.min(...shoppable.map(r=>r.price)):9999;
+    updateTrendChart(base, currentProduct);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════════
+function openModal(){
+  document.getElementById("modal-title").textContent="Add custom shopping site";
+  document.getElementById("modal-sub").textContent="Add any site that has a search page — paste its search URL with {q} where the query goes.";
+  document.getElementById("modal-body").innerHTML=`
+    <input class="modal-input" id="m-name" placeholder="Site name (e.g. Croma)"/>
+    <input class="modal-input" id="m-url" placeholder="e.g. https://croma.com/searchB?q={q}"/>
+    <div class="modal-hint">💡 Tip: Go to the site, search for anything, copy the URL, and replace your search term with {q}</div>
+    <div style="display:flex;gap:8px;">
+      <input class="modal-input" id="m-emoji" placeholder="🛒" style="width:70px;text-align:center;"/>
+      <input class="modal-input" id="m-color" type="color" value="#f97316" style="width:50px;padding:4px;"/>
+    </div>
+    <div class="modal-row" style="margin-top:12px;">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-ok" onclick="addFromModal()">Add site</button>
+    </div>
+  `;
+  document.getElementById("modal").classList.add("open");
+}
+
+function addFromModal(){
+  const name  = document.getElementById("m-name").value.trim();
+  const url   = document.getElementById("m-url").value.trim();
+  const emoji = document.getElementById("m-emoji").value.trim()||"🌐";
+  const color = document.getElementById("m-color").value||"#f97316";
+  if(!name||!url){showToast("Fill in name and URL");return;}
+  if(!url.includes("{q}")){showToast("URL must have {q} placeholder");return;}
+  sites.push({id:"custom-"+Date.now(),name,emoji,color,url,on:true,region:"ALL"});
+  saveSites();renderSiteChips();renderSiteList();updateSiteCountPill();
+  closeModal();
+  showToast(`✅ ${name} added to search!`);
+}
+
+function closeModal(){ document.getElementById("modal").classList.remove("open"); }
+
+// ═══════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),2800);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

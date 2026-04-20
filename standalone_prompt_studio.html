@@ -1,0 +1,349 @@
+
+<h2 class="sr-only">Prompt Studio — fully offline prompt library, builder, and improver. No internet required.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.tabs{display:flex;gap:0;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.5rem;}
+.tab{padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary);}
+.sec{display:none;}.sec.active{display:block;}
+.cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.cb{font-size:12px;padding:4px 11px;border:0.5px solid var(--color-border-secondary);border-radius:999px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);}
+.cb.on{background:var(--color-text-primary);color:var(--color-background-primary);}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;}
+.pc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:.9rem 1.1rem;}
+.pc:hover{border-color:var(--color-border-primary);}
+.ptag{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;display:inline-block;margin-bottom:7px;}
+.pc h3{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;}
+.pc p{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-bottom:8px;}
+.ubtn{font-size:12px;padding:4px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:none;color:var(--color-text-secondary);cursor:pointer;}
+.ubtn:hover{background:var(--color-background-secondary);}
+.form{display:flex;flex-direction:column;gap:.9rem;}
+.fl label{font-size:13px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:5px;}
+.fl input,.fl textarea,.fl select{width:100%;font-size:14px;}
+.fl textarea{resize:vertical;min-height:75px;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.out{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.1rem 1.25rem;font-size:13px;line-height:1.75;color:var(--color-text-primary);white-space:pre-wrap;word-break:break-word;}
+.sl{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;}
+.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.abtn{font-size:12px;padding:5px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:none;cursor:pointer;color:var(--color-text-secondary);}
+.abtn:hover{background:var(--color-background-secondary);}
+.abtn.pri{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:999px;font-weight:500;}
+.badge.ok{background:var(--color-background-success);color:var(--color-text-success);}
+.badge.warn{background:var(--color-background-warning);color:var(--color-text-warning);}
+.badge.info{background:var(--color-background-info);color:var(--color-text-info);}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1rem 0;}
+.imp-change{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:.75rem 1rem;margin-bottom:6px;}
+.imp-change .what{font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px;}
+.imp-change .why{font-size:12px;color:var(--color-text-secondary);line-height:1.5;}
+.score-row{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
+.score-card{flex:1;min-width:80px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .8rem;text-align:center;}
+.score-card .sv{font-size:20px;font-weight:500;color:var(--color-text-primary);}
+.score-card .sk{font-size:11px;color:var(--color-text-secondary);margin-top:2px;}
+.hidden{display:none;}
+.tip{font-size:12px;color:var(--color-text-tertiary);}
+</style>
+
+<div style="padding:1rem 0;">
+<div class="tabs">
+  <button class="tab active" onclick="sw('lib')">Library</button>
+  <button class="tab" onclick="sw('build')">Prompt builder</button>
+  <button class="tab" onclick="sw('imp')">Improve prompt</button>
+</div>
+
+<div id="lib" class="sec active">
+  <div class="cat-row" id="cats"></div>
+  <div class="pgrid" id="pgrid"></div>
+</div>
+
+<div id="build" class="sec">
+  <div class="form">
+    <div class="fl"><label>Goal — what should the AI do?</label>
+      <input id="b-goal" placeholder="e.g. Build a Python script to automate system reporting..." oninput="buildLive()"/>
+    </div>
+    <div class="r2">
+      <div class="fl"><label>Your role / AI persona</label>
+        <input id="b-role" placeholder="e.g. Senior Linux engineer..." oninput="buildLive()"/>
+      </div>
+      <div class="fl"><label>Target audience</label>
+        <input id="b-aud" placeholder="e.g. Beginners, DevOps team..." oninput="buildLive()"/>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fl"><label>Output format</label>
+        <select id="b-fmt" onchange="buildLive()">
+          <option value="well-structured paragraphs">Paragraphs</option>
+          <option value="bullet points">Bullet points</option>
+          <option value="numbered steps">Numbered steps</option>
+          <option value="working code with inline comments">Code with comments</option>
+          <option value="a comparison table">Table</option>
+          <option value="JSON">JSON</option>
+          <option value="a step-by-step tutorial">Tutorial</option>
+        </select>
+      </div>
+      <div class="fl"><label>Tone</label>
+        <select id="b-tone" onchange="buildLive()">
+          <option>Professional</option>
+          <option>Casual and friendly</option>
+          <option>Technical and precise</option>
+          <option>Persuasive</option>
+          <option>Concise and direct</option>
+          <option>Creative</option>
+          <option>Educational</option>
+        </select>
+      </div>
+    </div>
+    <div class="r2">
+      <div class="fl"><label>Depth / length</label>
+        <select id="b-len" onchange="buildLive()">
+          <option value="brief and concise (2–3 sentences)">Brief</option>
+          <option value="moderate (1–2 focused paragraphs)" selected>Moderate</option>
+          <option value="detailed and comprehensive with examples">Detailed</option>
+          <option value="exhaustive — cover every aspect with examples and edge cases">Exhaustive</option>
+        </select>
+      </div>
+      <div class="fl"><label>Domain / context</label>
+        <input id="b-domain" placeholder="e.g. Linux, marketing, finance..." oninput="buildLive()"/>
+      </div>
+    </div>
+    <div class="fl"><label>Constraints <span class="tip">(what to avoid or include)</span></label>
+      <textarea id="b-cons" placeholder="e.g. Avoid jargon, include real examples, explain every step, output runnable code only..." oninput="buildLive()"></textarea>
+    </div>
+    <div class="fl"><label>Example output structure <span class="tip">(optional — describe what a good response looks like)</span></label>
+      <textarea id="b-ex" placeholder="e.g. Start with a one-line summary, then the code block, then a 'How to run' section..." oninput="buildLive()" style="min-height:55px;"></textarea>
+    </div>
+    <div id="b-out-wrap">
+      <div class="divider"></div>
+      <span class="sl">Generated prompt</span>
+      <div class="out" id="b-out" style="margin-bottom:8px;min-height:60px;font-style:italic;color:var(--color-text-tertiary);">Fill in your goal above — your prompt will appear here instantly.</div>
+      <div class="acts">
+        <button class="abtn pri" onclick="copyEl('b-out',this)">Copy prompt</button>
+        <button class="abtn" onclick="clearBuilder()">Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="imp" class="sec">
+  <div class="form">
+    <div class="fl"><label>Paste your prompt to improve</label>
+      <textarea id="i-in" style="min-height:130px;" placeholder="Paste any prompt here — the improver will analyse and rewrite it automatically..."></textarea>
+    </div>
+    <div class="fl"><label>What's the problem? <span class="tip">(optional — helps the improver focus)</span></label>
+      <input id="i-issue" placeholder="e.g. Too vague, wrong format, missing context, too long, not specific enough..."/>
+    </div>
+    <div class="acts">
+      <button class="abtn pri" onclick="runImprover()">Improve prompt</button>
+      <button class="abtn" onclick="clearImprover()">Clear</button>
+    </div>
+
+    <div id="i-out-wrap" class="hidden">
+      <div class="divider"></div>
+      <div class="score-row" id="i-scores"></div>
+      <span class="sl">Improved prompt</span>
+      <div class="out" id="i-out" style="margin-bottom:8px;"></div>
+      <div class="acts">
+        <button class="abtn pri" onclick="copyEl('i-out',this)">Copy improved prompt</button>
+        <button class="abtn" onclick="useImproved()">Load into builder</button>
+      </div>
+      <div class="divider"></div>
+      <span class="sl">What changed and why</span>
+      <div id="i-changes"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const PROMPTS=[
+  {cat:"Writing",tag:"purple",title:"Blog post outline",desc:"SEO-structured outline for any topic.",prompt:"You are an expert content strategist. Create a detailed blog post outline for the topic: [TOPIC]. Include: a compelling headline, 5–7 main sections with subpoints, a strong intro hook, and a clear conclusion with a CTA. Format as a structured outline. Target audience: [AUDIENCE]."},
+  {cat:"Writing",tag:"purple",title:"Email rewriter",desc:"Turn a rough draft into a polished email.",prompt:"Rewrite the following email to be clear, professional, and persuasive. Preserve the core message but improve tone, structure, and clarity. Keep it concise.\n\nOriginal:\n[PASTE EMAIL]"},
+  {cat:"Writing",tag:"purple",title:"Story opener",desc:"Engaging opening for any fiction genre.",prompt:"Write a compelling opening paragraph (150–200 words) for a [GENRE] story set in [SETTING]. Introduce the protagonist through action or dialogue and end with a hook. Avoid clichés."},
+  {cat:"Coding",tag:"teal",title:"Code reviewer",desc:"Full review: bugs, performance, security.",prompt:"Act as a senior software engineer. Review the following [LANGUAGE] code for: (1) bugs and edge cases, (2) performance issues, (3) security vulnerabilities, (4) readability. For each issue explain the problem and provide a corrected example.\n\n```\n[PASTE CODE]\n```"},
+  {cat:"Coding",tag:"teal",title:"Debug assistant",desc:"Diagnose errors with step-by-step fixes.",prompt:"I am getting this error in my [LANGUAGE/FRAMEWORK]:\n\nError: [PASTE ERROR]\n\nCode:\n```\n[PASTE CODE]\n```\n\nPlease: (1) explain the root cause, (2) provide a corrected version, (3) explain every change you made."},
+  {cat:"Coding",tag:"teal",title:"Script generator",desc:"Generate a working script for any task.",prompt:"You are a senior [LANGUAGE] developer. Write a complete, working script that: [DESCRIBE TASK]. Include inline comments explaining every key step. At the end, add a 'How to run' section with the exact commands needed. Target audience: [AUDIENCE LEVEL]."},
+  {cat:"Analysis",tag:"blue",title:"Data summarizer",desc:"Key insights and recommendations from data.",prompt:"Analyze the following data and provide: (1) 3–5 key insights, (2) notable trends or anomalies, (3) actionable recommendations. Write for [AUDIENCE] in clear, non-technical language.\n\nData:\n[PASTE DATA]"},
+  {cat:"Analysis",tag:"blue",title:"Pros and cons",desc:"Balanced evaluation with importance ratings.",prompt:"Give me a thorough pros and cons analysis of [TOPIC]. For each point, rate importance (high/medium/low) and explain why. End with a balanced summary and recommendation.\n\nContext: [ADD CONTEXT]"},
+  {cat:"Research",tag:"amber",title:"Topic explainer",desc:"Clear explanation for any audience level.",prompt:"Explain [TOPIC] for [AUDIENCE: beginner / intermediate / expert]. Cover: what it is, how it works, why it matters, and a real-world example. Use analogies where helpful. Be concise but complete."},
+  {cat:"Research",tag:"amber",title:"Literature review",desc:"Summarize key themes in any research area.",prompt:"Summarize the key themes, findings, and debates in research on [TOPIC]. Structure as: (1) Overview, (2) Major schools of thought, (3) Key findings, (4) Ongoing debates, (5) Emerging directions."},
+  {cat:"Business",tag:"coral",title:"Meeting agenda",desc:"Focused, time-boxed agenda for any meeting.",prompt:"Create a [DURATION]-minute meeting agenda for: [PURPOSE]. Include: objectives, time-boxed items, discussion questions per item, and a section for decisions and action items. Attendees: [ROLES]."},
+  {cat:"Business",tag:"coral",title:"SWOT analysis",desc:"Strategic SWOT for any product or company.",prompt:"Conduct a SWOT analysis for [SUBJECT] in [INDUSTRY/MARKET]. For each quadrant provide 4–5 specific, insightful points. End with 2–3 strategic implications."},
+];
+const TAG={purple:{bg:"#EEEDFE",cl:"#3C3489"},teal:{bg:"#E1F5EE",cl:"#0F6E56"},blue:{bg:"#E6F1FB",cl:"#0C447C"},amber:{bg:"#FAEEDA",cl:"#633806"},coral:{bg:"#FAECE7",cl:"#712B13"}};
+const CATS=["All",...new Set(PROMPTS.map(p=>p.cat))];
+let activeCat="All";
+
+function renderCats(){
+  document.getElementById("cats").innerHTML=CATS.map(c=>`<button class="cb${c===activeCat?" on":""}" onclick="filterCat('${c}')">${c}</button>`).join("");
+}
+function filterCat(c){activeCat=c;renderCats();renderCards();}
+function renderCards(){
+  const list=activeCat==="All"?PROMPTS:PROMPTS.filter(p=>p.cat===activeCat);
+  document.getElementById("pgrid").innerHTML=list.map(p=>{
+    const t=TAG[p.tag];
+    const s=encodeURIComponent(p.prompt);
+    return `<div class="pc"><span class="ptag" style="background:${t.bg};color:${t.cl}">${p.cat}</span><h3>${p.title}</h3><p>${p.desc}</p><button class="ubtn" onclick="loadTemplate(decodeURIComponent('${s}'))">Use in builder</button></div>`;
+  }).join("");
+}
+function loadTemplate(p){
+  sw('build');
+  document.getElementById('b-goal').value='';
+  document.getElementById('b-out').textContent=p;
+  document.getElementById('b-out').style.fontStyle='normal';
+  document.getElementById('b-out').style.color='var(--color-text-primary)';
+}
+
+function sw(id){
+  const ids=["lib","build","imp"];
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",ids[i]===id));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function buildLive(){
+  const goal=document.getElementById("b-goal").value.trim();
+  const role=document.getElementById("b-role").value.trim();
+  const aud=document.getElementById("b-aud").value.trim();
+  const fmt=document.getElementById("b-fmt").value;
+  const tone=document.getElementById("b-tone").value;
+  const len=document.getElementById("b-len").value;
+  const domain=document.getElementById("b-domain").value.trim();
+  const cons=document.getElementById("b-cons").value.trim();
+  const ex=document.getElementById("b-ex").value.trim();
+  const el=document.getElementById("b-out");
+  if(!goal){el.textContent="Fill in your goal above — your prompt will appear here instantly.";el.style.fontStyle="italic";el.style.color="var(--color-text-tertiary)";return;}
+  let p="";
+  if(role) p+=`You are a ${role}.`;
+  else p+=`You are an expert AI assistant.`;
+  if(domain) p+=` You specialize in ${domain}.`;
+  p+=`\n\n`;
+  p+=`Your task: ${goal}.`;
+  if(aud) p+=` Tailor your response for ${aud}.`;
+  p+=`\n\n`;
+  p+=`Format: Present your response as ${fmt}.`;
+  p+=` Tone: ${tone.toLowerCase()}.`;
+  p+=` Length: ${len}.`;
+  if(cons) p+=`\n\nConstraints and requirements:\n${cons}`;
+  if(ex) p+=`\n\nExpected output structure:\n${ex}`;
+  p+=`\n\n[Replace this line with your specific content, data, or context before sending.]`;
+  el.textContent=p;el.style.fontStyle="normal";el.style.color="var(--color-text-primary)";
+}
+
+function clearBuilder(){
+  ["b-goal","b-role","b-aud","b-cons","b-ex","b-domain"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("b-fmt").selectedIndex=0;
+  document.getElementById("b-tone").selectedIndex=0;
+  document.getElementById("b-len").selectedIndex=1;
+  buildLive();
+}
+
+function scorePrompt(text){
+  const scores={};
+  const t=text.toLowerCase();
+  scores.clarity=Math.min(10,3+(text.length>80?2:0)+(text.length>200?2:0)+(/your task|please|write|create|explain|analyze|generate/i.test(text)?2:0)+(/\.|,/.test(text)?1:0));
+  scores.specificity=Math.min(10,2+(/role|persona|you are|expert|senior/i.test(text)?2:0)+(/format|bullet|step|code|table|json|paragraph/i.test(text)?2:0)+(/audience|beginner|expert|team/i.test(text)?2:0)+(/example|instance|such as/i.test(text)?2:0));
+  scores.structure=Math.min(10,2+(/\n/.test(text)?2:0)+(text.split('\n').length>3?2:0)+(/\(1\)|\(2\)|1\.|2\.|first|second|then|finally/i.test(text)?2:0)+(/constraint|avoid|include|must|should/i.test(text)?2:0));
+  scores.actionability=Math.min(10,3+(/tone|length|format|style/i.test(text)?2:0)+(/constraint|avoid|do not|must|should/i.test(text)?2:0)+(/example|structure|section/i.test(text)?3:0));
+  return scores;
+}
+
+function runImprover(){
+  const raw=document.getElementById("i-in").value.trim();
+  const issue=document.getElementById("i-issue").value.trim();
+  if(!raw){alert("Please paste a prompt first.");return;}
+
+  const before=scorePrompt(raw);
+  const changes=[];
+  let improved=raw;
+
+  const hasRole=/you are|act as|as a|your role/i.test(improved);
+  if(!hasRole){
+    const domainGuess=improved.match(/\b(python|linux|marketing|sales|data|code|write|design|finance|medical|legal)\b/i);
+    const persona=domainGuess?`a senior ${domainGuess[0]} expert`:"an expert AI assistant";
+    improved=`You are ${persona}.\n\n`+improved;
+    changes.push({what:"Added a role / persona",why:"Without a defined role, AI gives generic responses. A specific persona anchors expertise and tone."});
+  }
+
+  const hasFormat=/format|bullet|step|code|table|json|paragraph|list/i.test(improved);
+  if(!hasFormat){
+    const fmtGuess=issue.match(/format|code|bullet|step|table/i)?issue.match(/(code|bullet|step|table)/i)[0]:"bullet points";
+    improved=improved+`\n\nFormat your response as ${fmtGuess}.`;
+    changes.push({what:"Added output format instruction",why:"Specifying format prevents AI from guessing — it removes ambiguity about how to present the response."});
+  }
+
+  const hasTone=/tone|professional|casual|technical|concise|creative/i.test(improved);
+  if(!hasTone){
+    improved=improved+` Use a professional tone.`;
+    changes.push({what:"Added tone instruction",why:"Tone shapes language and style. Without it, AI picks arbitrarily and may mismatch your audience."});
+  }
+
+  const hasAud=/audience|beginner|expert|user|team|developer|non-technical/i.test(improved);
+  if(!hasAud&&!/explain/i.test(improved)){
+    improved=improved+` Tailor the response for a general professional audience.`;
+    changes.push({what:"Added audience definition",why:"Knowing the audience lets AI calibrate vocabulary, depth, and examples appropriately."});
+  }
+
+  const hasLen=/length|brief|concise|detailed|comprehensive|short|long|paragraph|sentence/i.test(improved);
+  if(!hasLen){
+    improved=improved+` Keep the response detailed and comprehensive.`;
+    changes.push({what:"Added length / depth guidance",why:"Length instructions prevent responses that are too brief to be useful or too long to be readable."});
+  }
+
+  const hasCons=/avoid|do not|must|should|constraint|include|always|never/i.test(improved);
+  if(!hasCons&&issue){
+    improved=improved+`\n\nConstraint: ${issue}.`;
+    changes.push({what:"Turned your issue into a constraint",why:`Your reported issue ("${issue}") was added as an explicit constraint so AI cannot ignore it.`});
+  }
+
+  const hasPlaceholder=/\[.+\]/.test(improved);
+  if(!hasPlaceholder){
+    improved=improved+`\n\n[Add your specific content, data, or context here.]`;
+    changes.push({what:"Added a content placeholder",why:"A clear placeholder shows where variable input goes, making the prompt reusable as a template."});
+  }
+
+  const incompleteWords=/\b\w{1,2}\b\s*$/.test(raw.trim())||/\band\s*$|\bor\s*$|\bto\s*$/i.test(raw.trim());
+  if(incompleteWords){
+    improved=improved.replace(/\b(cus\b)/gi,"focus").replace(/\s+and\.?\s*(\[|$)/," and explain every step.\n\n$1");
+    changes.push({what:"Fixed incomplete sentences",why:"Truncated instructions like 'and' or 'cus' confuse AI. Completed them into full, actionable instructions."});
+  }
+
+  improved=improved.replace(/\s{3,}/g,"\n\n").trim();
+
+  const after=scorePrompt(improved);
+
+  document.getElementById("i-out").textContent=improved;
+
+  const scoreNames=["clarity","specificity","structure","actionability"];
+  document.getElementById("i-scores").innerHTML=scoreNames.map(k=>`<div class="score-card"><div class="sv">${before[k]}<span style="font-size:13px;color:var(--color-text-secondary)">→${after[k]}</span></div><div class="sk">${k}</div></div>`).join("");
+
+  if(changes.length===0) changes.push({what:"Prompt is already strong",why:"No major structural issues found. Minor phrasing was polished for clarity."});
+
+  document.getElementById("i-changes").innerHTML=changes.map(c=>`<div class="imp-change"><div class="what">${c.what}</div><div class="why">${c.why}</div></div>`).join("");
+  document.getElementById("i-out-wrap").classList.remove("hidden");
+}
+
+function clearImprover(){
+  document.getElementById("i-in").value="";
+  document.getElementById("i-issue").value="";
+  document.getElementById("i-out-wrap").classList.add("hidden");
+}
+
+function useImproved(){
+  const text=document.getElementById("i-out").textContent;
+  loadTemplate(text);
+}
+
+function copyEl(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{
+    const o=btn.textContent;btn.textContent="Copied!";setTimeout(()=>btn.textContent=o,1800);
+  }).catch(()=>{
+    const el=document.getElementById(id);
+    const r=document.createRange();r.selectNode(el);
+    window.getSelection().removeAllRanges();window.getSelection().addRange(r);
+    document.execCommand('copy');
+    const o=btn.textContent;btn.textContent="Copied!";setTimeout(()=>btn.textContent=o,1800);
+  });
+}
+
+renderCats();renderCards();
+</script>
