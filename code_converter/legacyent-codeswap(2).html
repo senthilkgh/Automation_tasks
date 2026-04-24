@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leg(acy)ent Code Swap — Offline</title>
+<style>
+:root {
+  --font-mono:
+    'IBM Plex Mono','JetBrains Mono','Cascadia Code','Cascadia Mono',
+    'Fira Code',ui-monospace,'SF Mono','Menlo','Consolas',
+    'Liberation Mono','DejaVu Sans Mono',monospace;
+  --font-sans:
+    'Outfit','Inter','DM Sans',system-ui,-apple-system,
+    'Segoe UI','Ubuntu','Cantarell',sans-serif;
+}
+
+/* ── THEMES ── */
+[data-theme="dark"] {
+  --bg:       #07080c;
+  --bg2:      #0d0f16;
+  --surface:  #111520;
+  --surface2: #161b2a;
+  --surface3: #1b2236;
+  --border:   #1e2840;
+  --border2:  #253050;
+  --text:     #dce8ff;
+  --text2:    #a8bcdf;
+  --muted:    #4a5980;
+  --muted2:   #6b7fa8;
+  --accent:   #4f8eff;
+  --accent2:  #00d4aa;
+  --warn:     #ffb547;
+  --danger:   #ff5f5f;
+  --success:  #00d4aa;
+  --shadow:   rgba(0,0,0,0.5);
+  --glow-a:   rgba(79,142,255,0.06);
+  --glow-b:   rgba(0,212,170,0.04);
+  --grid-c:   rgba(79,142,255,0.025);
+  --out-text: #7ddfc3;
+}
+[data-theme="light"] {
+  --bg:       #f0f2f8;
+  --bg2:      #e8ecf5;
+  --surface:  #ffffff;
+  --surface2: #f5f7fc;
+  --surface3: #eef1fa;
+  --border:   #d0d8ec;
+  --border2:  #b8c4e0;
+  --text:     #1a2340;
+  --text2:    #3a4870;
+  --muted:    #8090b8;
+  --muted2:   #5a6d9a;
+  --accent:   #2563eb;
+  --accent2:  #059669;
+  --warn:     #d97706;
+  --danger:   #dc2626;
+  --success:  #059669;
+  --shadow:   rgba(30,40,80,0.12);
+  --glow-a:   rgba(37,99,235,0.05);
+  --glow-b:   rgba(5,150,105,0.04);
+  --grid-c:   rgba(37,99,235,0.04);
+  --out-text: #047857;
+}
+[data-theme="grey"] {
+  --bg:       #1a1c20;
+  --bg2:      #222429;
+  --surface:  #2a2d34;
+  --surface2: #32363f;
+  --surface3: #3a3f4a;
+  --border:   #404550;
+  --border2:  #50566a;
+  --text:     #e8eaee;
+  --text2:    #b0b8c8;
+  --muted:    #606878;
+  --muted2:   #808898;
+  --accent:   #6b9fff;
+  --accent2:  #34d8b0;
+  --warn:     #fbbf24;
+  --danger:   #f87171;
+  --success:  #34d8b0;
+  --shadow:   rgba(0,0,0,0.4);
+  --glow-a:   rgba(107,159,255,0.05);
+  --glow-b:   rgba(52,216,176,0.04);
+  --grid-c:   rgba(107,159,255,0.025);
+  --out-text: #5eead4;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { height:100%; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── Background ── */
+.bg-layer {
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 15% -10%, var(--glow-a) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 110%, var(--glow-b) 0%, transparent 60%);
+  transition: all 0.3s;
+}
+.grid-layer {
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(var(--grid-c) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-c) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.app {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  height:100vh; overflow:hidden;
+}
+
+/* ══ TOPBAR ══ */
+.topbar {
+  display:flex; align-items:center;
+  justify-content:space-between;
+  padding: 0 20px;
+  height: 54px;
+  background: rgba(var(--surface-rgb, 17,21,32),0.96);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
+  backdrop-filter: blur(14px);
+}
+
+/* ── BRAND LOGO ── */
+.brand { display:flex; align-items:center; gap:10px; }
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+/* The "Leg" block sits left, the stacked "acy/ent" block sits right */
+.logo-leg-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+/* Stacked column: acy top, ent bottom — both same font-size */
+.logo-stack {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1;
+  margin-left: 2px;
+  gap: 1px;
+}
+
+/* "Leg" — big bold anchor, blue gradient */
+.logo-leg {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--accent) 0%, #7c5cfc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* "acy" — top of stack, medium size, warm purple→pink gradient */
+.logo-acy {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* "ent" — bottom of stack, same size as acy, cool teal→cyan gradient */
+.logo-ent {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  background: linear-gradient(135deg, var(--accent2) 0%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.2);
+  color: var(--accent2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.topbar-right { display:flex; align-items:center; gap:8px; }
+
+/* Theme switcher */
+.theme-switch {
+  display:flex; align-items:center;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.theme-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+.theme-btn:hover { color: var(--text2); }
+.theme-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.theme-btn + .theme-btn { border-left: 1px solid var(--border); }
+
+.conn-indicator {
+  display:flex; align-items:center; gap:7px;
+  font-family: var(--font-mono); font-size:11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select:none;
+}
+.conn-indicator:hover { border-color: var(--border2); }
+.conn-dot {
+  width:7px; height:7px; border-radius:50%;
+  background: var(--muted);
+  transition: background 0.3s;
+  flex-shrink:0;
+}
+.conn-dot.online  { background: var(--success); box-shadow: 0 0 8px color-mix(in srgb, var(--success) 50%, transparent); }
+.conn-dot.offline { background: var(--danger); box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 40%, transparent); animation: blink 1.5s ease infinite; }
+.conn-dot.checking { background: var(--warn); animation: blink 0.8s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+.conn-text { color: var(--muted2); }
+
+/* ══ CONFIG BAR ══ */
+.config-bar {
+  display:grid;
+  grid-template-columns: 1fr 44px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
+  transition: background 0.3s;
+}
+.lang-group { display:flex; flex-direction:column; gap:3px; }
+.lang-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding-left: 2px;
+}
+.lang-select {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a5980' d='M5 6L0 0h10z'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 34px 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.lang-select:hover  { background-color: var(--surface2); }
+.lang-select:focus  { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent); }
+.lang-select option, .lang-select optgroup { background: var(--surface2); color: var(--text); }
+
+.swap-btn {
+  width:38px; height:38px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  cursor: pointer;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--muted2); font-size: 16px;
+  transition: all 0.25s;
+  align-self: flex-end;
+  flex-shrink:0;
+}
+.swap-btn:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); border-color: var(--accent); color: var(--accent); transform: rotate(180deg); }
+
+.model-group { display:flex; flex-direction:column; gap:3px; align-self:flex-end; }
+.model-row   { display:flex; align-items:center; gap:6px; }
+.model-select {
+  appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a5980' d='M5 6L0 0h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 28px 8px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  min-width: 175px;
+  transition: border-color 0.2s;
+}
+.model-select:focus { border-color: var(--accent); }
+.model-select option { background: var(--surface2); color: var(--text); }
+
+.refresh-btn {
+  width:30px; height:30px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--muted); font-size: 12px;
+  transition: all 0.2s;
+  flex-shrink:0;
+}
+.refresh-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.refresh-btn.spin svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══ OPTIONS STRIP ══ */
+.opts-strip {
+  display:flex; align-items:center;
+  gap:6px; padding: 7px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
+  flex-wrap:wrap;
+  transition: background 0.3s;
+}
+.opt-chip {
+  display:flex; align-items:center; gap:5px;
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  user-select:none;
+  transition: all 0.15s;
+}
+.opt-chip:hover { border-color: var(--border2); }
+.opt-chip.on { background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.opt-check {
+  width:13px; height:13px;
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 9px; flex-shrink:0;
+  transition: all 0.15s;
+}
+.opt-chip.on .opt-check { background: var(--accent); border-color: var(--accent); color:#fff; }
+.opt-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted2); }
+.opt-chip.on .opt-label { color: var(--text); }
+.opts-spacer { flex:1; }
+.sample-btn {
+  font-family: var(--font-mono); font-size: 11px;
+  padding: 4px 11px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.15s;
+  display:flex; align-items:center; gap:4px;
+}
+.sample-btn:hover { border-color: var(--border2); color: var(--text); }
+
+/* ══ INSTRUCTION BAR ══ */
+.instr-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 20px;
+  background: color-mix(in srgb, var(--accent2) 4%, var(--bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent2) 15%, var(--border));
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.instr-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  padding-top: 10px;
+  flex-shrink: 0;
+}
+.instr-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent2) 25%, var(--border2));
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  min-height: 36px;
+  max-height: 80px;
+  transition: border-color 0.2s;
+}
+.instr-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent2) 12%, transparent); }
+.instr-input::placeholder { color: var(--muted); opacity: 0.6; }
+.instr-toggle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 9px;
+  background: color-mix(in srgb, var(--accent2) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent2) 25%, var(--border));
+  border-radius: 6px;
+  color: var(--accent2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  align-self: center;
+}
+.instr-toggle:hover { background: color-mix(in srgb, var(--accent2) 15%, transparent); }
+
+/* ══ EDITORS ══ */
+.editors-wrap {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  flex:1;
+  overflow:hidden;
+}
+.editor-pane {
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  border-right: 1px solid var(--border);
+}
+.editor-pane:last-child { border-right:none; }
+.pane-header {
+  display:flex; align-items:center;
+  justify-content:space-between;
+  padding: 7px 13px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink:0;
+  transition: background 0.3s;
+}
+.pane-title {
+  display:flex; align-items:center; gap:6px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted2); letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.pane-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot-src { background: var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent); }
+.dot-out { background: var(--accent2); box-shadow: 0 0 6px color-mix(in srgb, var(--accent2) 60%, transparent); }
+.pane-btns { display:flex; gap:4px; }
+.pane-btn {
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 3px 8px; border-radius: 5px;
+  border: 1px solid var(--border2);
+  background: transparent; color: var(--muted2);
+  cursor: pointer; transition: all 0.15s;
+  display:flex; align-items:center; gap:3px;
+}
+.pane-btn:hover { background: color-mix(in srgb, var(--text) 4%, transparent); color: var(--text); }
+.pane-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.pane-btn.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: color-mix(in srgb, var(--success) 6%, transparent); }
+.pane-btn.readme-btn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+  background: color-mix(in srgb, var(--warn) 5%, transparent);
+}
+.pane-btn.readme-btn:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+
+.code-editor {
+  flex:1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.75;
+  padding: 14px 16px;
+  background: transparent;
+  border: none; outline: none;
+  color: var(--text);
+  resize: none;
+  overflow-y: auto;
+  tab-size: 2;
+  caret-color: var(--accent);
+  transition: color 0.3s;
+}
+.code-editor::placeholder { color: var(--muted); opacity: 0.5; }
+.code-editor.out-area { color: var(--out-text); }
+
+.line-count {
+  padding: 3px 13px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  display:flex; gap:14px;
+  flex-shrink:0;
+  transition: background 0.3s;
+}
+
+/* ══ LIBS PANEL ══ */
+.libs-panel {
+  display:none;
+  padding: 6px 20px;
+  background: color-mix(in srgb, var(--accent2) 3%, var(--bg));
+  border-top: 1px solid color-mix(in srgb, var(--accent2) 15%, var(--border));
+  flex-shrink:0;
+}
+.libs-panel.show { display:flex; align-items:center; gap:8px; flex-wrap:wrap; animation: slideIn 0.25s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none} }
+.libs-title { font-family: var(--font-mono); font-size: 10px; color: var(--muted2); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.lib-tag {
+  font-family: var(--font-mono); font-size: 11px;
+  padding: 2px 8px; border-radius: 5px;
+  background: color-mix(in srgb, var(--accent2) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent2) 20%, transparent);
+  color: var(--accent2);
+}
+
+/* ══ BOTTOM BAR ══ */
+.bottom-bar {
+  display:flex; align-items:center;
+  gap:8px; padding: 9px 20px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink:0;
+  transition: background 0.3s;
+}
+.convert-btn {
+  display:flex; align-items:center; gap:8px;
+  padding: 9px 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 75%, #000) 100%);
+  border: none; border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  position:relative; overflow:hidden;
+  letter-spacing: 0.2px;
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--accent) 30%, transparent);
+  flex-shrink:0;
+}
+.convert-btn::after {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  pointer-events:none;
+}
+.convert-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow: 0 5px 20px color-mix(in srgb, var(--accent) 45%, transparent); }
+.convert-btn:active:not(:disabled) { transform:none; }
+.convert-btn:disabled { opacity:0.45; cursor:not-allowed; }
+.spinner {
+  width:13px; height:13px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display:none;
+}
+.status {
+  flex:1;
+  display:flex; align-items:center; gap:7px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  min-height: 36px;
+  transition: all 0.3s;
+}
+.status.loading { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--accent) 4%, var(--surface)); }
+.status.ok      { color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent); background: color-mix(in srgb, var(--success) 4%, var(--surface)); }
+.status.err     { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, transparent); background: color-mix(in srgb, var(--danger) 4%, var(--surface)); }
+.status.warn    { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); background: color-mix(in srgb, var(--warn) 4%, var(--surface)); }
+.status-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.status.loading .status-dot { animation: blink 1s ease infinite; }
+.status-stats {
+  margin-left:auto;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  display:none;
+}
+.status-stats.show { display:block; }
+
+.dl-btn {
+  font-family: var(--font-mono); font-size: 11px;
+  padding: 7px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--muted2);
+  cursor: pointer; transition: all 0.15s;
+  display:flex; align-items:center; gap:5px;
+  white-space: nowrap; flex-shrink:0;
+}
+.dl-btn:hover:not(:disabled) { background: var(--surface2); color: var(--text); border-color: var(--muted); }
+.dl-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+.abort-btn {
+  display:none;
+  align-items:center; gap:7px;
+  padding: 9px 20px;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: 8px;
+  color: var(--danger);
+  font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  flex-shrink:0;
+}
+.abort-btn:hover { background: color-mix(in srgb, var(--danger) 22%, transparent); border-color: var(--danger); }
+.abort-btn.show { display:flex; }
+
+.progress-wrap { position:relative; flex:1; display:flex; flex-direction:column; gap:3px; }
+.progress-bar-track {
+  height:3px; background: var(--border); border-radius:2px; overflow:hidden; display:none;
+}
+.progress-bar-track.show { display:block; }
+.progress-bar-fill {
+  height:100%; width:0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius:2px; transition: width 0.3s ease; position:relative;
+}
+.progress-bar-fill::after {
+  content:''; position:absolute; top:0; right:0; bottom:0; width:40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  animation: shimmer 1s ease infinite;
+}
+@keyframes shimmer { 0%,100%{opacity:0}50%{opacity:1} }
+
+/* ══ OVERLAY / MODAL ══ */
+.overlay {
+  position:fixed; inset:0; z-index:100;
+  background: rgba(0,0,0,0.7);
+  display:none; align-items:center; justify-content:center;
+  backdrop-filter: blur(4px);
+}
+.overlay.show { display:flex; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
+.config-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 26px 30px;
+  width: 420px;
+  max-width: 90vw;
+  animation: popIn 0.2s ease;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:none} }
+.modal-title {
+  font-size: 15px; font-weight: 700;
+  margin-bottom: 18px;
+  display:flex; align-items:center; gap:7px;
+}
+.field-row { margin-bottom: 14px; }
+.field-label {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted2); letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 5px;
+  display:block;
+}
+.field-input {
+  width:100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font-mono); font-size: 13px;
+  padding: 9px 12px; border-radius: 8px;
+  outline: none; transition: border-color 0.2s;
+}
+.field-input:focus { border-color: var(--accent); }
+.modal-hint {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); line-height: 1.7;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  margin-bottom: 16px;
+}
+.modal-hint code { color: var(--accent2); }
+.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.modal-btn {
+  font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+  padding: 8px 18px; border-radius: 7px;
+  cursor: pointer; transition: all 0.15s; border: none;
+}
+.modal-btn.primary { background: var(--accent); color: #fff; }
+.modal-btn.primary:hover { filter: brightness(1.1); }
+.modal-btn.secondary { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border2); }
+.modal-btn.secondary:hover { color: var(--text); }
+
+/* ══ README MODAL ══ */
+.readme-overlay {
+  position:fixed; inset:0; z-index:110;
+  background: rgba(0,0,0,0.75);
+  display:none; align-items:center; justify-content:center;
+  backdrop-filter: blur(6px);
+}
+.readme-overlay.show { display:flex; animation: fadeIn 0.2s ease; }
+.readme-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 0;
+  width: 680px;
+  max-width: 92vw;
+  max-height: 82vh;
+  display:flex; flex-direction:column;
+  animation: popIn 0.2s ease;
+  overflow:hidden;
+}
+.readme-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.readme-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent2);
+  display:flex; align-items:center; gap:7px;
+}
+.readme-close {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--muted2);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: all 0.15s;
+}
+.readme-close:hover { color: var(--text); }
+.readme-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+.readme-textarea {
+  width: 100%;
+  min-height: 360px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  padding: 14px;
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+}
+.readme-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display:flex; gap:8px; justify-content:flex-end;
+}
+
+/* scrollbars */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius:3px; }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 800px) {
+  .editors-wrap { grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
+  .editor-pane { border-right:none; border-bottom: 1px solid var(--border); }
+  .config-bar { grid-template-columns: 1fr 38px 1fr; }
+  .model-group { display:none; }
+  .swap-btn { align-self: flex-end; }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="bg-layer"></div>
+<div class="grid-layer"></div>
+
+<div class="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="logo-leg-wrap">
+          <span class="logo-leg">Leg</span>
+          <div class="logo-stack">
+            <span class="logo-acy">acy</span>
+			<span class="logo-acy">   </span>
+            <span class="logo-ent">ent</span>
+          </div>
+        </div>
+      </div>
+      <div class="brand-sub">Code Swap · (local)Ai Enabled</div>
+    </div>
+    <div class="topbar-right">
+      <div class="theme-switch">
+        <button class="theme-btn active" data-theme-val="dark">Dark</button>
+        <button class="theme-btn" data-theme-val="grey">Grey</button>
+        <button class="theme-btn" data-theme-val="light">Light</button>
+      </div>
+      <div class="conn-indicator" id="connIndicator" title="Click to configure Ollama">
+        <div class="conn-dot" id="connDot"></div>
+        <span class="conn-text" id="connText">Checking…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config bar -->
+  <div class="config-bar">
+    <div class="lang-group">
+      <div class="lang-label">▸ Source Language</div>
+      <select class="lang-select" id="srcLang">
+        <option value="auto">🔍 Auto Detect</option>
+        <optgroup label="── Systems ──">
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+        </optgroup>
+        <optgroup label="── Scripting ──">
+          <option value="bash" selected>Bash / Shell</option>
+          <option value="perl">Perl</option>
+          <option value="python">Python</option>
+          <option value="ruby">Ruby</option>
+          <option value="php">PHP</option>
+          <option value="powershell">PowerShell</option>
+          <option value="lua">Lua</option>
+          <option value="awk">AWK</option>
+        </optgroup>
+        <optgroup label="── JVM / Enterprise ──">
+          <option value="java">Java</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="groovy">Groovy</option>
+          <option value="scala">Scala</option>
+        </optgroup>
+        <optgroup label="── Web ──">
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+        </optgroup>
+        <optgroup label="── Data / Config ──">
+          <option value="json">JSON</option>
+          <option value="yaml">YAML</option>
+          <option value="toml">TOML</option>
+          <option value="xml">XML</option>
+          <option value="sql">SQL</option>
+        </optgroup>
+        <optgroup label="── Modern ──">
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="swift">Swift</option>
+          <option value="dart">Dart</option>
+          <option value="r">R</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <button class="swap-btn" id="swapBtn" title="Swap source ↔ target">⇄</button>
+
+    <div class="lang-group">
+      <div class="lang-label">◂ Target Language</div>
+      <select class="lang-select" id="tgtLang">
+        <optgroup label="── Systems ──">
+          <option value="c">C</option>
+          <option value="cpp">C++</option>
+        </optgroup>
+        <optgroup label="── Scripting ──">
+          <option value="bash">Bash / Shell</option>
+          <option value="perl">Perl</option>
+          <option value="python" selected>Python</option>
+          <option value="ruby">Ruby</option>
+          <option value="php">PHP</option>
+          <option value="powershell">PowerShell</option>
+          <option value="lua">Lua</option>
+          <option value="awk">AWK</option>
+        </optgroup>
+        <optgroup label="── JVM / Enterprise ──">
+          <option value="java">Java</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="groovy">Groovy</option>
+          <option value="scala">Scala</option>
+        </optgroup>
+        <optgroup label="── Web ──">
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+        </optgroup>
+        <optgroup label="── Data / Config ──">
+          <option value="json">JSON</option>
+          <option value="yaml">YAML</option>
+          <option value="toml">TOML</option>
+          <option value="xml">XML</option>
+          <option value="sql">SQL</option>
+        </optgroup>
+        <optgroup label="── Modern ──">
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="swift">Swift</option>
+          <option value="dart">Dart</option>
+          <option value="r">R</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="model-group">
+      <div class="lang-label">◈ Ollama Model</div>
+      <div class="model-row">
+        <select class="model-select" id="modelSelect">
+          <option value="">Loading models…</option>
+        </select>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh model list">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options strip -->
+  <div class="opts-strip">
+    <div class="opt-chip on" data-key="comments">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Comments</span>
+    </div>
+    <div class="opt-chip on" data-key="imports">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Imports &amp; Libs</span>
+    </div>
+    <div class="opt-chip on" data-key="errors">
+      <div class="opt-check">✓</div>
+      <span class="opt-label">Error Handling</span>
+    </div>
+    <div class="opt-chip" data-key="optimize">
+      <div class="opt-check"></div>
+      <span class="opt-label">Optimize</span>
+    </div>
+    <div class="opt-chip" data-key="idiomatic">
+      <div class="opt-check"></div>
+      <span class="opt-label">Idiomatic</span>
+    </div>
+    <div class="opt-chip" data-key="strict">
+      <div class="opt-check"></div>
+      <span class="opt-label">Strict Types</span>
+    </div>
+    <div class="opt-chip" data-key="readme">
+      <div class="opt-check"></div>
+      <span class="opt-label">Gen README</span>
+    </div>
+    <div class="opts-spacer"></div>
+    <button class="sample-btn" id="sampleBtn">◈ Load Sample</button>
+  </div>
+
+  <!-- Instruction bar -->
+  <div class="instr-bar">
+    <span class="instr-label">⚡ Instruction</span>
+    <textarea class="instr-input" id="instrInput"
+      placeholder="Optional: Describe extra requirements or build target from scratch without source… e.g. 'add retry logic', 'use async/await', 'create a REST API for user auth'"></textarea>
+    <button class="instr-toggle" id="instrToggle" title="Collapse/expand instruction bar">▲</button>
+  </div>
+
+  <!-- Editors -->
+  <div class="editors-wrap">
+    <div class="editor-pane">
+      <div class="pane-header">
+        <div class="pane-title"><div class="pane-dot dot-src"></div>SOURCE CODE</div>
+        <div class="pane-btns">
+          <button class="pane-btn" id="pasteBtn">⌘ Paste</button>
+          <button class="pane-btn" id="clearSrcBtn">✕</button>
+        </div>
+      </div>
+      <textarea class="code-editor" id="srcCode"
+        placeholder="// Paste or type your source code here — or leave empty and use Instruction above
+// Supported: Bash · Perl · C · C++ · Java · Python · Go · Rust
+// JavaScript · TypeScript · HTML · CSS · JSON · YAML · SQL · and more
+//
+// Tip: Ctrl+Enter to convert"></textarea>
+      <div class="line-count">
+        <span id="srcLines">0 lines</span>
+        <span id="srcChars">0 chars</span>
+      </div>
+    </div>
+
+    <div class="editor-pane">
+      <div class="pane-header">
+        <div class="pane-title"><div class="pane-dot dot-out"></div>CONVERTED OUTPUT</div>
+        <div class="pane-btns">
+          <button class="pane-btn readme-btn" id="readmeBtn" disabled>📄 README</button>
+          <button class="pane-btn" id="copyBtn" disabled>⎘ Copy</button>
+          <button class="pane-btn" id="clearOutBtn">✕</button>
+        </div>
+      </div>
+      <textarea class="code-editor out-area" id="outCode"
+        placeholder="// Converted code appears here
+// ── 100% offline using local Ollama ──
+// No internet connection required
+// 
+// Tip: enable 'Gen README' to also create a separate README" readonly></textarea>
+      <div class="line-count">
+        <span id="outLines">0 lines</span>
+        <span id="outChars">0 chars</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libs panel -->
+  <div class="libs-panel" id="libsPanel">
+    <span class="libs-title">📦 Required:</span>
+    <div id="libsTags"></div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <button class="convert-btn" id="convertBtn" disabled>
+      <div class="spinner" id="spinner"></div>
+      <span id="btnLabel">⇄ Convert</span>
+    </button>
+    <button class="abort-btn" id="abortBtn">◼ Abort</button>
+    <div class="progress-wrap">
+      <div class="status" id="status">
+        <div class="status-dot"></div>
+        <span id="statusTxt">Connecting to Ollama…</span>
+        <span class="status-stats" id="statusStats"></span>
+      </div>
+      <div class="progress-bar-track" id="progressTrack">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+    <button class="dl-btn" id="dlOut" disabled>⬇ Code</button>
+    <button class="dl-btn" id="dlReadme" disabled>⬇ README</button>
+    <button class="dl-btn" id="dlBoth" disabled>⬇ Both</button>
+  </div>
+</div>
+
+<!-- Config Overlay -->
+<div class="overlay" id="overlay">
+  <div class="config-modal">
+    <div class="modal-title"><span>⚙</span> Ollama Configuration</div>
+    <div id="liveError" style="display:none;font-family:var(--font-mono);font-size:11px;color:var(--danger);background:color-mix(in srgb,var(--danger) 7%,transparent);border:1px solid color-mix(in srgb,var(--danger) 25%,transparent);border-radius:6px;padding:8px 11px;margin-bottom:13px;"></div>
+    <div class="modal-hint">
+      <b style="color:var(--text)">Step 1 — Add CORS to docker-compose.yml:</b><br>
+      <code>environment:</code><br>
+      <code>&nbsp;&nbsp;- OLLAMA_ORIGINS=*</code><br>
+      <code>&nbsp;&nbsp;- OLLAMA_HOST=0.0.0.0:11434</code><br><br>
+      <b style="color:var(--text)">Step 2 — Restart:</b><br>
+      <code>docker compose restart ollama</code><br><br>
+      <b style="color:var(--text)">Step 3 — Verify:</b><br>
+      <code>curl http://localhost:11434/api/tags</code>
+    </div>
+    <div id="testResult" style="font-family:var(--font-mono);font-size:12px;min-height:16px;margin-bottom:10px;"></div>
+    <div class="field-row">
+      <label class="field-label">Ollama Host URL</label>
+      <input class="field-input" id="hostInput" type="text"
+        placeholder="http://localhost:11434" value="http://localhost:11434">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" id="cancelModal">Cancel</button>
+      <button class="modal-btn secondary" id="testConnBtn">Test</button>
+      <button class="modal-btn primary" id="saveModal">Save &amp; Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- README Overlay -->
+<div class="readme-overlay" id="readmeOverlay">
+  <div class="readme-modal">
+    <div class="readme-header">
+      <div class="readme-title">📄 README.md — Generated Documentation</div>
+      <button class="readme-close" id="readmeClose">✕ Close</button>
+    </div>
+    <div class="readme-content">
+      <textarea class="readme-textarea" id="readmeContent" readonly></textarea>
+    </div>
+    <div class="readme-footer">
+      <button class="modal-btn secondary" id="copyReadme">⎘ Copy README</button>
+      <button class="modal-btn primary" id="dlReadmeModal">⬇ Download README</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let ollamaHost       = localStorage.getItem('ollamaHost') || 'http://localhost:11434';
+let modelList        = [];
+let isConverting     = false;
+let lastError        = '';
+let isCheckingConn   = false;
+let convertAbortCtrl = null;
+let generatedReadme  = '';
+let instrVisible     = true;
+
+const EXT = {
+  bash:'sh',shell:'sh',perl:'pl',python:'py',ruby:'rb',php:'php',
+  powershell:'ps1',lua:'lua',awk:'awk',c:'c',cpp:'cpp',java:'java',
+  kotlin:'kt',groovy:'groovy',scala:'scala',javascript:'js',
+  typescript:'ts',html:'html',css:'css',json:'json',yaml:'yml',
+  toml:'toml',xml:'xml',sql:'sql',go:'go',rust:'rs',swift:'swift',
+  dart:'dart',r:'r'
+};
+
+const SAMPLES = {
+  bash: `#!/bin/bash
+HOSTNAME=$(hostname)
+DATE=$(date +"%Y-%m-%d %H:%M:%S")
+
+check_disk() {
+  local part="$1"
+  local usage
+  usage=$(df -h "$part" 2>/dev/null | awk 'NR==2 {print $5}' | tr -d '%')
+  [ -z "$usage" ] && return
+  if [ "$usage" -gt 85 ]; then
+    echo "[$DATE] WARNING: $part is \${usage}% full"
+  else
+    echo "[$DATE] OK: $part is \${usage}% full"
+  fi
+}
+
+check_mem() {
+  local free total pct
+  free=$(free -m | awk 'NR==2 {print $4}')
+  total=$(free -m | awk 'NR==2 {print $2}')
+  pct=$(( (total - free) * 100 / total ))
+  echo "[$DATE] Memory: \${pct}% used (\${free}MB free of \${total}MB)"
+}
+
+echo "=== Health Report: $HOSTNAME @ $DATE ==="
+check_disk "/"
+check_disk "/tmp"
+check_mem`,
+
+  python: `#!/usr/bin/env python3
+import shutil, psutil, datetime, socket
+
+def now():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def check_disk(path="/"):
+    usage = shutil.disk_usage(path)
+    pct = usage.used * 100 // usage.total
+    status = "WARNING" if pct > 85 else "OK"
+    print(f"[{now()}] {status}: {path} is {pct}% full")
+
+def check_mem():
+    m = psutil.virtual_memory()
+    print(f"[{now()}] Memory: {m.percent}% used ({m.available // 1024**2}MB free of {m.total // 1024**2}MB)")
+
+if __name__ == "__main__":
+    print(f"=== Health Report: {socket.gethostname()} @ {now()} ===")
+    check_disk("/")
+    check_disk("/tmp")
+    check_mem()`,
+
+  javascript: `const os = require('os');
+const { execSync } = require('child_process');
+
+const now = () => new Date().toISOString().replace('T',' ').slice(0,19);
+
+function checkMem() {
+  const total = os.totalmem(), free = os.freemem();
+  const pct = Math.round((total - free) / total * 100);
+  console.log(\`[\${now()}] Memory: \${pct}% used (\${Math.round(free/1024**2)}MB free)\`);
+}
+
+function checkDisk(path='/') {
+  try {
+    const out = execSync(\`df -h \${path}\`).toString().split('\\n')[1].split(/\\s+/);
+    console.log(\`[\${now()}] Disk \${path}: \${out[4]} used\`);
+  } catch(e) { console.error(\`Disk check failed: \${e.message}\`); }
+}
+
+console.log(\`=== Health Report: \${os.hostname()} @ \${now()} ===\`);
+checkDisk('/'); checkMem();`,
+
+  go: `package main
+
+import (
+  "fmt"; "os"; "syscall"; "time"
+)
+
+func now() string { return time.Now().Format("2006-01-02 15:04:05") }
+
+func checkDisk(path string) {
+  var s syscall.Statfs_t
+  if err := syscall.Statfs(path, &s); err != nil { fmt.Fprintln(os.Stderr, err); return }
+  total := s.Blocks * uint64(s.Bsize)
+  free  := s.Bfree  * uint64(s.Bsize)
+  pct   := (total - free) * 100 / total
+  status := "OK"; if pct > 85 { status = "WARNING" }
+  fmt.Printf("[%s] %s: %s is %d%% full\\n", now(), status, path, pct)
+}
+
+func main() {
+  host, _ := os.Hostname()
+  fmt.Printf("=== Health Report: %s @ %s ===\\n", host, now())
+  checkDisk("/")
+}`,
+
+  rust: `use std::time::{SystemTime, UNIX_EPOCH};
+
+fn now() -> String {
+    let secs = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+    format!("T+{}s", secs)
+}
+
+fn check_disk(path: &str) { println!("[{}] Disk check: {}", now(), path); }
+
+fn main() {
+    println!("=== Health Report @ {} ===", now());
+    check_disk("/");
+    println!("[{}] Memory: (use sysinfo crate)", now());
+}`,
+
+  java: `import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.io.File;
+
+public class HealthMonitor {
+    static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    static String now() { return LocalDateTime.now().format(FMT); }
+
+    static void checkDisk(String path) {
+        File f = new File(path);
+        long total = f.getTotalSpace(), free = f.getFreeSpace();
+        if (total == 0) { System.out.println("[" + now() + "] Cannot read: " + path); return; }
+        long pct = (total - free) * 100 / total;
+        System.out.printf("[%s] %s: %s is %d%% full%n", now(), pct > 85 ? "WARNING" : "OK", path, pct);
+    }
+
+    public static void main(String[] args) throws Exception {
+        String host = java.net.InetAddress.getLocalHost().getHostName();
+        System.out.printf("=== Health Report: %s @ %s ===%n", host, now());
+        checkDisk("/");
+    }
+}`,
+
+  sql: `CREATE TABLE IF NOT EXISTS health_snapshots (
+  id         SERIAL PRIMARY KEY,
+  hostname   TEXT        NOT NULL,
+  checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  disk_path  TEXT        NOT NULL,
+  disk_pct   INTEGER     NOT NULL,
+  mem_pct    INTEGER     NOT NULL
+);
+
+INSERT INTO health_snapshots (hostname, disk_path, disk_pct, mem_pct)
+VALUES ('web-01', '/', 42, 67);
+
+SELECT hostname, disk_path, disk_pct, mem_pct, checked_at
+FROM   health_snapshots
+WHERE  disk_pct > 85 OR mem_pct > 90
+ORDER  BY checked_at DESC LIMIT 50;`,
+
+  c: `#include <stdio.h>
+#include <sys/statvfs.h>
+#include <time.h>
+#include <unistd.h>
+
+void now(char *buf, size_t n) {
+    time_t t = time(NULL);
+    strftime(buf, n, "%Y-%m-%d %H:%M:%S", localtime(&t));
+}
+
+void check_disk(const char *path) {
+    struct statvfs s; char ts[32]; now(ts, sizeof ts);
+    if (statvfs(path, &s) != 0) { fprintf(stderr, "[%s] Cannot stat %s\\n", ts, path); return; }
+    unsigned long total = s.f_blocks * s.f_frsize;
+    unsigned long free_ = s.f_bfree  * s.f_frsize;
+    int pct = (int)((total - free_) * 100UL / total);
+    printf("[%s] %s: %s is %d%% full\\n", ts, pct > 85 ? "WARNING" : "OK", path, pct);
+}
+
+int main(void) {
+    char ts[32], host[256]; now(ts, sizeof ts); gethostname(host, sizeof host);
+    printf("=== Health Report: %s @ %s ===\\n", host, ts);
+    check_disk("/"); return 0;
+}`,
+};
+
+// ══════════════════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════════════════
+function applyTheme(t) {
+  document.body.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.themeVal === t);
+  });
+}
+
+document.querySelectorAll('.theme-btn').forEach(b => {
+  b.addEventListener('click', () => applyTheme(b.dataset.themeVal));
+});
+applyTheme(localStorage.getItem('theme') || 'dark');
+
+// ══════════════════════════════════════════════════════
+//  INSTRUCTION TOGGLE
+// ══════════════════════════════════════════════════════
+document.getElementById('instrToggle').addEventListener('click', () => {
+  instrVisible = !instrVisible;
+  const bar = document.querySelector('.instr-bar');
+  const inp = document.getElementById('instrInput');
+  const tog = document.getElementById('instrToggle');
+  if (instrVisible) {
+    inp.style.display = '';
+    tog.textContent = '▲';
+  } else {
+    inp.style.display = 'none';
+    tog.textContent = '▼';
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  OLLAMA API
+// ══════════════════════════════════════════════════════
+function fetchWithTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const id   = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+}
+
+async function ollamaGet(path, timeoutMs) {
+  timeoutMs = timeoutMs || 8000;
+  const r = await fetchWithTimeout(ollamaHost + path, {
+    method:'GET', mode:'cors', headers:{'Accept':'application/json'}
+  }, timeoutMs);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function checkConnection() {
+  if (isCheckingConn) return;
+  isCheckingConn = true;
+  const dot = document.getElementById('connDot');
+  const txt = document.getElementById('connText');
+  const btn = document.getElementById('convertBtn');
+  dot.className = 'conn-dot checking';
+  txt.textContent = 'Checking…';
+  setStatus('', 'Connecting to ' + ollamaHost + ' …');
+
+  const baseHost = ollamaHost;
+  const hostsToTry = [baseHost];
+  if (baseHost.includes('localhost')) hostsToTry.push(baseHost.replace('localhost','127.0.0.1'));
+
+  let lastErr = '', connected = false;
+  for (const host of hostsToTry) {
+    try {
+      ollamaHost = host;
+      const data = await ollamaGet('/api/tags', 8000);
+      modelList  = (data.models || []).map(m => m.name);
+      if (host !== baseHost) { localStorage.setItem('ollamaHost', host); document.getElementById('hostInput').value = host; }
+      dot.className = 'conn-dot online';
+      txt.textContent = host.replace(/https?:\/\//,'');
+      populateModels(modelList);
+      if (modelList.length > 0) {
+        btn.disabled = false;
+        setStatus('ok', '✓ Connected — ' + modelList.length + ' model(s) loaded');
+      } else {
+        setStatus('warn', '⚠ Connected but no models — run: ollama pull phi3:latest');
+      }
+      lastError = ''; connected = true; break;
+    } catch(e) { lastErr = e.message || String(e); ollamaHost = baseHost; }
+  }
+
+  if (!connected) {
+    ollamaHost = baseHost; lastError = lastErr;
+    dot.className = 'conn-dot offline'; txt.textContent = 'Offline';
+    btn.disabled = true; modelList = []; populateModels([]);
+    let hint = '';
+    if (lastErr.includes('abort') || lastErr.includes('timeout')) hint = 'Timeout — run: ollama serve';
+    else if (lastErr.includes('Failed to fetch') || lastErr.includes('CORS')) hint = 'CORS blocked — restart with: OLLAMA_ORIGINS=* ollama serve';
+    else if (lastErr.includes('refused')) hint = 'Connection refused — is Ollama on port 11434?';
+    else hint = lastErr;
+    setStatus('err', '✗ ' + hint + ' — click indicator to configure');
+    updateModalError(hint);
+  }
+  isCheckingConn = false;
+}
+
+function updateModalError(msg) {
+  const el = document.getElementById('liveError');
+  if (!el) return;
+  el.textContent = msg ? '⚠ ' + msg : '';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function ollamaGenerate(model, prompt, onChunk, signal) {
+  const url = ollamaHost + '/api/generate';
+  let r;
+  try {
+    r = await fetch(url, {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model, prompt, stream:true }), signal
+    });
+  } catch(e) {
+    if (e.name === 'AbortError') throw e;
+    if (e.message && (e.message.includes('CORS') || e.message.includes('Failed to fetch'))) {
+      return ollamaGenerateNoStream(model, prompt, onChunk, signal);
+    }
+    throw e;
+  }
+  if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Ollama ' + r.status + ': ' + t.substring(0,150)); }
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  let full = '';
+  while (true) {
+    if (signal && signal.aborted) { reader.cancel(); break; }
+    const { done, value } = await reader.read();
+    if (done) break;
+    for (const line of dec.decode(value, { stream:true }).split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.response) { full += obj.response; onChunk(obj.response); }
+        if (obj.done) return full;
+        if (obj.error) throw new Error('Model error: ' + obj.error);
+      } catch(pe) {}
+    }
+  }
+  return full;
+}
+
+async function ollamaGenerateNoStream(model, prompt, onChunk, signal) {
+  const r = await fetchWithTimeout(ollamaHost + '/api/generate', {
+    method:'POST', mode:'cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model, prompt, stream:false }), signal
+  }, 300000);
+  if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error('Ollama ' + r.status + ': ' + t.substring(0,150)); }
+  const data = await r.json();
+  const text = data.response || '';
+  onChunk(text); return text;
+}
+
+// ══════════════════════════════════════════════════════
+//  MODELS
+// ══════════════════════════════════════════════════════
+function populateModels(list) {
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '';
+  if (!list || list.length === 0) {
+    const o = document.createElement('option'); o.value = ''; o.textContent = '— no models found —'; sel.appendChild(o); return;
+  }
+  const preferred = ['codellama','deepseek-coder','codegemma','mistral','phi','llama','gemma','qwen','neural'];
+  const sorted = [...list].sort((a,b) => {
+    const al = a.toLowerCase(), bl = b.toLowerCase();
+    const ai = preferred.findIndex(p => al.includes(p)), bi = preferred.findIndex(p => bl.includes(p));
+    if (ai===-1 && bi===-1) return al.localeCompare(bl);
+    if (ai===-1) return 1; if (bi===-1) return -1; return ai-bi;
+  });
+  sorted.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+  const saved = localStorage.getItem('preferredModel');
+  if (saved && sorted.includes(saved)) sel.value = saved;
+}
+
+// ══════════════════════════════════════════════════════
+//  TARGET-SPECIFIC PROMPT RULES
+// ══════════════════════════════════════════════════════
+function targetRules(srcLang, tgtLang) {
+  if (tgtLang === 'yaml') {
+    return `
+TARGET FORMAT: Ansible Playbook (YAML)
+
+CONVERSION FIDELITY — CRITICAL:
+- Convert ONLY what exists in the source script. DO NOT add extra tasks, handlers, packages, or logic that are not in the source.
+- Every task must map directly to a source line/block. No invented tasks.
+- If the source runs SSH commands in a loop, use ansible.builtin.command or shell: with loop: — do not restructure into unrelated modules.
+- If instruction says "add X", add ONLY X as a new task, nothing else.
+
+ANSIBLE MODULE MAPPING — use native modules, never shell:/command: when a module exists:
+  apt/apt-get install → ansible.builtin.apt (state: present)
+  apt-get remove      → ansible.builtin.apt (state: absent)
+  systemctl start/stop→ ansible.builtin.systemd (state: started/stopped)
+  systemctl enable    → ansible.builtin.systemd (enabled: true)
+  cp/rsync            → ansible.builtin.copy or synchronize
+  mkdir -p            → ansible.builtin.file (state: directory)
+  rm -rf              → ansible.builtin.file (state: absent)
+  chmod               → ansible.builtin.file (mode: '0755')
+  chown               → ansible.builtin.file (owner/group)
+  ln -s               → ansible.builtin.file (state: link)
+  useradd             → ansible.builtin.user
+  echo > file         → ansible.builtin.copy (content)
+  echo >> file        → ansible.builtin.lineinfile
+  sed -i              → ansible.builtin.lineinfile or replace
+  curl/wget           → ansible.builtin.get_url or uri
+  tar/unzip           → ansible.builtin.unarchive
+  git clone           → ansible.builtin.git
+  pip install         → ansible.builtin.pip
+  crontab             → ansible.builtin.cron
+  for loops           → loop: with_items:
+  if/else             → when: conditions
+  ssh $host "cmd"     → ansible.builtin.command: cmd  (with delegate_to or loop over hosts)
+  hostname (command)  → ansible.builtin.command: hostname  OR use ansible_hostname fact
+  df / filesystem     → ansible.builtin.command: df -h  OR ansible.builtin.setup (facts)
+
+STRUCTURE RULES:
+- Start with: ---
+- Single play: - name: <derived from source purpose>
+- hosts: all
+- become: yes ONLY if source uses sudo/root
+- vars: ONLY for variables that exist in the source
+- tasks: one task per source logical step — NO MORE
+- Task name: short, ≤40 chars, describes exactly what it does
+- NO handlers unless source has restart-on-change logic
+- NEVER add packages not in the source
+- NEVER add pip/apt tasks unless source explicitly installs packages
+- Last line comment: # DEPS: ansible-core
+`;
+  }
+  return '';
+}
+
+// ══════════════════════════════════════════════════════
+//  PROMPT BUILDER — STRICT FAITHFUL CONVERSION
+// ══════════════════════════════════════════════════════
+function buildPrompt(srcLang, tgtLang, srcCode, instruction) {
+  const on  = key => document.querySelector('.opt-chip[data-key="' + key + '"]')?.classList.contains('on');
+  const src = srcLang === 'auto' ? 'auto-detected' : srcLang.toUpperCase();
+  const reqs = [];
+  if (on('comments'))  reqs.push('- Inline comments max 30 chars each — terse labels only, never explanatory sentences');
+  if (on('imports'))   reqs.push('- Include ALL required imports/includes at top');
+  if (on('errors'))    reqs.push('- Add idiomatic error handling for ' + tgtLang.toUpperCase());
+  if (on('optimize'))  reqs.push('- Optimise for performance');
+  if (on('idiomatic')) reqs.push('- Use idiomatic ' + tgtLang.toUpperCase() + ' patterns');
+  if (on('strict'))    reqs.push('- Strict typing / type annotations');
+
+  const extra = targetRules(srcLang, tgtLang);
+  const hasSource = srcCode && srcCode.trim().length > 0;
+  const hasInstr  = instruction && instruction.trim().length > 0;
+
+  let taskBlock = '';
+  if (hasSource && hasInstr) {
+    taskBlock =
+      'TASK: Convert the ' + src + ' source code below to ' + tgtLang.toUpperCase() + '.\n' +
+      'Then apply this ADDITIONAL INSTRUCTION on top of the conversion: ' + instruction.trim() + '\n\n' +
+      'SOURCE ' + src + ' CODE (convert this faithfully, line by line):\n' +
+      srcCode + '\n';
+  } else if (hasSource) {
+    taskBlock =
+      'TASK: Convert the ' + src + ' source code below to ' + tgtLang.toUpperCase() + '.\n\n' +
+      'SOURCE ' + src + ' CODE:\n' +
+      srcCode + '\n';
+  } else if (hasInstr) {
+    taskBlock =
+      'TASK: Generate ' + tgtLang.toUpperCase() + ' code that does the following:\n' +
+      instruction.trim() + '\n';
+  } else {
+    taskBlock = 'TASK: Generate a minimal hello-world in ' + tgtLang.toUpperCase() + '.\n';
+  }
+
+  return [
+    'You are an expert code converter. Your only job is to produce the converted code — nothing else.',
+    '',
+    taskBlock,
+    (extra ? extra : ''),
+    'ABSOLUTE RULES — VIOLATIONS CAUSE FAILURE:',
+    '1. Output ONLY raw code. No markdown. No triple backticks. No explanations. No preamble.',
+    '2. FAITHFULNESS: every line of source must appear in output. Do NOT add invented logic, extra tasks, extra packages, or extra handlers that are not in the source.',
+    '3. INSTRUCTION FIDELITY: if an instruction says "add X", add ONLY X — nothing else.',
+    '4. COMMENTS: max 30 characters per comment. No paragraph comments. No explaining what Ansible does.',
+    '5. No placeholder tasks. No "TODO" tasks. No example tasks. Only what is in the source.',
+    '6. Code must run immediately without modification.',
+    (hasSource ? '7. Preserve ALL logic, variable names, and control flow from source.' : ''),
+    (reqs.length ? reqs.join('\n') : ''),
+    '- Last line: a comment with DEPS: pkg1, pkg2  (or DEPS: stdlib-only)',
+    '',
+    tgtLang.toUpperCase() + ' OUTPUT:',
+  ].filter(Boolean).join('\n');
+}
+
+
+
+// ══════════════════════════════════════════════════════
+//  README PROMPT
+// ══════════════════════════════════════════════════════
+function buildReadmePrompt(srcLang, tgtLang, convertedCode, instruction) {
+  const src = srcLang === 'auto' ? 'auto-detected' : srcLang.toUpperCase();
+  return 'Generate a concise README.md for this ' + tgtLang.toUpperCase() + ' script.\n\n'
+    + 'CONTEXT:\n'
+    + '- Converted from: ' + src + '\n'
+    + '- Target language: ' + tgtLang.toUpperCase() + '\n'
+    + (instruction ? '- Extra instruction applied: ' + instruction + '\n' : '')
+    + '\nCODE:\n' + convertedCode + '\n\n'
+    + 'README MUST INCLUDE:\n'
+    + '1. Brief description (1-2 sentences)\n'
+    + '2. Requirements/dependencies\n'
+    + '3. Usage examples\n'
+    + '4. Key functions/features table\n'
+    + '5. Notes on conversion from ' + src + '\n\n'
+    + 'Output ONLY the README.md markdown. No extra commentary.';
+}
+
+// ══════════════════════════════════════════════════════
+//  CONVERSION STATE UI
+// ══════════════════════════════════════════════════════
+function setConverting(active) {
+  const convertBtn = document.getElementById('convertBtn');
+  const abortBtn   = document.getElementById('abortBtn');
+  const track      = document.getElementById('progressTrack');
+  const stats      = document.getElementById('statusStats');
+  if (active) {
+    convertBtn.style.display = 'none';
+    abortBtn.classList.add('show');
+    track.classList.add('show');
+  } else {
+    convertBtn.style.display = '';
+    abortBtn.classList.remove('show');
+    track.classList.remove('show');
+    document.getElementById('progressFill').style.width = '0%';
+    stats.classList.remove('show'); stats.textContent = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  MAIN CONVERSION
+// ══════════════════════════════════════════════════════
+async function doConvert() {
+  if (isConverting) return;
+  const src  = document.getElementById('srcCode').value.trim();
+  const instr = document.getElementById('instrInput').value.trim();
+  const sLng = document.getElementById('srcLang').value;
+  const tLng = document.getElementById('tgtLang').value;
+  const mdl  = document.getElementById('modelSelect').value;
+  const doReadme = document.querySelector('.opt-chip[data-key="readme"]')?.classList.contains('on');
+
+  if (!src && !instr) { setStatus('err', '⚠ Provide source code or an instruction'); return; }
+  if (!mdl) { setStatus('err', '⚠ No model — click connection indicator to set up Ollama'); return; }
+  if (src && sLng !== 'auto' && sLng === tLng) { setStatus('err', '⚠ Source and target must differ'); return; }
+
+  isConverting = true;
+  convertAbortCtrl = new AbortController();
+  generatedReadme = '';
+
+  const convertBtn = document.getElementById('convertBtn');
+  convertBtn.disabled = true;
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('btnLabel').textContent  = 'Converting…';
+  setConverting(true);
+
+  const out = document.getElementById('outCode');
+  out.value = '';
+  document.getElementById('libsPanel').classList.remove('show');
+  document.getElementById('copyBtn').disabled   = true;
+  document.getElementById('dlOut').disabled     = true;
+  document.getElementById('dlBoth').disabled    = true;
+  document.getElementById('dlReadme').disabled  = true;
+  document.getElementById('readmeBtn').disabled = true;
+
+  const startTime = Date.now();
+  let tokenCount  = 0;
+  let progressTimer = null;
+  const stats = document.getElementById('statusStats');
+  const fill  = document.getElementById('progressFill');
+
+  function updateProgress() {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const tps     = elapsed > 0 ? (tokenCount / elapsed).toFixed(1) : '0.0';
+    const elStr   = elapsed < 60 ? elapsed.toFixed(0)+'s' : Math.floor(elapsed/60)+'m '+(elapsed%60).toFixed(0)+'s';
+    fill.style.width = (95 * (1 - Math.exp(-elapsed / 45))).toFixed(1) + '%';
+    stats.textContent = tokenCount + ' tok · ' + tps + ' t/s · ' + elStr;
+    stats.classList.add('show');
+  }
+
+  const displaySrc = src ? sLng.toUpperCase() : 'INSTR';
+  setStatus('loading', 'Converting ' + displaySrc + ' → ' + tLng.toUpperCase() + ' using ' + mdl + '…');
+  progressTimer = setInterval(updateProgress, 500);
+
+  try {
+    const prompt = buildPrompt(sLng, tLng, src, instr);
+    let full = '';
+
+    await ollamaGenerate(mdl, prompt, chunk => {
+      tokenCount += chunk.length;
+      full += chunk;
+      out.value = full.replace(/^```[\w]*\n?/gm,'').replace(/```\s*$/gm,'').trim();
+      out.scrollTop = out.scrollHeight;
+      updateLineCounts();
+    }, convertAbortCtrl.signal);
+
+    let result = full.replace(/^```[\w]*\n?/gm,'').replace(/```\s*$/gm,'').trim();
+    out.value  = result;
+
+    // Detect deps
+    const dm = result.match(/DEPS:\s*([^\n\r]+)/i);
+    if (dm) {
+      const raw = dm[1].trim();
+      if (!/stdlib.only/i.test(raw) && raw) {
+        const deps = raw.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+        if (deps.length) showLibs(deps);
+      }
+    }
+
+    fill.style.width = '100%';
+    document.getElementById('copyBtn').disabled = false;
+    document.getElementById('dlOut').disabled   = false;
+    document.getElementById('dlBoth').disabled  = false;
+    localStorage.setItem('preferredModel', mdl);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const tps     = (tokenCount / parseFloat(elapsed)).toFixed(1);
+
+    // ── README generation (if opted in) ──
+    if (doReadme && result) {
+      setStatus('loading', 'Generating README…');
+      document.getElementById('btnLabel').textContent = 'README…';
+      const readmePrompt = buildReadmePrompt(sLng, tLng, result, instr);
+      let readmeFull = '';
+      await ollamaGenerate(mdl, readmePrompt, chunk => { readmeFull += chunk; }, convertAbortCtrl.signal);
+      generatedReadme = readmeFull.replace(/^```[\w]*\n?/gm,'').replace(/```\s*$/gm,'').trim();
+      document.getElementById('readmeContent').value = generatedReadme;
+      document.getElementById('readmeBtn').disabled  = false;
+      document.getElementById('dlReadme').disabled   = false;
+    }
+
+    setStatus('ok', '✓ Done — ' + result.split('\n').length + ' lines · ' + tokenCount + ' tokens · ' + tps + ' t/s · ' + elapsed + 's' + (doReadme && generatedReadme ? ' · README ready' : ''));
+
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      const partial = out.value.trim();
+      if (partial) {
+        out.value = partial + '\n\n// ── Aborted by user ──';
+        document.getElementById('copyBtn').disabled = false;
+        document.getElementById('dlOut').disabled   = false;
+        document.getElementById('dlBoth').disabled  = false;
+      }
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      setStatus('warn', '◼ Aborted after ' + elapsed + 's · ' + tokenCount + ' tokens received');
+    } else {
+      let msg = e.message || String(e);
+      if (msg.includes('CORS') || msg.includes('Failed to fetch')) msg = 'CORS error — restart Ollama with: OLLAMA_ORIGINS=* ollama serve';
+      setStatus('err', '✗ ' + msg);
+      out.value = '// Conversion failed\n// ' + msg;
+    }
+  } finally {
+    clearInterval(progressTimer);
+    isConverting = false; convertAbortCtrl = null;
+    convertBtn.disabled = false;
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('btnLabel').textContent  = '⇄ Convert';
+    setConverting(false);
+    updateLineCounts();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function setStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = 'status' + (type ? ' '+type : '');
+  document.getElementById('statusTxt').textContent = msg;
+}
+
+function showLibs(deps) {
+  document.getElementById('libsTags').innerHTML = deps.map(d => '<span class="lib-tag">'+d+'</span>').join('');
+  document.getElementById('libsPanel').classList.add('show');
+}
+
+function updateLineCounts() {
+  const s = document.getElementById('srcCode').value;
+  const o = document.getElementById('outCode').value;
+  document.getElementById('srcLines').textContent = s.split('\n').length + ' lines';
+  document.getElementById('srcChars').textContent = s.length.toLocaleString() + ' chars';
+  document.getElementById('outLines').textContent = o.split('\n').length + ' lines';
+  document.getElementById('outChars').textContent = o.length.toLocaleString() + ' chars';
+}
+
+function downloadFile(name, content) {
+  const a = document.createElement('a');
+  a.href    = URL.createObjectURL(new Blob([content], { type:'text/plain;charset=utf-8' }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function trySetOption(sel, val) {
+  for (const o of sel.options) { if (o.value === val) { sel.value = val; return; } }
+}
+
+// ══════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ══════════════════════════════════════════════════════
+document.querySelectorAll('.opt-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('on');
+    chip.querySelector('.opt-check').textContent = chip.classList.contains('on') ? '✓' : '';
+  });
+});
+
+document.getElementById('swapBtn').addEventListener('click', () => {
+  const sEl = document.getElementById('srcLang'), tEl = document.getElementById('tgtLang');
+  const sv = sEl.value, tv = tEl.value;
+  const sc = document.getElementById('srcCode').value, oc = document.getElementById('outCode').value;
+  trySetOption(sEl, tv === 'auto' ? 'bash' : tv);
+  trySetOption(tEl, sv === 'auto' ? 'python' : sv);
+  document.getElementById('srcCode').value = oc;
+  document.getElementById('outCode').value = sc;
+  updateLineCounts();
+});
+
+document.getElementById('sampleBtn').addEventListener('click', () => {
+  const lang = document.getElementById('srcLang').value;
+  const key  = lang === 'auto' ? 'bash' : lang;
+  document.getElementById('srcCode').value = SAMPLES[key] || SAMPLES['bash'];
+  updateLineCounts();
+  setStatus('', 'Sample ' + key.toUpperCase() + ' code loaded');
+});
+
+document.getElementById('clearSrcBtn').addEventListener('click', () => {
+  document.getElementById('srcCode').value = ''; updateLineCounts();
+});
+
+document.getElementById('clearOutBtn').addEventListener('click', () => {
+  document.getElementById('outCode').value = '';
+  generatedReadme = '';
+  document.getElementById('libsPanel').classList.remove('show');
+  document.getElementById('copyBtn').disabled   = true;
+  document.getElementById('dlOut').disabled     = true;
+  document.getElementById('dlBoth').disabled    = true;
+  document.getElementById('dlReadme').disabled  = true;
+  document.getElementById('readmeBtn').disabled = true;
+  updateLineCounts();
+});
+
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+  try {
+    document.getElementById('srcCode').value = await navigator.clipboard.readText();
+    updateLineCounts();
+  } catch { setStatus('warn', '⚠ Clipboard blocked — paste with Ctrl+V'); }
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const v = document.getElementById('outCode').value;
+  if (!v) return;
+  try { await navigator.clipboard.writeText(v); } catch {}
+  const b = document.getElementById('copyBtn');
+  const prev = b.textContent;
+  b.textContent = '✓ Copied'; b.classList.add('ok');
+  setTimeout(() => { b.textContent = prev; b.classList.remove('ok'); }, 2000);
+});
+
+document.getElementById('convertBtn').addEventListener('click', doConvert);
+
+document.getElementById('abortBtn').addEventListener('click', () => {
+  if (convertAbortCtrl) convertAbortCtrl.abort();
+});
+
+document.getElementById('dlOut').addEventListener('click', () => {
+  const code = document.getElementById('outCode').value;
+  const lang = document.getElementById('tgtLang').value;
+  if (code) downloadFile('converted.' + (EXT[lang] || 'txt'), code);
+});
+
+document.getElementById('dlReadme').addEventListener('click', () => {
+  if (generatedReadme) downloadFile('README.md', generatedReadme);
+});
+
+document.getElementById('dlBoth').addEventListener('click', () => {
+  const sc = document.getElementById('srcCode').value;
+  const oc = document.getElementById('outCode').value;
+  const sl = document.getElementById('srcLang').value;
+  const tl = document.getElementById('tgtLang').value;
+  if (sc) downloadFile('source.'+(EXT[sl==='auto'?'bash':sl]||'txt'), sc);
+  if (oc) downloadFile('converted.'+(EXT[tl]||'txt'), oc);
+  if (generatedReadme) downloadFile('README.md', generatedReadme);
+});
+
+// README modal
+document.getElementById('readmeBtn').addEventListener('click', () => {
+  if (!generatedReadme) return;
+  document.getElementById('readmeContent').value = generatedReadme;
+  document.getElementById('readmeOverlay').classList.add('show');
+});
+document.getElementById('readmeClose').addEventListener('click', () => {
+  document.getElementById('readmeOverlay').classList.remove('show');
+});
+document.getElementById('readmeOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+document.getElementById('copyReadme').addEventListener('click', async () => {
+  if (!generatedReadme) return;
+  try { await navigator.clipboard.writeText(generatedReadme); } catch {}
+  const b = document.getElementById('copyReadme');
+  const prev = b.textContent;
+  b.textContent = '✓ Copied'; 
+  setTimeout(() => { b.textContent = prev; }, 2000);
+});
+document.getElementById('dlReadmeModal').addEventListener('click', () => {
+  if (generatedReadme) downloadFile('README.md', generatedReadme);
+});
+
+// Config modal
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+  if (isCheckingConn) return;
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spin');
+  await checkConnection();
+  btn.classList.remove('spin');
+});
+
+document.getElementById('connIndicator').addEventListener('click', () => {
+  document.getElementById('hostInput').value = ollamaHost;
+  updateModalError(lastError);
+  document.getElementById('overlay').classList.add('show');
+});
+document.getElementById('cancelModal').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+document.getElementById('saveModal').addEventListener('click', async () => {
+  const v = document.getElementById('hostInput').value.trim().replace(/\/$/,'');
+  if (!v) return;
+  ollamaHost = v; localStorage.setItem('ollamaHost', v);
+  document.getElementById('overlay').classList.remove('show');
+  await checkConnection();
+});
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+document.getElementById('testConnBtn').addEventListener('click', async () => {
+  const host = document.getElementById('hostInput').value.trim().replace(/\/$/,'');
+  const lbl  = document.getElementById('testConnBtn');
+  lbl.textContent = 'Testing…'; lbl.disabled = true;
+  try {
+    const ctrl = new AbortController();
+    const id   = setTimeout(() => ctrl.abort(), 5000);
+    const r    = await fetch(host + '/api/tags', { mode:'cors', signal:ctrl.signal });
+    clearTimeout(id);
+    if (r.ok) {
+      const d = await r.json(), n = (d.models||[]).length;
+      updateModalError('');
+      document.getElementById('testResult').textContent = '✓ Connected! ' + n + ' model(s) found.';
+      document.getElementById('testResult').style.color = 'var(--success)';
+    } else { throw new Error('HTTP ' + r.status); }
+  } catch(e) {
+    let m = e.message || String(e);
+    if (m.includes('abort')) m = 'Timeout at ' + host;
+    else if (m.includes('Failed to fetch') || m.includes('CORS')) m = 'CORS blocked. See setup instructions.';
+    document.getElementById('testResult').textContent = '✗ ' + m;
+    document.getElementById('testResult').style.color = 'var(--danger)';
+    updateModalError(m);
+  } finally { lbl.textContent = 'Test'; lbl.disabled = false; }
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doConvert(); }
+  if (e.key === 'Escape') {
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('readmeOverlay').classList.remove('show');
+  }
+});
+
+document.getElementById('srcCode').addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = e.target, p = s.selectionStart;
+    s.value = s.value.slice(0,p) + '  ' + s.value.slice(s.selectionEnd);
+    s.selectionStart = s.selectionEnd = p + 2;
+  }
+});
+
+['srcCode','outCode'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateLineCounts)
+);
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+updateLineCounts();
+checkConnection();
+</script>
+</body>
+</html>
