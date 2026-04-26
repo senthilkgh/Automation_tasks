@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jyotish Kundali & Nadi Jothidam</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+Devanagari:wght@300;400;500&family=Noto+Sans+Tamil:wght@300;400;500&family=Noto+Sans+Telugu:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg1:#0D0520;--bg2:#1A0A2E;--bg3:#0A1628;
+  --saffron:#E8520A;--gold:#C8941A;
+  --text-bright:#F5E8C0;--text-muted:#B8A080;
+  --accent:#8B5CF6;--teal:#0891B2;--ruby:#BE123C;
+}
+body{font-family:'Noto Sans Devanagari','Cinzel',serif;background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 40%,var(--bg3) 100%);min-height:100vh;color:var(--text-bright);transition:background 0.5s}
+
+/* PALETTE THEMES */
+body.theme-midnight{--bg1:#0D0520;--bg2:#1A0A2E;--bg3:#0A1628}
+body.theme-forest{--bg1:#031a0a;--bg2:#062e14;--bg3:#041a10}
+body.theme-desert{--bg1:#1a0a03;--bg2:#2e1506;--bg3:#1a0e04}
+body.theme-ocean{--bg1:#03091a;--bg2:#061228;--bg3:#040e1a}
+body.theme-ruby{--bg1:#1a030a;--bg2:#2e0614;--bg3:#1a040c}
+body.theme-slate{--bg1:#0a0a12;--bg2:#141420;--bg3:#0a0a14}
+body.theme-ember{--bg1:#1a0803;--bg2:#2e1206;--bg3:#1a0c04}
+
+.app{max-width:760px;margin:0 auto;padding:16px}
+.stars-bg{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(1px 1px at 10% 15%,rgba(255,255,220,.8) 0%,transparent 100%),radial-gradient(1px 1px at 30% 40%,rgba(255,255,200,.6) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 55% 10%,rgba(255,240,180,.9) 0%,transparent 100%),radial-gradient(1px 1px at 75% 60%,rgba(255,255,220,.7) 0%,transparent 100%),radial-gradient(1px 1px at 85% 25%,rgba(255,255,200,.5) 0%,transparent 100%),radial-gradient(1px 1px at 20% 75%,rgba(255,255,220,.6) 0%,transparent 100%),radial-gradient(1px 1px at 90% 80%,rgba(255,255,200,.8) 0%,transparent 100%),radial-gradient(1px 1px at 45% 85%,rgba(255,240,180,.5) 0%,transparent 100%),radial-gradient(1.5px 1.5px at 65% 45%,rgba(255,255,220,.7) 0%,transparent 100%),radial-gradient(1px 1px at 5% 50%,rgba(255,255,200,.6) 0%,transparent 100%);
+}
+
+.content{position:relative;z-index:1}
+
+/* PALETTE SWITCHER */
+.palette-bar{
+  position:fixed;top:12px;right:12px;z-index:100;
+  background:rgba(13,5,32,0.92);border:1px solid rgba(200,148,26,.35);
+  border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;align-items:center;
+  backdrop-filter:blur(8px)
+}
+.palette-label{font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.palette-swatches{display:flex;flex-direction:column;gap:5px}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .2s,border-color .2s}
+.swatch:hover{transform:scale(1.15)}
+.swatch.active{border-color:var(--gold)}
+
+/* HEADER */
+.header{text-align:center;padding:20px 0 18px;border-bottom:1px solid rgba(200,148,26,.3);margin-bottom:18px}
+.om{font-size:32px;color:var(--gold);display:block;margin-bottom:6px}
+.app-title{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:3px;text-transform:uppercase}
+.app-sub{font-size:11px;color:var(--text-muted);margin-top:5px;letter-spacing:1px}
+.credit-line{font-size:10px;color:rgba(200,148,26,.5);margin-top:6px}
+.credit-line a{color:rgba(200,148,26,.7);text-decoration:none}
+
+/* LANGUAGE BAR */
+.lang-bar{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+.lang-btn{background:rgba(255,255,255,.05);border:1px solid rgba(200,148,26,.3);color:var(--text-muted);padding:5px 11px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit}
+.lang-btn:hover{border-color:var(--gold);color:var(--text-bright)}
+.lang-btn.active{background:rgba(200,148,26,.2);border-color:var(--gold);color:var(--gold)}
+
+/* TABS */
+.tabs{display:flex;gap:3px;margin-bottom:18px;background:rgba(255,255,255,.04);border-radius:10px;padding:4px}
+.tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-size:10px;cursor:pointer;color:var(--text-muted);transition:all .2s;border:none;background:transparent;font-family:inherit;line-height:1.3}
+.tab.active{background:rgba(200,148,26,.25);color:var(--gold)}
+.tab-icon{font-size:15px;display:block;margin-bottom:2px}
+
+.panel{display:none}.panel.active{display:block}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+.field label{display:block;font-size:10px;color:var(--text-muted);margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase}
+.field input,.field select{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(200,148,26,.3);border-radius:8px;padding:9px 12px;color:var(--text-bright);font-size:13px;font-family:inherit;outline:none;transition:border .2s}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field select option{background:#1A0A2E}
+
+/* CITY SEARCH */
+.city-search-wrap{position:relative}
+.city-input{width:100%}
+.city-dropdown{position:absolute;top:100%;left:0;right:0;background:#1a0a2e;border:1px solid rgba(200,148,26,.4);border-radius:8px;max-height:200px;overflow-y:auto;z-index:50;display:none}
+.city-dropdown.open{display:block}
+.city-option{padding:8px 12px;font-size:12px;cursor:pointer;color:var(--text-bright);border-bottom:1px solid rgba(255,255,255,.04)}
+.city-option:hover{background:rgba(200,148,26,.1);color:var(--gold)}
+.city-state{font-size:10px;color:var(--text-muted);margin-left:6px}
+
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#C8941A,#E8520A);border:none;border-radius:10px;color:white;font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer;margin-top:14px;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+
+/* KUNDALI GRID */
+.kundali-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,58px);gap:2px;background:rgba(200,148,26,.15);border:1px solid rgba(200,148,26,.4);border-radius:8px;overflow:hidden;margin:14px 0}
+.house{background:rgba(13,5,32,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);padding:3px;position:relative;cursor:pointer;transition:background .2s}
+.house:hover{background:rgba(200,148,26,.1)}
+.house-num{position:absolute;top:2px;left:4px;font-size:9px;color:rgba(200,148,26,.5)}
+.house-planets{font-size:11px;color:var(--gold);text-align:center;line-height:1.3}
+.house-rasi{font-size:8px;color:var(--text-muted);margin-top:1px}
+.center-cell{background:rgba(13,5,32,.9) !important;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.chart-label{font-family:'Cinzel',serif;font-size:10px;color:rgba(200,148,26,.7);text-align:center;line-height:1.4}
+
+/* TABLES */
+.planet-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.planet-table th{color:var(--gold);text-align:left;padding:6px 8px;border-bottom:1px solid rgba(200,148,26,.3);font-size:10px;font-weight:500}
+.planet-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-bright)}
+.planet-table tr:hover td{background:rgba(200,148,26,.05)}
+
+/* SECTION TITLE */
+.section-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(200,148,26,.2);display:flex;align-items:center;gap:8px}
+
+/* NADI STYLES */
+.nadi-type-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.nadi-type-btn{padding:8px 14px;border-radius:20px;border:1px solid rgba(200,148,26,.3);background:rgba(255,255,255,.04);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.nadi-type-btn.active{background:rgba(200,148,26,.2);border-color:var(--gold);color:var(--gold)}
+
+.nadi-svg-container{text-align:center;margin:14px 0;background:rgba(255,255,255,.03);border:1px solid rgba(200,148,26,.2);border-radius:12px;padding:16px}
+.nadi-svg-container svg{max-width:100%;filter:drop-shadow(0 0 12px rgba(200,148,26,.3))}
+
+.nadi-card{background:rgba(255,255,255,.04);border:1px solid rgba(200,148,26,.25);border-radius:10px;padding:14px;margin-bottom:12px}
+.nadi-card h4{font-size:13px;color:var(--gold);margin-bottom:8px;font-family:'Cinzel',serif}
+.nadi-card p{font-size:12px;color:var(--text-muted);line-height:1.7}
+
+.kandam-item{background:rgba(255,255,255,.03);border:1px solid rgba(200,148,26,.15);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.kandam-item:hover{border-color:rgba(200,148,26,.4);background:rgba(200,148,26,.05)}
+.kandam-item.expanded{border-color:rgba(200,148,26,.5)}
+.kandam-header{display:flex;align-items:center;gap:10px}
+.kandam-num{width:28px;height:28px;border-radius:50%;background:rgba(200,148,26,.2);border:1px solid rgba(200,148,26,.4);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:600;flex-shrink:0}
+.kandam-title{font-size:13px;color:var(--text-bright);font-weight:500}
+.kandam-subtitle{font-size:10px;color:var(--text-muted);margin-top:2px}
+.kandam-body{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);display:none}
+.kandam-body.open{display:block}
+.kandam-body p{font-size:12px;color:var(--text-muted);line-height:1.8}
+.ai-response{background:rgba(139,92,246,.08);border-left:3px solid var(--accent);padding:10px 12px;border-radius:0 8px 8px 0;margin-top:8px}
+.ai-response p{color:rgba(200,180,255,.85);font-size:12px;line-height:1.8}
+.ai-loading{display:flex;align-items:center;gap:8px;padding:8px}
+.dot-pulse span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1.2s ease-in-out infinite}
+.dot-pulse span:nth-child(2){animation-delay:.2s}
+.dot-pulse span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+
+/* DASHA */
+.dasha-row{display:flex;align-items:center;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-bottom:7px}
+.dasha-planet{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;margin-right:10px;flex-shrink:0}
+.dasha-name{font-size:13px;color:var(--text-bright);font-weight:500}
+.dasha-period{font-size:10px;color:var(--text-muted);margin-top:2px}
+.dasha-bar{height:4px;border-radius:2px;margin-top:5px;background:rgba(255,255,255,.08);overflow:hidden}
+.dasha-fill{height:100%;border-radius:2px}
+.active-dasha{border-color:rgba(200,148,26,.5)!important;background:rgba(200,148,26,.08)!important}
+
+/* PREDICTIONS */
+.prediction-block{background:rgba(139,92,246,.06);border-left:3px solid var(--accent);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:12px}
+.pred-title{font-size:11px;color:#A78BFA;font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.prediction-block p{font-size:12px;color:var(--text-muted);line-height:1.7}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:500}
+.badge-gold{background:rgba(200,148,26,.2);color:var(--gold);border:1px solid rgba(200,148,26,.4)}
+.badge-purple{background:rgba(139,92,246,.2);color:#A78BFA;border:1px solid rgba(139,92,246,.4)}
+.badge-ruby{background:rgba(190,18,60,.2);color:#FB7185;border:1px solid rgba(190,18,60,.4)}
+.badge-teal{background:rgba(8,145,178,.2);color:#22D3EE;border:1px solid rgba(8,145,178,.4)}
+
+.scroll-area{max-height:540px;overflow-y:auto;padding-right:4px}
+.scroll-area::-webkit-scrollbar{width:3px}
+.scroll-area::-webkit-scrollbar-thumb{background:rgba(200,148,26,.3);border-radius:2px}
+
+.loading{display:none;text-align:center;padding:40px 20px}
+.loading.show{display:block}
+.chakra-spinner{width:48px;height:48px;border:2px solid rgba(200,148,26,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.name-display{text-align:center;padding:12px;background:rgba(200,148,26,.08);border:1px solid rgba(200,148,26,.25);border-radius:10px;margin-bottom:14px}
+.person-name{font-family:'Cinzel',serif;font-size:17px;color:var(--gold)}
+.person-dob{font-size:11px;color:var(--text-muted);margin-top:3px}
+
+/* ASHTAKAVARGA */
+.ashtakavarga-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.av-planet{width:58px;font-size:11px;color:var(--text-muted)}
+.av-bars{flex:1;display:flex;gap:2px}
+.av-bar{flex:1;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500}
+.av-high{background:rgba(5,150,105,.3);color:#34D399}
+.av-mid{background:rgba(200,148,26,.2);color:var(--gold)}
+.av-low{background:rgba(190,18,60,.2);color:#FB7185}
+
+/* YOGAS */
+.yogas-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.yoga-card{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.yoga-name{font-size:12px;color:var(--text-bright);font-weight:500;margin-bottom:3px}
+.yoga-desc{font-size:10px;color:var(--text-muted);line-height:1.5}
+.yoga-present{border-color:rgba(5,150,105,.4)!important}
+.yoga-present .yoga-name{color:#34D399}
+
+/* GEMSTONES */
+.gemstone-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.gem-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.gem-name{font-size:13px;color:var(--text-bright)}
+.gem-planet{font-size:11px;color:var(--text-muted);margin-top:1px}
+.gem-benefit{font-size:11px;color:var(--text-muted);font-style:italic;margin-top:1px}
+
+.result-section{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body class="theme-midnight">
+<div class="stars-bg"></div>
+
+<!-- PALETTE SWITCHER -->
+<div class="palette-bar">
+  <div class="palette-label">Theme</div>
+  <div class="palette-swatches">
+    <div class="swatch active" style="background:linear-gradient(135deg,#0D0520,#2D1057)" data-theme="midnight" title="Midnight Purple" onclick="setTheme(this,'midnight')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#031a0a,#062e14)" data-theme="forest" title="Mystic Forest" onclick="setTheme(this,'forest')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#1a0a03,#2e1506)" data-theme="desert" title="Desert Sand" onclick="setTheme(this,'desert')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#03091a,#061228)" data-theme="ocean" title="Deep Ocean" onclick="setTheme(this,'ocean')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#1a030a,#2e0614)" data-theme="ruby" title="Ruby Red" onclick="setTheme(this,'ruby')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#0a0a12,#141420)" data-theme="slate" title="Dark Slate" onclick="setTheme(this,'slate')"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#1a0803,#2e1206)" data-theme="ember" title="Ember Glow" onclick="setTheme(this,'ember')"></div>
+  </div>
+</div>
+
+<div class="app">
+<div class="content">
+
+<div class="header">
+  <span class="om">ॐ</span>
+  <div class="app-title">Jyotish Kundali</div>
+  <div class="app-sub">Vedic Astrology & Nadi Jothidam • ஜோதிடம் • జ్యోతిష్య • ಜ್ಯೋತಿಷ</div>
+  <div class="credit-line">
+    Fonts: <a href="https://fonts.google.com/specimen/Cinzel" target="_blank">Cinzel</a> &
+    <a href="https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari" target="_blank">Noto Sans (Indian Scripts)</a> via Google Fonts •
+    AI Interpretations: <a href="https://www.anthropic.com" target="_blank">Anthropic Claude API</a>
+  </div>
+</div>
+
+<div class="lang-bar" id="langBar">
+  <button class="lang-btn active" onclick="setLang('en')" data-lang="en">English</button>
+  <button class="lang-btn" onclick="setLang('hi')" data-lang="hi">हिंदी</button>
+  <button class="lang-btn" onclick="setLang('ta')" data-lang="ta">தமிழ்</button>
+  <button class="lang-btn" onclick="setLang('te')" data-lang="te">తెలుగు</button>
+  <button class="lang-btn" onclick="setLang('kn')" data-lang="kn">ಕನ್ನಡ</button>
+  <button class="lang-btn" onclick="setLang('ml')" data-lang="ml">മലയാളം</button>
+  <button class="lang-btn" onclick="setLang('mr')" data-lang="mr">मराठी</button>
+  <button class="lang-btn" onclick="setLang('bn')" data-lang="bn">বাংলা</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('input')" id="tab-input"><span class="tab-icon">✦</span><span data-key="birth">Birth Details</span></button>
+  <button class="tab" onclick="showTab('kundali')" id="tab-kundali"><span class="tab-icon">◈</span><span data-key="kundali">Kundali</span></button>
+  <button class="tab" onclick="showTab('nadi')" id="tab-nadi"><span class="tab-icon">𑁕</span><span data-key="nadi">Nadi</span></button>
+  <button class="tab" onclick="showTab('dasha')" id="tab-dasha"><span class="tab-icon">⊛</span><span data-key="dasha">Dasha</span></button>
+  <button class="tab" onclick="showTab('predict')" id="tab-predict"><span class="tab-icon">◉</span><span data-key="predict">Predictions</span></button>
+</div>
+
+<!-- INPUT PANEL -->
+<div class="panel active" id="panel-input">
+  <div class="form-grid">
+    <div class="field"><label data-key="fullName">Full Name</label><input type="text" id="name" placeholder="Enter full name" value="Arjun Kumar"></div>
+    <div class="field"><label data-key="gender">Gender</label>
+      <select id="gender"><option value="m">Male / पुरुष / ஆண்</option><option value="f">Female / महिला / பெண்</option></select>
+    </div>
+    <div class="field"><label data-key="dob">Date of Birth</label><input type="date" id="dob" value="1990-03-15"></div>
+    <div class="field"><label data-key="tob">Time of Birth</label><input type="time" id="tob" value="06:45"></div>
+
+    <div class="field form-full">
+      <label data-key="state">State</label>
+      <select id="stateSelect" onchange="filterCities()">
+        <option value="">-- Select State --</option>
+      </select>
+    </div>
+
+    <div class="field form-full city-search-wrap">
+      <label data-key="city">City / Town / Village of Birth</label>
+      <input type="text" class="city-input" id="cityInput" placeholder="Type to search city..." autocomplete="off" oninput="searchCities()" onblur="setTimeout(()=>closeDrop(),200)">
+      <input type="hidden" id="cityHidden" value="Mumbai|18.9667|72.8333">
+      <div class="city-dropdown" id="cityDropdown"></div>
+    </div>
+
+    <div class="field form-full">
+      <label data-key="ayanamsa">Ayanamsa System</label>
+      <select id="ayanamsa">
+        <option value="lahiri">Lahiri (Chitrapaksha) — Most Common</option>
+        <option value="raman">B.V. Raman</option>
+        <option value="krishnamurti">Krishnamurti (KP)</option>
+        <option value="yukteshwar">Sri Yukteshwar</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="generateChart()">✦ <span data-key="generate">Generate Kundali</span> ✦</button>
+</div>
+
+<!-- KUNDALI PANEL -->
+<div class="panel" id="panel-kundali">
+  <div id="loading-kundali" class="loading show"><div class="chakra-spinner"></div><p style="color:var(--text-muted);font-size:13px" data-key="calculating">Calculating celestial positions...</p></div>
+  <div id="kundali-result" class="result-section" style="display:none">
+    <div class="scroll-area">
+      <div class="name-display"><div class="person-name" id="display-name">Arjun Kumar</div><div class="person-dob" id="display-dob"></div></div>
+      <div class="section-title">☽ <span data-key="rasiChart">Rasi Chart (D-1)</span></div>
+      <div class="kundali-grid" id="rasiGrid"></div>
+      <div class="section-title">⬡ <span data-key="planetPos">Planetary Positions</span></div>
+      <table class="planet-table"><thead><tr><th data-key="planet">Planet</th><th data-key="rasi">Rasi</th><th>Degree</th><th data-key="nakshatra">Nakshatra</th><th>Pada</th></tr></thead><tbody id="planetTableBody"></tbody></table>
+      <div class="section-title">✧ Ashtakavarga</div>
+      <div id="ashtakvarga"></div>
+      <div class="section-title">◈ <span data-key="yogas_title">Major Yogas</span></div>
+      <div class="yogas-grid" id="yogasGrid"></div>
+      <div class="section-title">♦ <span data-key="gems_title">Recommended Gemstones</span></div>
+      <div id="gemstones"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NADI PANEL -->
+<div class="panel" id="panel-nadi">
+  <div class="scroll-area">
+    <div class="section-title">𑁕 <span data-key="nadiSection">Nadi Jothidam</span></div>
+    <div class="nadi-type-selector" id="nadiTypeSelector">
+      <button class="nadi-type-btn active" onclick="selectNadi('agastya',this)" data-nadi="agastya">Agastya Nadi</button>
+      <button class="nadi-type-btn" onclick="selectNadi('nandi',this)" data-nadi="nandi">Nandi Nadi</button>
+      <button class="nadi-type-btn" onclick="selectNadi('koushika',this)" data-nadi="koushika">Koushika Nadi</button>
+      <button class="nadi-type-btn" onclick="selectNadi('sapta',this)" data-nadi="sapta">Sapta Rishi Nadi</button>
+      <button class="nadi-type-btn" onclick="selectNadi('jeeva',this)" data-nadi="jeeva">Jeeva Nadi</button>
+    </div>
+    <div class="nadi-svg-container" id="nadiSvgContainer"></div>
+    <div id="nadiDescription"></div>
+    <div class="section-title" style="margin-top:16px">📖 <span data-key="kandamsTitle">The 13 Kandams — Personalized Reading</span></div>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px" data-key="nadiInstruct">Click on each Kandam to reveal your personalized AI-generated Nadi reading based on your birth chart.</p>
+    <div id="kandamsList"></div>
+  </div>
+</div>
+
+<!-- DASHA PANEL -->
+<div class="panel" id="panel-dasha">
+  <div class="scroll-area">
+    <div class="section-title">⊛ <span data-key="dasha_title">Vimshottari Dasha</span></div>
+    <div id="dasha-content"></div>
+    <div class="section-title" style="margin-top:16px">⊕ Antardasha Sub-periods</div>
+    <div id="antardasha-content"></div>
+  </div>
+</div>
+
+<!-- PREDICTIONS PANEL -->
+<div class="panel" id="panel-predict">
+  <div class="scroll-area">
+    <div class="section-title">◉ <span data-key="pred_title">Vedic Predictions</span></div>
+    <div id="predictions-content"></div>
+    <div class="section-title" style="margin-top:16px">🔯 Remedies & Upaya</div>
+    <div id="remedies-content"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ===== LANGUAGE DATA =====
+const LANGS={
+en:{birth:"Birth Details",kundali:"Kundali",nadi:"Nadi",dasha:"Dasha",predict:"Predictions",fullName:"Full Name",dob:"Date of Birth",tob:"Time of Birth",gender:"Gender",state:"State",city:"City / Town / Village of Birth",ayanamsa:"Ayanamsa System",generate:"Generate Kundali",calculating:"Calculating celestial positions...",rasiChart:"Rasi Chart (D-1)",planetPos:"Planetary Positions",planet:"Planet",rasi:"Rasi",nakshatra:"Nakshatra",yogas:"Major Yogas",gemstones:"Recommended Gemstones",vimshottari:"Vimshottari Dasha",predictions:"Vedic Predictions",
+nadiSection:"Nadi Jothidam",nadiInstruct:"Click each Kandam to reveal your personalized AI Nadi reading.",nadiIdTitle:"Your Nadi Identification",nadiIdText:"Based on birth data & thumb impression, your Nadi is identified as",nadiGotram:"Gotram (ancestral lineage)",nadiBundle:"Nadi Kandam identified through confirmatory questions.",sage:"Sage",nadiBtn:"✦ Get Personalized Nadi Reading for this Kandam ✦",topics:"Topics covered",kandamsTitle:"The 13 Kandams — Personalized Reading",
+nadiTypes:{agastya:"Agastya Nadi",nandi:"Nandi Nadi",koushika:"Koushika Nadi",sapta:"Sapta Rishi Nadi",jeeva:"Jeeva Nadi"},
+nadiSages:{agastya:"Maharishi Agastya",nandi:"Nandi (Shiva's sacred bull)",koushika:"Sage Vishwamitra (Koushika)",sapta:"Seven Sages (Saptarishis)",jeeva:"Divine Channeling (Living Nadi)"},
+nadiDesc:{agastya:"The most revered Nadi, written by Sage Agastya (Agathiyar) — one of the Saptarishis. Palm leaf manuscripts found in Vaitheeswaran Koil, Tamil Nadu. Known for detailed life predictions including past and future janmas.",nandi:"Channeled through Nandi, vehicle of Lord Shiva. Contains divine revelations about karma, dharma and moksha paths. Found in Vaitheeswaran Koil and Sirkazhi regions.",koushika:"Attributed to Sage Vishwamitra (Koushika). Detailed in astrological calculations and house-by-house (bhava) predictions. Known for accuracy in timing of events.",sapta:"Represents combined wisdom of the seven sages: Atri, Bharadvaja, Gautama, Jamadagni, Kashyapa, Vasishtha, and Vishwamitra. Multi-dimensional life readings.",jeeva:"A living oracle — channeled fresh by Nadi readers in meditative state, not from ancient palm leaves. Most direct and personal form of Nadi astrology."},
+kandams:[
+{t:"1st Kandam — Lagna (Ascendant)",s:"Physical self, personality, health, general destiny",tp:["Physical appearance and constitution","Personality traits and character","Overall life theme and destiny","Health tendencies and vitality","Social standing and reputation"]},
+{t:"2nd Kandam — Dhana (Wealth)",s:"Family, speech, wealth, early education, food",tp:["Financial situation and earning capacity","Family dynamics and relations","Speech patterns and communication","Early childhood and education","Eyes, face and dental health"]},
+{t:"3rd Kandam — Sahodhara (Siblings)",s:"Courage, siblings, short journeys, communication",tp:["Number and nature of siblings","Courage and initiative","Short-distance travel","Hobbies and creative efforts","Hands, arms and shoulders"]},
+{t:"4th Kandam — Matru (Mother)",s:"Mother, property, vehicles, education, inner happiness",tp:["Mother's nature and relationship","Property and real estate","Academic qualifications","Vehicle possession","Inner peace and domestic happiness"]},
+{t:"5th Kandam — Putra (Children)",s:"Children, intelligence, past karma, speculation",tp:["Number and nature of children","Intelligence and creativity","Previous life karmic patterns","Romantic relationships","Stomach and digestive system"]},
+{t:"6th Kandam — Shatru (Enemies)",s:"Enemies, disease, debts, legal matters, service",tp:["Hidden enemies and obstacles","Diseases and health challenges","Debts and financial struggles","Legal proceedings","Pets and small animals"]},
+{t:"7th Kandam — Kalatra (Marriage)",s:"Spouse, marriage, partnerships, business relations",tp:["Marriage timing and nature of spouse","Marital harmony and challenges","Business partnerships","Physical appearance of partner","Lower abdomen and reproductive health"]},
+{t:"8th Kandam — Ayur (Longevity)",s:"Lifespan, occult, sudden events, transformation",tp:["Overall longevity indication","Sudden gains or losses","Interest in occult and spirituality","Inheritance and legacies","Chronic diseases and surgery"]},
+{t:"9th Kandam — Bhagya (Fortune)",s:"Father, dharma, long journeys, higher learning, luck",tp:["Father's nature and relationship","Fortune and divine grace","Long-distance and foreign travel","Higher education and wisdom","Spiritual inclinations and dharma"]},
+{t:"10th Kandam — Karma (Career)",s:"Profession, authority, fame, social status, actions",tp:["Career path and profession","Professional success and fame","Relationship with authority figures","Contributions to society","Knees and skeletal structure"]},
+{t:"11th Kandam — Labha (Gains)",s:"Income, gains, fulfillment of desires, elder siblings",tp:["Income sources and financial gains","Fulfillment of desires and ambitions","Elder siblings and friends","Social networks and groups","Ankles and calves"]},
+{t:"12th Kandam — Vyaya (Losses)",s:"Expenses, foreign lands, spiritual liberation, bed pleasures",tp:["Expenditures and financial losses","Foreign travel and settlement","Spiritual liberation and moksha","Sleep quality and dreams","Feet and hidden spiritual practice"]},
+{t:"13th Kandam — Shanti (Remedies)",s:"Karmic remedies, past-life debts, divine appeasement",tp:["Specific karmic debts to clear","Temple worship recommendations","Charitable acts and donations","Mantras and spiritual practices","Overall divine grace and blessings"]}
+]},
+hi:{birth:"जन्म विवरण",kundali:"कुण्डली",nadi:"नाड़ी",dasha:"दशा",predict:"भविष्यवाणी",fullName:"पूरा नाम",dob:"जन्म तिथि",tob:"जन्म समय",gender:"लिंग",state:"राज्य",city:"जन्म स्थान",ayanamsa:"अयनांश पद्धति",generate:"कुण्डली बनाएं",calculating:"ग्रह स्थिति गणना हो रही है...",rasiChart:"राशि चक्र (D-1)",planetPos:"ग्रह स्थितियाँ",planet:"ग्रह",rasi:"राशि",nakshatra:"नक्षत्र",yogas:"प्रमुख योग",gemstones:"अनुशंसित रत्न",vimshottari:"विंशोत्तरी दशा",predictions:"वैदिक भविष्यवाणी",
+nadiSection:"नाड़ी ज्योतिषम्",nadiInstruct:"अपने जन्म कुंडली के आधार पर व्यक्तिगत नाड़ी पठन के लिए प्रत्येक खंड पर क्लिक करें।",nadiIdTitle:"आपकी नाड़ी पहचान",nadiIdText:"जन्म डेटा और अंगूठे की छाप के आधार पर आपकी नाड़ी पहचानी गई",nadiGotram:"गोत्र (वंश परंपरा)",nadiBundle:"पुष्टिकारक प्रश्नों द्वारा नाड़ी कांडम पहचाना गया।",sage:"ऋषि",nadiBtn:"✦ इस खंड का व्यक्तिगत नाड़ी पठन पाएं ✦",topics:"विषय",kandamsTitle:"13 खंड — व्यक्तिगत पठन",
+nadiTypes:{agastya:"अगस्त्य नाड़ी",nandi:"नंदी नाड़ी",koushika:"कौशिक नाड़ी",sapta:"सप्त ऋषि नाड़ी",jeeva:"जीव नाड़ी"},
+nadiSages:{agastya:"महर्षि अगस्त्य",nandi:"नंदी (शिव का पवित्र बैल)",koushika:"ऋषि विश्वामित्र (कौशिक)",sapta:"सप्तर्षि (सात ऋषि)",jeeva:"दिव्य चैनलिंग (जीव नाड़ी)"},
+nadiDesc:{agastya:"सप्तर्षियों में से एक ऋषि अगस्त्य द्वारा लिखी गई सर्वाधिक पूजनीय नाड़ी। ये ताड़पत्र पांडुलिपियां वैथीश्वरन कोइल, तमिलनाडु में पाई जाती हैं। अगस्त्य नाड़ी पूर्व और भविष्य के जन्मों सहित विस्तृत जीवन भविष्यवाणियों के लिए प्रसिद्ध है।",nandi:"भगवान शिव के वाहन नंदी के माध्यम से प्रसारित अत्यंत प्रामाणिक नाड़ी। इसमें कर्म, धर्म और मोक्ष के दिव्य रहस्य हैं।",koushika:"ऋषि विश्वामित्र (कौशिक) को समर्पित। ज्योतिषीय गणना और भाव-वार भविष्यवाणी में विशेष रूप से विस्तृत।",sapta:"सात महान ऋषियों — अत्रि, भारद्वाज, गौतम, जमदग्नि, कश्यप, वशिष्ठ और विश्वामित्र का संयुक्त ज्ञान।",jeeva:"एक जीवित दैवज्ञ — ध्यान अवस्था में ताजा प्रसारित, प्राचीन ताड़पत्रों से नहीं पढ़ा जाता।"},
+kandams:[
+{t:"प्रथम खंड — लग्न",s:"शरीर, व्यक्तित्व, स्वास्थ्य, जीवन भाग्य",tp:["शारीरिक बनावट","व्यक्तित्व लक्षण","जीवन का समग्र विषय","स्वास्थ्य प्रवृत्तियाँ","सामाजिक प्रतिष्ठा"]},
+{t:"द्वितीय खंड — धन",s:"परिवार, वाणी, धन, प्रारंभिक शिक्षा",tp:["आर्थिक स्थिति","पारिवारिक संबंध","वाणी और संचार","बचपन और शिक्षा","आँखें, चेहरा और दाँत"]},
+{t:"तृतीय खंड — सहोदर",s:"साहस, भाई-बहन, लघु यात्राएँ",tp:["भाई-बहनों की संख्या","साहस और पहल","छोटी यात्राएँ","शौक","हाथ और भुजाएँ"]},
+{t:"चतुर्थ खंड — मातृ",s:"माता, संपत्ति, वाहन, शिक्षा",tp:["माता का स्वभाव","संपत्ति और भूमि","शिक्षा","वाहन","आंतरिक शांति"]},
+{t:"पंचम खंड — पुत्र",s:"संतान, बुद्धि, पूर्व कर्म",tp:["संतानों की संख्या","बुद्धि और रचनात्मकता","पूर्व जन्म कर्म","प्रेम संबंध","पाचन तंत्र"]},
+{t:"षष्ठ खंड — शत्रु",s:"शत्रु, रोग, ऋण, कानूनी मामले",tp:["छिपे शत्रु","रोग","ऋण","कानूनी कार्यवाही","पालतू जानवर"]},
+{t:"सप्तम खंड — कलत्र",s:"जीवनसाथी, विवाह, साझेदारी",tp:["विवाह समय और जीवनसाथी","वैवाहिक सौहार्द","व्यापारिक साझेदारी","जीवनसाथी की बनावट","प्रजनन स्वास्थ्य"]},
+{t:"अष्टम खंड — आयु",s:"आयु, गुप्त विद्या, अचानक घटनाएँ",tp:["दीर्घायु संकेत","अचानक लाभ-हानि","गुप्त विद्या में रुचि","विरासत","पुराने रोग"]},
+{t:"नवम खंड — भाग्य",s:"पिता, धर्म, दीर्घ यात्राएँ, उच्च शिक्षा",tp:["पिता का स्वभाव","सौभाग्य और दैवी कृपा","लंबी यात्राएँ","उच्च शिक्षा","आध्यात्मिक झुकाव"]},
+{t:"दशम खंड — कर्म",s:"पेशा, अधिकार, प्रसिद्धि, सामाजिक प्रतिष्ठा",tp:["कैरियर पथ","व्यावसायिक सफलता","अधिकारियों से संबंध","समाज में योगदान","घुटने और हड्डियाँ"]},
+{t:"एकादश खंड — लाभ",s:"आय, लाभ, इच्छाओं की पूर्ति",tp:["आय के स्रोत","इच्छाओं की पूर्ति","बड़े भाई-बहन और मित्र","सामाजिक नेटवर्क","टखने"]},
+{t:"द्वादश खंड — व्यय",s:"खर्च, विदेश, आध्यात्मिक मुक्ति",tp:["खर्च और हानि","विदेश यात्रा","मोक्ष","नींद की गुणवत्ता","पाँव"]},
+{t:"त्रयोदश खंड — शांति",s:"कर्मिक उपाय, पूर्व जन्म ऋण",tp:["कर्मिक ऋण","मंदिर पूजा","दान","मंत्र","दैवी कृपा"]}
+]},
+ta:{birth:"பிறப்பு விவரங்கள்",kundali:"ஜாதகம்",nadi:"நாடி",dasha:"தசை",predict:"கணிப்புகள்",fullName:"முழு பெயர்",dob:"பிறந்த தேதி",tob:"பிறந்த நேரம்",gender:"பாலினம்",state:"மாநிலம்",city:"பிறந்த இடம்",ayanamsa:"அயனாம்சம்",generate:"ஜாதகம் உருவாக்கு",calculating:"கிரக நிலைகள் கணக்கிடப்படுகின்றன...",rasiChart:"ராசி சக்கரம்",planetPos:"கிரக நிலைகள்",planet:"கிரகம்",rasi:"ராசி",nakshatra:"நட்சத்திரம்",yogas:"முக்கிய யோகங்கள்",gemstones:"பரிந்துரைக்கப்பட்ட கற்கள்",vimshottari:"விம்சோத்தரி தசை",predictions:"வேத கணிப்புகள்",
+nadiSection:"நாடி ஜோதிடம்",nadiInstruct:"உங்கள் ஜாதகத்தின் அடிப்படையில் தனிப்பட்ட நாடி வாசிப்புக்கு ஒவ்வொரு கண்டத்தையும் கிளிக் செய்யுங்கள்.",nadiIdTitle:"உங்கள் நாடி அடையாளம்",nadiIdText:"பிறப்பு தகவல் மற்றும் கட்டை விரல் ரேகை அடிப்படையில் உங்கள் நாடி அடையாளம் காணப்பட்டது",nadiGotram:"கோத்திரம் (வமிச பாரம்பரியம்)",nadiBundle:"உறுதிப்படுத்தும் கேள்விகள் மூலம் நாடி கண்டம் அடையாளம் காணப்பட்டது.",sage:"முனிவர்",nadiBtn:"✦ இந்த கண்டத்திற்கான தனிப்பட்ட நாடி வாசிப்பு பெறுக ✦",topics:"உள்ளடக்கப்பட்ட தலைப்புகள்",kandamsTitle:"13 கண்டங்கள் — தனிப்பட்ட வாசிப்பு",
+nadiTypes:{agastya:"அகஸ்திய நாடி",nandi:"நந்தி நாடி",koushika:"கௌசிக நாடி",sapta:"சப்த ரிஷி நாடி",jeeva:"ஜீவ நாடி"},
+nadiSages:{agastya:"மகரிஷி அகஸ்தியர்",nandi:"நந்தி (சிவனின் புனிதமான காளை)",koushika:"முனிவர் விஸ்வாமித்திரர்",sapta:"சப்தரிஷிகள் (ஏழு முனிவர்கள்)",jeeva:"தெய்வீக சேனலிங் (ஜீவ நாடி)"},
+nadiDesc:{agastya:"சப்தரிஷிகளில் ஒருவரான அகஸ்தியர் (அகத்தியார்) எழுதிய மிக மரியாதைக்குரிய நாடி. பனை ஓலை கையெழுத்து பிரதிகள் வைத்தீஸ்வரன் கோயில், தமிழ்நாட்டில் காணப்படுகின்றன.",nandi:"சிவனின் வாகனமான நந்தி மூலம் பெறப்படும் நம்பகமான நாடி. கர்மா, தர்மம், மோட்சம் பற்றிய தெய்வீக வெளிப்பாடுகளைக் கொண்டது.",koushika:"முனிவர் விஸ்வாமித்திரருக்கு (கௌசிகர்) சொந்தமான நாடி. பாவம் வாரியான கணிப்புகளில் மிகவும் விரிவானது.",sapta:"ஏழு மகான் முனிவர்களின் ஒருங்கிணைந்த ஞானம்: அத்ரி, பரத்வாஜ, கௌதம, ஜமதக்னி, காஸ்யப, வசிஷ்ட மற்றும் விஸ்வாமித்திரர்.",jeeva:"ஒரு உயிருள்ள ஆரக்கிள் — ஆழ்நிலை தியானத்தில் நாடி வாசிப்பாளர்களால் புதுமையாக சேனல் செய்யப்படுகிறது."},
+kandams:[
+{t:"1ஆம் கண்டம் — லக்னம்",s:"உடல் அமைப்பு, ஆளுமை, உடல்நலம்",tp:["உடல் அமைப்பு","ஆளுமை பண்புகள்","வாழ்க்கை கருப்பொருள்","உடல்நல போக்குகள்","சமூக நிலை"]},
+{t:"2ஆம் கண்டம் — தன",s:"குடும்பம், பேச்சு, செல்வம், கல்வி",tp:["நிதி நிலை","குடும்ப உறவுகள்","பேச்சு மற்றும் தொடர்பு","குழந்தைப் பருவம்","கண்கள், முகம், பல்"]},
+{t:"3ஆம் கண்டம் — சகோதர",s:"தைரியம், உடன்பிறந்தவர்கள், குறுகிய பயணங்கள்",tp:["உடன்பிறந்தவர்கள்","தைரியம்","குறுகிய பயணங்கள்","பொழுதுபோக்கு","கைகள் மற்றும் தோள்கள்"]},
+{t:"4ஆம் கண்டம் — மாதிரு",s:"அன்னை, சொத்து, வாகனங்கள், கல்வி",tp:["அன்னையின் இயல்பு","சொத்து","கல்வி","வாகனம்","உள் அமைதி"]},
+{t:"5ஆம் கண்டம் — புத்திர",s:"பிள்ளைகள், அறிவு, பூர்வ கர்மா",tp:["பிள்ளைகளின் எண்ணிக்கை","அறிவு","பூர்வ கர்மா","காதல் உறவுகள்","செரிமான மண்டலம்"]},
+{t:"6ஆம் கண்டம் — சத்ரு",s:"எதிரிகள், நோய், கடன்கள்",tp:["மறைந்த எதிரிகள்","நோய்கள்","கடன்கள்","சட்ட நடவடிக்கைகள்","செல்லப்பிராணிகள்"]},
+{t:"7ஆம் கண்டம் — களத்ர",s:"வாழ்க்கைத்துணை, திருமணம், கூட்டாண்மை",tp:["திருமண நேரம்","திருமண நல்லிணக்கம்","வணிக கூட்டாண்மை","வாழ்க்கைத்துணை","இனப்பெருக்க ஆரோக்கியம்"]},
+{t:"8ஆம் கண்டம் — ஆயுர்",s:"ஆயுள், மறைவிடம், திடீர் நிகழ்வுகள்",tp:["ஆயுள் குறிப்பு","திடீர் ஆதாயம்","மறைவிடம் ஆர்வம்","வாரிசு","நாள்பட்ட நோய்கள்"]},
+{t:"9ஆம் கண்டம் — பாக்கியம்",s:"தந்தை, தர்மம், நீண்ட பயணங்கள்",tp:["தந்தையின் இயல்பு","அதிர்ஷ்டம்","வெளிநாட்டு பயணம்","உயர் கல்வி","ஆன்மிக நாட்டம்"]},
+{t:"10ஆம் கண்டம் — கர்மா",s:"தொழில், அதிகாரம், புகழ்",tp:["தொழில் பாதை","தொழில் வெற்றி","அதிகாரிகளுடன்","சமூக பங்களிப்பு","முழங்கால்"]},
+{t:"11ஆம் கண்டம் — லாப",s:"வருமானம், ஆதாயம், விருப்பம்",tp:["வருமான ஆதாரங்கள்","விருப்பம் நிறைவேறுதல்","மூத்த உடன்பிறந்தவர்கள்","சமூக வலைப்பின்னல்கள்","கணுக்கால்"]},
+{t:"12ஆம் கண்டம் — வியய",s:"செலவுகள், வெளிநாடு, ஆன்மிக விடுதலை",tp:["செலவுகள்","வெளிநாட்டு பயணம்","மோட்சம்","தூக்க தரம்","கால்கள்"]},
+{t:"13ஆம் கண்டம் — சாந்தி",s:"கர்மிக தீர்வுகள், முந்தைய வாழ்க்கை கடன்கள்",tp:["கர்மிக கடன்கள்","கோயில் வழிபாடு","தொண்டு","மந்திரங்கள்","தெய்வீக அருள்"]}
+]},
+te:{birth:"జన్మ వివరాలు",kundali:"కుండలి",nadi:"నాడి",dasha:"దశ",predict:"అంచనాలు",fullName:"పూర్తి పేరు",dob:"జన్మ తేదీ",tob:"జన్మ సమయం",gender:"లింగం",state:"రాష్ట్రం",city:"జన్మ స్థలం",ayanamsa:"అయనాంశ పద్ధతి",generate:"కుండలి తయారు చేయండి",calculating:"గ్రహ స్థానాలు లెక్కిస్తున్నాం...",rasiChart:"రాశి చక్రం",planetPos:"గ్రహ స్థానాలు",planet:"గ్రహం",rasi:"రాశి",nakshatra:"నక్షత్రం",yogas:"ప్రధాన యోగాలు",gemstones:"సిఫారసు రత్నాలు",vimshottari:"వింశోత్తరీ దశ",predictions:"వేద అంచనాలు",
+nadiSection:"నాడి జ్యోతిష్యం",nadiInstruct:"మీ జన్మ చార్ట్ ఆధారంగా వ్యక్తిగత నాడి పఠనానికి ప్రతి కండం పై క్లిక్ చేయండి.",nadiIdTitle:"మీ నాడి గుర్తింపు",nadiIdText:"జన్మ వివరాలు మరియు బొటనవేలు ముద్ర ఆధారంగా మీ నాడి గుర్తించబడింది",nadiGotram:"గోత్రం (వంశ సంప్రదాయం)",nadiBundle:"నిర్ధారణ ప్రశ్నల ద్వారా నాడి కండం గుర్తించబడింది.",sage:"మహర్షి",nadiBtn:"✦ ఈ కండం కోసం వ్యక్తిగత నాడి పఠనం పొందండి ✦",topics:"చేర్చిన అంశాలు",kandamsTitle:"13 కండాలు — వ్యక్తిగత పఠనం",
+nadiTypes:{agastya:"అగస్త్య నాడి",nandi:"నంది నాడి",koushika:"కౌశిక నాడి",sapta:"సప్త ఋషి నాడి",jeeva:"జీవ నాడి"},
+nadiSages:{agastya:"మహర్షి అగస్త్యర్",nandi:"నంది (శివుని పవిత్ర ఎద్దు)",koushika:"మహర్షి విశ్వామిత్ర",sapta:"సప్తర్షులు (ఏడు మహర్షులు)",jeeva:"దివ్య చానలింగ్ (జీవ నాడి)"},
+nadiDesc:{agastya:"సప్తర్షులలో ఒకరైన అగస్త్య మహర్షి రాసిన అత్యంత గౌరవనీయమైన నాడి. వైత్యీశ్వరన్ కోయిల్, తమిళనాడులో తాటి ఆకు హస్తప్రతులు కనుగొనబడతాయి.",nandi:"శివుని వాహనమైన నంది ద్వారా ప్రసారమయ్యే నాడి. కర్మ, ధర్మం, మోక్ష మార్గాల గురించి దివ్య రహస్యాలు.",koushika:"విశ్వామిత్ర మహర్షికి ఆపాదించబడిన నాడి. జ్యోతిష్య గణనలు మరియు భావం వారీగా అంచనాలలో చాలా వివరంగా ఉంటుంది.",sapta:"ఏడు మహర్షుల సంయుక్త జ్ఞానం: అత్రి, భరద్వాజ, గౌతమ, జమదగ్ని, కాశ్యప, వశిష్ఠ మరియు విశ్వామిత్ర.",jeeva:"జీవంతమైన వాగ్దేవత — ధ్యాన స్థితిలో నాడి పాఠకులు తాజాగా ప్రసారం చేస్తారు."},
+kandams:[
+{t:"1వ కండం — లగ్నం",s:"శారీరక స్వరూపం, వ్యక్తిత్వం, ఆరోగ్యం",tp:["శారీరక అమరిక","వ్యక్తిత్వ లక్షణాలు","జీవిత ఇతివృత్తం","ఆరోగ్య ధోరణులు","సామాజిక హోదా"]},
+{t:"2వ కండం — ధనం",s:"కుటుంబం, వాక్కు, సంపద, విద్య",tp:["ఆర్థిక పరిస్థితి","కుటుంబ సంబంధాలు","వాక్కు","బాల్యం","కళ్ళు, ముఖం, దంతాలు"]},
+{t:"3వ కండం — సహోదర",s:"ధైర్యం, తోబుట్టువులు, చిన్న ప్రయాణాలు",tp:["తోబుట్టువులు","ధైర్యం","చిన్న ప్రయాణాలు","అభిరుచులు","చేతులు, భుజాలు"]},
+{t:"4వ కండం — మాతృ",s:"తల్లి, ఆస్తి, వాహనాలు, విద్య",tp:["తల్లి స్వభావం","ఆస్తి","విద్య","వాహనం","అంతర శాంతి"]},
+{t:"5వ కండం — పుత్ర",s:"సంతానం, తెలివి, పూర్వ కర్మ",tp:["సంతానం","మేధస్సు","పూర్వ జన్మ కర్మ","ప్రణయం","జఠరం"]},
+{t:"6వ కండం — శత్రు",s:"శత్రువులు, రోగాలు, అప్పులు",tp:["దాగిన శత్రువులు","రోగాలు","అప్పులు","చట్టపర చర్యలు","పెంపుడు జంతువులు"]},
+{t:"7వ కండం — కళత్ర",s:"జీవిత భాగస్వామి, వివాహం",tp:["వివాహ సమయం","వైవాహిక సామరస్యం","వ్యాపార భాగస్వామ్యం","భాగస్వామి","పునరుత్పత్తి ఆరోగ్యం"]},
+{t:"8వ కండం — ఆయుర్",s:"ఆయుష్షు, రహస్య విద్య, అకస్మాత్ సంఘటనలు",tp:["దీర్ఘాయువు","అకస్మాత్ లాభ నష్టాలు","రహస్య విద్య","వారసత్వం","దీర్ఘకాలిక రోగాలు"]},
+{t:"9వ కండం — భాగ్యం",s:"తండ్రి, ధర్మం, దీర్ఘ ప్రయాణాలు",tp:["తండ్రి స్వభావం","అదృష్టం","విదేశ ప్రయాణం","ఉన్నత విద్య","ఆధ్యాత్మికత"]},
+{t:"10వ కండం — కర్మ",s:"వృత్తి, అధికారం, కీర్తి",tp:["వృత్తి పాత్ర","విజయం","అధికారులతో","సమాజ సహకారం","మోకాళ్ళు"]},
+{t:"11వ కండం — లాభ",s:"ఆదాయం, లాభాలు, కోరికలు",tp:["ఆదాయ వనరులు","కోరికలు","పెద్ద తోబుట్టువులు","సామాజిక నెట్వర్క్","చీలమండ"]},
+{t:"12వ కండం — వ్యయ",s:"ఖర్చులు, విదేశాలు, మోక్షం",tp:["ఖర్చులు","విదేశం","మోక్షం","నిద్ర నాణ్యత","పాదాలు"]},
+{t:"13వ కండం — శాంతి",s:"కర్మిక పరిష్కారాలు",tp:["కర్మ ఋణాలు","దేవాలయ ఆరాధన","దాన","మంత్రాలు","దైవ అనుగ్రహం"]}
+]},
+kn:{birth:"ಜನನ ವಿವರಗಳು",kundali:"ಕುಂಡಲಿ",nadi:"ನಾಡಿ",dasha:"ದಶ",predict:"ಭವಿಷ್ಯ",fullName:"ಪೂರ್ಣ ಹೆಸರು",dob:"ಹುಟ್ಟಿದ ದಿನಾಂಕ",tob:"ಹುಟ್ಟಿದ ಸಮಯ",gender:"ಲಿಂಗ",state:"ರಾಜ್ಯ",city:"ಜನ್ಮ ಸ್ಥಳ",ayanamsa:"ಅಯನಾಂಶ ವ್ಯವಸ್ಥೆ",generate:"ಕುಂಡಲಿ ರಚಿಸಿ",calculating:"ಗ್ರಹ ಸ್ಥಾನಗಳನ್ನು ಲೆಕ್ಕಿಸಲಾಗುತ್ತಿದೆ...",rasiChart:"ರಾಶಿ ಚಕ್ರ",planetPos:"ಗ್ರಹ ಸ್ಥಾನಗಳು",planet:"ಗ್ರಹ",rasi:"ರಾಶಿ",nakshatra:"ನಕ್ಷತ್ರ",yogas:"ಪ್ರಮುಖ ಯೋಗಗಳು",gemstones:"ಶಿಫಾರಸು ರತ್ನಗಳು",vimshottari:"ವಿಂಶೋತ್ತರೀ ದಶ",predictions:"ವೈದಿಕ ಭವಿಷ್ಯ",
+nadiSection:"ನಾಡಿ ಜ್ಯೋತಿಷ",nadiInstruct:"ನಿಮ್ಮ ಜನ್ಮ ಚಾರ್ಟ್ ಆಧಾರಿತ ವ್ಯಕ್ತಿಗತ ನಾಡಿ ಓದಿಗಾಗಿ ಪ್ರತಿ ಕಂಡಂ ಮೇಲೆ ಕ್ಲಿಕ್ ಮಾಡಿ.",nadiIdTitle:"ನಿಮ್ಮ ನಾಡಿ ಗುರುತು",nadiIdText:"ಜನ್ಮ ಮಾಹಿತಿ ಮತ್ತು ಹೆಬ್ಬೆರಳ ಮುದ್ರೆ ಆಧಾರದ ಮೇಲೆ ನಿಮ್ಮ ನಾಡಿ ಗುರುತಿಸಲಾಗಿದೆ",nadiGotram:"ಗೋತ್ರ (ವಂಶ ಪರಂಪರೆ)",nadiBundle:"ದೃಢೀಕರಣ ಪ್ರಶ್ನೆಗಳ ಮೂಲಕ ನಾಡಿ ಕಂಡಂ ಗುರುತಿಸಲಾಗಿದೆ.",sage:"ಮಹರ್ಷಿ",nadiBtn:"✦ ಈ ಕಂಡಂಗೆ ವ್ಯಕ್ತಿಗತ ನಾಡಿ ಓದನ್ನು ಪಡೆಯಿರಿ ✦",topics:"ಒಳಗೊಂಡ ವಿಷಯಗಳು",kandamsTitle:"13 ಕಂಡಂಗಳು — ವ್ಯಕ್ತಿಗತ ಓದು",
+nadiTypes:{agastya:"ಅಗಸ್ತ್ಯ ನಾಡಿ",nandi:"ನಂದಿ ನಾಡಿ",koushika:"ಕೌಶಿಕ ನಾಡಿ",sapta:"ಸಪ್ತ ಋಷಿ ನಾಡಿ",jeeva:"ಜೀವ ನಾಡಿ"},
+nadiSages:{agastya:"ಮಹರ್ಷಿ ಅಗಸ್ತ್ಯರ್",nandi:"ನಂದಿ (ಶಿವನ ಪವಿತ್ರ ಎಮ್ಮೆ)",koushika:"ಮಹರ್ಷಿ ವಿಶ್ವಾಮಿತ್ರ",sapta:"ಸಪ್ತರ್ಷಿಗಳು",jeeva:"ದೈವಿಕ ಚಾನೆಲಿಂಗ್ (ಜೀವ ನಾಡಿ)"},
+nadiDesc:{agastya:"ಸಪ್ತರ್ಷಿಗಳಲ್ಲಿ ಒಬ್ಬರಾದ ಅಗಸ್ತ್ಯ ಮಹರ್ಷಿ ಬರೆದ ಗೌರವಾನ್ವಿತ ನಾಡಿ. ತಾಳೆ ಓಲೆ ಹಸ್ತಪ್ರತಿಗಳು ವೈತ್ಯೀಶ್ವರನ್ ಕೋಯಿಲ್, ತಮಿಳುನಾಡಿನಲ್ಲಿ ಕಂಡುಬರುತ್ತವೆ.",nandi:"ಶಿವನ ವಾಹನ ನಂದಿಯ ಮೂಲಕ ಪ್ರಸಾರಿಸಲ್ಪಡುವ ಅಧಿಕೃತ ನಾಡಿ. ಕರ್ಮ, ಧರ್ಮ, ಮೋಕ್ಷದ ದೈವಿಕ ರಹಸ್ಯಗಳು.",koushika:"ವಿಶ್ವಾಮಿತ್ರ ಮಹರ್ಷಿಗೆ ಸಂಬಂಧಿಸಿದ ನಾಡಿ. ಜ್ಯೋತಿಷ್ಯ ಲೆಕ್ಕಾಚಾರ ಮತ್ತು ಭಾವ ಭವಿಷ್ಯದಲ್ಲಿ ವಿಶೇಷವಾಗಿ ವಿವರವಾಗಿದೆ.",sapta:"ಏಳು ಋಷಿಗಳ ಸಂಯುಕ್ತ ಜ್ಞಾನ.",jeeva:"ಜೀವಂತ ಪ್ರವಾದಿ — ಧ್ಯಾನ ಸ್ಥಿತಿಯಲ್ಲಿ ನಾಡಿ ವಾಚಕರಿಂದ ತಾಜಾ ಪ್ರಸಾರ."},
+kandams:[
+{t:"1ನೇ ಕಂಡಂ — ಲಗ್ನ",s:"ದೇಹ, ವ್ಯಕ್ತಿತ್ವ, ಆರೋಗ್ಯ",tp:["ದೈಹಿಕ ನೋಟ","ವ್ಯಕ್ತಿತ್ವ","ಜೀವನ ವಿಷಯ","ಆರೋಗ್ಯ","ಸಾಮಾಜಿಕ ಸ್ಥಾನ"]},
+{t:"2ನೇ ಕಂಡಂ — ಧನ",s:"ಕುಟುಂಬ, ಮಾತು, ಸಂಪತ್ತು",tp:["ಆರ್ಥಿಕ ಸ್ಥಿತಿ","ಕುಟುಂಬ","ಮಾತು","ಬಾಲ್ಯ","ಕಣ್ಣುಗಳು"]},
+{t:"3ನೇ ಕಂಡಂ — ಸಹೋದರ",s:"ಧೈರ್ಯ, ಒಡಹುಟ್ಟಿದವರು",tp:["ಒಡಹುಟ್ಟಿದವರು","ಧೈರ್ಯ","ಪ್ರಯಾಣ","ಹವ್ಯಾಸ","ಕೈಗಳು"]},
+{t:"4ನೇ ಕಂಡಂ — ಮಾತೃ",s:"ತಾಯಿ, ಆಸ್ತಿ, ಶಿಕ್ಷಣ",tp:["ತಾಯಿ","ಆಸ್ತಿ","ಶಿಕ್ಷಣ","ವಾಹನ","ಶಾಂತಿ"]},
+{t:"5ನೇ ಕಂಡಂ — ಪುತ್ರ",s:"ಮಕ್ಕಳು, ಬುದ್ಧಿ, ಪೂರ್ವ ಕರ್ಮ",tp:["ಮಕ್ಕಳು","ಬುದ್ಧಿ","ಪೂರ್ವ ಕರ್ಮ","ಪ್ರೇಮ","ಹೊಟ್ಟೆ"]},
+{t:"6ನೇ ಕಂಡಂ — ಶತ್ರು",s:"ಶತ್ರುಗಳು, ರೋಗ, ಸಾಲ",tp:["ಶತ್ರುಗಳು","ರೋಗ","ಸಾಲ","ಕಾನೂನು","ಸಾಕು ಪ್ರಾಣಿ"]},
+{t:"7ನೇ ಕಂಡಂ — ಕಲತ್ರ",s:"ಜೀವನಸಂಗಾತಿ, ವಿವಾಹ",tp:["ವಿವಾಹ","ದಾಂಪತ್ಯ","ಭಾಗಿದಾರಿಕೆ","ಸಂಗಾತಿ","ಆರೋಗ್ಯ"]},
+{t:"8ನೇ ಕಂಡಂ — ಆಯುರ್",s:"ಆಯುಷ್ಯ, ಗುಪ್ತ ವಿದ್ಯೆ",tp:["ದೀರ್ಘಾಯು","ಅಕಸ್ಮಾತ್ ಘಟನೆ","ಗುಪ್ತ ವಿದ್ಯೆ","ವಾರಸು","ರೋಗ"]},
+{t:"9ನೇ ಕಂಡಂ — ಭಾಗ್ಯ",s:"ತಂದೆ, ಧರ್ಮ, ಅದೃಷ್ಟ",tp:["ತಂದೆ","ಅದೃಷ್ಟ","ದೀರ್ಘ ಪ್ರಯಾಣ","ಉನ್ನತ ಶಿಕ್ಷಣ","ಆಧ್ಯಾತ್ಮ"]},
+{t:"10ನೇ ಕಂಡಂ — ಕರ್ಮ",s:"ವೃತ್ತಿ, ಖ್ಯಾತಿ",tp:["ವೃತ್ತಿ","ಯಶಸ್ಸು","ಅಧಿಕಾರಿಗಳು","ಸಮಾಜ","ಮೊಣಕಾಲು"]},
+{t:"11ನೇ ಕಂಡಂ — ಲಾಭ",s:"ಆದಾಯ, ಲಾಭ, ಇಚ್ಛೆ",tp:["ಆದಾಯ","ಇಚ್ಛೆ ಪೂರ್ತಿ","ಒಡಹುಟ್ಟಿದವರು","ಸ್ನೇಹಿತರು","ಕಣಕಾಲು"]},
+{t:"12ನೇ ಕಂಡಂ — ವ್ಯಯ",s:"ಖರ್ಚು, ವಿದೇಶ, ಮೋಕ್ಷ",tp:["ಖರ್ಚು","ವಿದೇಶ","ಮೋಕ್ಷ","ನಿದ್ರೆ","ಪಾದ"]},
+{t:"13ನೇ ಕಂಡಂ — ಶಾಂತಿ",s:"ಕರ್ಮ ಪರಿಹಾರ",tp:["ಕರ್ಮ ಋಣ","ದೇವಾಲಯ","ದಾನ","ಮಂತ್ರ","ಅನುಗ್ರಹ"]}
+]},
+ml:{birth:"ജന്മ വിവരങ്ങൾ",kundali:"ജാതകം",nadi:"നാഡി",dasha:"ദശ",predict:"പ്രവചനങ്ങൾ",fullName:"പൂർണ്ണ നാമം",dob:"ജനനത്തീയതി",tob:"ജനന സമയം",gender:"ലിംഗം",state:"സംസ്ഥാനം",city:"ജന്മ സ്ഥലം",ayanamsa:"അയനാംശ രീതി",generate:"ജാതകം തയ്യാറാക്കുക",calculating:"ഗ്രഹ സ്ഥാനങ്ങൾ കണക്കാക്കുന്നു...",rasiChart:"രാശി ചക്രം",planetPos:"ഗ്രഹ സ്ഥാനങ്ങൾ",planet:"ഗ്രഹം",rasi:"രാശി",nakshatra:"നക്ഷത്രം",yogas:"പ്രധാന യോഗങ്ങൾ",gemstones:"ശുപാർശ ചെയ്ത രത്നങ്ങൾ",vimshottari:"വിംശോത്തരി ദശ",predictions:"വൈദിക പ്രവചനങ്ങൾ",
+nadiSection:"നാഡി ജ്യോതിഷം",nadiInstruct:"ജന്മ ചാർട്ട് അടിസ്ഥാനമാക്കിയ വ്യക്തിഗത നാഡി വായനക്കായി ഓരോ കണ്ടത്തിലും ക്ലിക്ക് ചെയ്യുക.",nadiIdTitle:"നിങ്ങളുടെ നാഡി തിരിച്ചറിയൽ",nadiIdText:"ജന്മ വിവരങ്ങളും പെരുവിരൽ മുദ്രയും അടിസ്ഥാനമാക്കി നാഡി തിരിച്ചറിഞ്ഞു",nadiGotram:"ഗോത്രം (വംശ പാരമ്പര്യം)",nadiBundle:"ചോദ്യങ്ങളിലൂടെ നാഡി കണ്ടം തിരിച്ചറിഞ്ഞു.",sage:"മഹർഷി",nadiBtn:"✦ ഈ കണ്ടത്തിനായി വ്യക്തിഗത നാഡി വായന നേടുക ✦",topics:"ഉൾപ്പെടുത്തിയ വിഷയങ്ങൾ",kandamsTitle:"13 കണ്ടങ്ങൾ — വ്യക്തിഗത വായന",
+nadiTypes:{agastya:"അഗസ്ത്യ നാഡി",nandi:"നന്ദി നാഡി",koushika:"കൗശിക നാഡി",sapta:"സപ്ത ഋഷി നാഡി",jeeva:"ജീവ നാഡി"},
+nadiSages:{agastya:"മഹർഷി അഗസ്ത്യർ",nandi:"നന്ദി (ശിവന്റെ പുണ്യ കാള)",koushika:"മഹർഷി വിശ്വാമിത്ര",sapta:"സപ്തർഷിമാർ (ഏഴ് ഋഷിമാർ)",jeeva:"ദൈവിക ചാനലിംഗ്"},
+nadiDesc:{agastya:"സപ്തർഷിമാരിൽ ഒരാളായ അഗസ്ത്യ മഹർഷി എഴുതിയ ഏറ്റവും ആദരണീയമായ നാഡി. ഓലഞ്ഞ്ഞ ഗ്രന്ഥങ്ങൾ വൈദ്യേശ്വരൻ കോവിൽ, തമിഴ്‌നാട്ടിൽ കണ്ടെത്തി.",nandi:"ശിവന്റെ വാഹനമായ നന്ദിയിലൂടെ ചാനൽ ചെയ്ത ആധികാരിക നാഡി. കർമ്മ, ധർമ്മം, മോക്ഷ മാർഗ്ഗങ്ങളെ കുറിച്ചുള്ള ദൈവിക രഹസ്യങ്ങൾ.",koushika:"വിശ്വാമിത്ര മഹർഷിക്ക് ആരോപിക്കപ്പെടുന്ന നാഡി. ഭാവം-ഭാവം പ്രവചനങ്ങളിൽ വളരെ വിശദം.",sapta:"ഏഴ് മഹർഷിമാരുടെ സംയുക്ത ജ്ഞാനം.",jeeva:"ജീവനുള്ള ഒറാക്കിൾ — ധ്യാന അവസ്ഥയിൽ നാഡി വായനക്കാർ ചാനൽ ചെയ്യുന്നത്."},
+kandams:[
+{t:"1-ാം കണ്ടം — ലഗ്നം",s:"ശാരീരിക സ്വഭാവം, വ്യക്തിത്വം",tp:["ശാരീരിക രൂപം","വ്യക്തിത്വ ഗുണങ്ങൾ","ജീവിത ഇതിവൃത്തം","ആരോഗ്യം","സാമൂഹ്യ നില"]},
+{t:"2-ാം കണ്ടം — ധന",s:"കുടുംബം, സമ്പത്ത്, വിദ്യാഭ്യാസം",tp:["സാമ്പത്തിക സ്ഥിതി","കുടുംബ ബന്ധങ്ങൾ","ഭാഷ്യം","ബാല്യകാലം","കണ്ണ്, മുഖം"]},
+{t:"3-ാം കണ്ടം — സഹോദര",s:"ധൈര്യം, സഹോദരങ്ങൾ",tp:["സഹോദരങ്ങൾ","ധൈര്യം","ചെറിയ യാത്രകൾ","ഹോബ്ബി","കൈകൾ"]},
+{t:"4-ാം കണ്ടം — മാതൃ",s:"അമ്മ, സ്വത്ത്, വിദ്യാഭ്യാസം",tp:["അമ്മ","സ്വത്ത്","വിദ്യാഭ്യാസം","വാഹനം","ആന്തരിക ശാന്തി"]},
+{t:"5-ാം കണ്ടം — പുത്ര",s:"മക്കൾ, ബുദ്ധി, കർമ്മം",tp:["മക്കൾ","ബുദ്ധി","കർമ്മം","പ്രണയം","ഉദര ദഹനം"]},
+{t:"6-ാം കണ്ടം — ശത്രു",s:"ശത്രുക്കൾ, രോഗം, കടം",tp:["ശത്രുക്കൾ","രോഗങ്ങൾ","കടങ്ങൾ","നിയമം","മൃഗങ്ങൾ"]},
+{t:"7-ാം കണ്ടം — കളത്ര",s:"വിവാഹം, ജീവിത പങ്കാളി",tp:["വിവാഹം","ദാമ്പത്യം","ബിസിനസ്","പങ്കാളി","ആരോഗ്യം"]},
+{t:"8-ാം കണ്ടം — ആയുർ",s:"ആയുസ്സ്, ഗൂഢ വിദ്യ",tp:["ദീർഘായുസ്സ്","അകസ്മാത്ത്","ഗൂഢ വിദ്യ","അനന്തരാവകാശം","രോഗം"]},
+{t:"9-ാം കണ്ടം — ഭാഗ്യം",s:"അച്ഛൻ, ധർമ്മം, ഭാഗ്യം",tp:["അച്ഛൻ","ഭാഗ്യം","ദീർഘ യാത്ര","ഉന്നത വിദ്യ","ആദ്ധ്യാത്മം"]},
+{t:"10-ാം കണ്ടം — കർമ്മ",s:"തൊഴിൽ, അധികാരം, പ്രശസ്തി",tp:["തൊഴിൽ","വിജയം","അധികൃതർ","സമൂഹം","മുട്ടുകൾ"]},
+{t:"11-ാം കണ്ടം — ലാഭ",s:"വരുമാനം, ആഗ്രഹ സഫലീകരണം",tp:["വരുമാനം","ആഗ്രഹം","ജ്യേഷ്ഠൻ","സ്നേഹിതർ","കണങ്കാൽ"]},
+{t:"12-ാം കണ്ടം — വ്യയ",s:"ചെലവ്, വിദേശം, മോക്ഷം",tp:["ചെലവ്","വിദേശം","മോക്ഷം","ഉറക്കം","പാദം"]},
+{t:"13-ാം കണ്ടം — ശാന്തി",s:"കർമ്മ പ്രതിവിധികൾ",tp:["കർമ്മ ഋണം","ക്ഷേത്രം","ദാനം","മന്ത്രം","അനുഗ്രഹം"]}
+]},
+mr:{birth:"जन्म तपशील",kundali:"कुंडली",nadi:"नाडी",dasha:"दशा",predict:"भविष्यकथन",fullName:"पूर्ण नाव",dob:"जन्मतारीख",tob:"जन्म वेळ",gender:"लिंग",state:"राज्य",city:"जन्मस्थान",ayanamsa:"अयनांश पद्धती",generate:"कुंडली तयार करा",calculating:"ग्रह स्थिती मोजली जात आहे...",rasiChart:"राशी चक्र",planetPos:"ग्रह स्थिती",planet:"ग्रह",rasi:"राशी",nakshatra:"नक्षत्र",yogas:"प्रमुख योग",gemstones:"शिफारशीत रत्ने",vimshottari:"विंशोत्तरी दशा",predictions:"वैदिक भविष्यकथन",
+nadiSection:"नाडी ज्योतिष",nadiInstruct:"तुमच्या कुंडलीवर आधारित वैयक्तिक नाडी वाचनासाठी प्रत्येक खंडावर क्लिक करा.",nadiIdTitle:"तुमची नाडी ओळख",nadiIdText:"जन्म माहिती आणि अंगठ्याच्या ठशावरून तुमची नाडी ओळखली गेली",nadiGotram:"गोत्र (वंश परंपरा)",nadiBundle:"पुष्टी प्रश्नांद्वारे नाडी खंड ओळखले गेले.",sage:"ऋषी",nadiBtn:"✦ या खंडासाठी वैयक्तिक नाडी वाचन मिळवा ✦",topics:"समाविष्ट विषय",kandamsTitle:"१३ खंड — वैयक्तिक वाचन",
+nadiTypes:{agastya:"अगस्त्य नाडी",nandi:"नंदी नाडी",koushika:"कौशिक नाडी",sapta:"सप्त ऋषी नाडी",jeeva:"जीव नाडी"},
+nadiSages:{agastya:"महर्षी अगस्त्य",nandi:"नंदी (शिवाचा पवित्र बैल)",koushika:"ऋषी विश्वामित्र",sapta:"सप्तर्षी",jeeva:"दैवी चॅनेलिंग"},
+nadiDesc:{agastya:"ऋषी अगस्त्य यांनी लिहिलेली सर्वात पूजनीय नाडी. ताडपत्र हस्तलिखिते वैतीश्वरन कोइल, तमिळनाडू येथे आढळतात.",nandi:"शिवाच्या वाहन नंदीद्वारे प्रसारित. कर्म, धर्म, मोक्षाबद्दल दैवी रहस्ये.",koushika:"ऋषी विश्वामित्र यांना दिलेली नाडी. ज्योतिषीय गणना आणि भाव-वार भविष्यवाण्यांमध्ये विस्तृत.",sapta:"सात महान ऋषींचे एकत्रित ज्ञान.",jeeva:"जिवंत भविष्यवक्ता — ध्यानात नाडी वाचकांद्वारे ताजे प्रसारित."},
+kandams:[
+{t:"१ला खंड — लग्न",s:"शरीर, व्यक्तिमत्व, आरोग्य",tp:["शारीरिक रचना","व्यक्तिमत्व","जीवन विषय","आरोग्य","सामाजिक प्रतिष्ठा"]},
+{t:"२रा खंड — धन",s:"कुटुंब, वाणी, संपत्ती",tp:["आर्थिक स्थिती","कुटुंब","वाणी","बालपण","चेहरा"]},
+{t:"३रा खंड — सहोदर",s:"धैर्य, भावंडे",tp:["भावंडे","धैर्य","लहान प्रवास","छंद","हात"]},
+{t:"४था खंड — मातृ",s:"आई, मालमत्ता, शिक्षण",tp:["आई","मालमत्ता","शिक्षण","वाहन","शांती"]},
+{t:"५वा खंड — पुत्र",s:"मुले, बुद्धिमत्ता, कर्म",tp:["मुले","बुद्धिमत्ता","कर्म","प्रेम","पचन"]},
+{t:"६वा खंड — शत्रू",s:"शत्रू, रोग, कर्ज",tp:["शत्रू","रोग","कर्ज","कायदा","प्राणी"]},
+{t:"७वा खंड — कलत्र",s:"विवाह, जीवनसाथी",tp:["विवाह","वैवाहिक","भागीदारी","जोडीदार","आरोग्य"]},
+{t:"८वा खंड — आयुर्",s:"आयुष्य, गुप्त विद्या",tp:["दीर्घायुष्य","अचानक घटना","गुप्त विद्या","वारसा","रोग"]},
+{t:"९वा खंड — भाग्य",s:"वडील, धर्म, नशीब",tp:["वडील","नशीब","दीर्घ प्रवास","उच्च शिक्षण","अध्यात्म"]},
+{t:"१०वा खंड — कर्म",s:"व्यवसाय, प्रसिद्धी",tp:["करिअर","यश","अधिकारी","समाज","गुडघे"]},
+{t:"११वा खंड — लाभ",s:"उत्पन्न, इच्छा पूर्तता",tp:["उत्पन्न","इच्छा","भावंडे","मित्र","घोटे"]},
+{t:"१२वा खंड — व्यय",s:"खर्च, परदेश, मुक्ती",tp:["खर्च","परदेश","मोक्ष","झोप","पाय"]},
+{t:"१३वा खंड — शांती",s:"उपाय, कर्मिक ऋण",tp:["ऋण","मंदिर","दान","मंत्र","कृपा"]}
+]},
+bn:{birth:"জন্ম বিবরণ",kundali:"কুণ্ডলী",nadi:"নাড়ি",dasha:"দশা",predict:"ভবিষ্যদ্বাণী",fullName:"পূর্ণ নাম",dob:"জন্মতারিখ",tob:"জন্ম সময়",gender:"লিঙ্গ",state:"রাজ্য",city:"জন্মস্থান",ayanamsa:"অয়নাংশ পদ্ধতি",generate:"কুণ্ডলী তৈরি করুন",calculating:"গ্রহের অবস্থান গণনা করা হচ্ছে...",rasiChart:"রাশি চক্র",planetPos:"গ্রহের অবস্থান",planet:"গ্রহ",rasi:"রাশি",nakshatra:"নক্ষত্র",yogas:"প্রধান যোগ",gemstones:"প্রস্তাবিত রত্নপাথর",vimshottari:"বিংশোত্তরী দশা",predictions:"বৈদিক ভবিষ্যদ্বাণী",
+nadiSection:"নাড়ি জ্যোতিষ",nadiInstruct:"আপনার জন্ম চার্টের উপর ভিত্তি করে ব্যক্তিগত নাড়ি পাঠের জন্য প্রতিটি কণ্ডমে ক্লিক করুন।",nadiIdTitle:"আপনার নাড়ি পরিচয়",nadiIdText:"জন্ম তথ্য ও বুড়ো আঙুলের ছাপের ভিত্তিতে আপনার নাড়ি চিহ্নিত করা হয়েছে",nadiGotram:"গোত্র (বংশ পরম্পরা)",nadiBundle:"নিশ্চিতকরণ প্রশ্নের মাধ্যমে নাড়ি কণ্ডম চিহ্নিত।",sage:"মহর্ষি",nadiBtn:"✦ এই কণ্ডমের জন্য ব্যক্তিগত নাড়ি পাঠ পান ✦",topics:"অন্তর্ভুক্ত বিষয়",kandamsTitle:"১৩টি কণ্ডম — ব্যক্তিগত পাঠ",
+nadiTypes:{agastya:"অগস্ত্য নাড়ি",nandi:"নন্দী নাড়ি",koushika:"কৌশিক নাড়ি",sapta:"সপ্ত ঋষি নাড়ি",jeeva:"জীব নাড়ি"},
+nadiSages:{agastya:"মহর্ষি অগস্ত্যর",nandi:"নন্দী (শিবের পবিত্র ষাঁড়)",koushika:"মহর্ষি বিশ্বামিত্র",sapta:"সপ্তর্ষি (সাত ঋষি)",jeeva:"দৈব চ্যানেলিং"},
+nadiDesc:{agastya:"সপ্তর্ষিদের একজন ঋষি অগস্ত্য রচিত সর্বাধিক সম্মানিত নাড়ি। তাল পাতার পাণ্ডুলিপি বৈদ্যীশ্বরন কোয়িলে পাওয়া যায়।",nandi:"শিবের বাহন নন্দীর মাধ্যমে প্রসারিত। কর্ম, ধর্ম ও মোক্ষের দৈব রহস্য।",koushika:"বিশ্বামিত্র মহর্ষিকে দায়ী। জ্যোতিষ গণনা ও ভাব-ভিত্তিক ভবিষ্যদ্বাণীতে বিস্তারিত।",sapta:"সাত মহান ঋষির সম্মিলিত জ্ঞান।",jeeva:"জীবন্ত ভবিষ্যদ্বাক্তা — ধ্যান অবস্থায় তাজাভাবে প্রেরণ।"},
+kandams:[
+{t:"১ম কণ্ডম — লগ্ন",s:"শারীরিক স্বরূপ, ব্যক্তিত্ব",tp:["শারীরিক গঠন","ব্যক্তিত্ব","জীবনের বিষয়","স্বাস্থ্য","সামাজিক মর্যাদা"]},
+{t:"২য় কণ্ডম — ধন",s:"পরিবার, সম্পদ, শিক্ষা",tp:["আর্থিক অবস্থা","পরিবার","বাক্","শৈশব","কণ্ঠস্বর"]},
+{t:"৩য় কণ্ডম — সহোদর",s:"সাহস, ভাইবোন",tp:["ভাইবোন","সাহস","ছোট ভ্রমণ","শখ","হাত"]},
+{t:"৪র্থ কণ্ডম — মাতৃ",s:"মা, সম্পত্তি, শিক্ষা",tp:["মায়ের স্বভাব","সম্পত্তি","শিক্ষা","যানবাহন","শান্তি"]},
+{t:"৫ম কণ্ডম — পুত্র",s:"সন্তান, বুদ্ধি, কর্ম",tp:["সন্তান","বুদ্ধি","কর্ম","প্রেম","পাচনতন্ত্র"]},
+{t:"৬ষ্ঠ কণ্ডম — শত্রু",s:"শত্রু, রোগ, ঋণ",tp:["শত্রু","রোগ","ঋণ","আইন","পোষা প্রাণী"]},
+{t:"৭ম কণ্ডম — কলত্র",s:"বিবাহ, জীবনসঙ্গী",tp:["বিবাহ","দাম্পত্য","অংশীদারিত্ব","সঙ্গী","স্বাস্থ্য"]},
+{t:"৮ম কণ্ডম — আয়ুর",s:"আয়ু, গুপ্ত বিদ্যা",tp:["আয়ু","আকস্মিক","গুপ্ত বিদ্যা","উত্তরাধিকার","রোগ"]},
+{t:"৯ম কণ্ডম — ভাগ্য",s:"পিতা, ধর্ম, সৌভাগ্য",tp:["পিতা","সৌভাগ্য","দীর্ঘ ভ্রমণ","উচ্চ শিক্ষা","আধ্যাত্মিকতা"]},
+{t:"১০ম কণ্ডম — কর্ম",s:"পেশা, খ্যাতি",tp:["পেশা","সাফল্য","কর্তৃপক্ষ","সমাজ","হাঁটু"]},
+{t:"১১তম কণ্ডম — লাভ",s:"আয়, ইচ্ছা পূরণ",tp:["আয়","ইচ্ছা","ভাইবোন","বন্ধু","গোড়ালি"]},
+{t:"১২তম কণ্ডম — ব্যয়",s:"খরচ, বিদেশ, মোক্ষ",tp:["খরচ","বিদেশ","মোক্ষ","ঘুম","পা"]},
+{t:"১৩তম কণ্ডম — শান্তি",s:"কর্মিক প্রতিকার",tp:["কর্মিক ঋণ","মন্দির","দান","মন্ত্র","অনুগ্রহ"]}
+]}
+};
+
+// ──────────────────────────────────────────────────────────────
+// MULTILINGUAL CONTENT DATA
+// ──────────────────────────────────────────────────────────────
+const ML={
+en:{
+  yogas_title:"Major Yogas",
+  gems_title:"Recommended Gemstones",
+  dasha_title:"Vimshottari Dasha",
+  antardasha_title:"Antardasha — Sub-periods",
+  current:"Current",
+  pred_title:"Vedic Predictions",
+  remedies_title:"Remedies (Upaya)",
+  yogas:[
+    {name:"Gajakesari Yoga",desc:"Jupiter in kendra from Moon — fame, prosperity, wisdom."},
+    {name:"Budha-Aditya Yoga",desc:"Sun & Mercury conjunction — intelligence, leadership."},
+    {name:"Hamsa Yoga",desc:"Jupiter in own/exalt in kendra — righteousness, good character."},
+    {name:"Malavya Yoga",desc:"Venus in own/exalt in kendra — beauty, comforts, charisma."},
+    {name:"Chandra-Mangala Yoga",desc:"Moon & Mars conjunction — financial success through effort."},
+    {name:"Neecha Bhanga Raja Yoga",desc:"Debilitated planet cancelled — rise after struggle."},
+  ],
+  gems:[
+    {gem:"Ruby",planet:"Sun — Surya",b:"Leadership, vitality, confidence"},
+    {gem:"Pearl",planet:"Moon — Chandra",b:"Emotional balance, intuition"},
+    {gem:"Yellow Sapphire",planet:"Jupiter — Guru",b:"Wisdom, wealth, marriage"},
+    {gem:"Emerald",planet:"Mercury — Budha",b:"Intelligence, business"},
+  ],
+  preds:[
+    {t:"Marriage & Relationships",txt:"The 7th lord in 11th house indicates a fulfilling partnership. Venus in Scorpio suggests deep emotional bonds. Period 2025-2027 is highly favorable for marriage or strengthening existing bonds."},
+    {t:"Career & Finance",txt:"10th lord exalted indicates professional excellence. Jupiter's aspect on 2nd house brings wealth accumulation post 2025. Technology, consulting or administrative roles will excel."},
+    {t:"Health & Wellbeing",txt:"Lagna lord in 6th house demands attention to digestive health. Regular yoga and pranayama are recommended. After 2026 Jupiter transit, overall vitality improves significantly."},
+    {t:"Spirituality & Moksha",txt:"Strong 9th house with Ketu indicates past-life spiritual merit. You will be drawn to pilgrimage and meditation in your 40s. A spiritual teacher will arrive at the right moment."},
+  ],
+  remedies:["Chant Aditya Hridayam on Sundays for Sun blessings","Offer milk to Shiva Linga on Mondays to strengthen Moon","Donate red items on Tuesdays to pacify Mars-Rahu conjunction","Recite Vishnu Sahasranamam on Thursdays for Jupiter grace","Light sesame oil lamps on Saturdays to appease Saturn","Wear Yellow Sapphire on index finger on a Thursday (Guru Pushya Yoga)"],
+  dasha_planets:["Sun","Moon","Mars","Rahu","Jupiter","Saturn","Mercury","Ketu","Venus"],
+  antardasha_label:"Rahu Maha Dasha — Sub-periods (Antardasha):",
+  nadi_reading:"Nadi Reading for",
+  nadi_no_api:"The sacred Nadi leaves reveal: For",
+  nadi_suffix:"this Kandam holds significant karmic imprints from previous janmas. Your life path in this area will undergo transformation during the current dasha period. Visit the nearest Shiva temple and offer bilva leaves on Mondays as a remedy. The cosmic blueprint written at the time of your birth reveals both challenges and divine grace in this area.",
+},
+hi:{
+  yogas_title:"प्रमुख योग",
+  gems_title:"अनुशंसित रत्न",
+  dasha_title:"विंशोत्तरी दशा",
+  antardasha_title:"अंतर्दशा — उप-अवधि",
+  current:"वर्तमान",
+  pred_title:"वैदिक भविष्यवाणी",
+  remedies_title:"उपाय",
+  yogas:[
+    {name:"गजकेसरी योग",desc:"चंद्र से केंद्र में बृहस्पति — प्रसिद्धि, समृद्धि, ज्ञान।"},
+    {name:"बुध-आदित्य योग",desc:"सूर्य और बुध युति — बुद्धि, नेतृत्व।"},
+    {name:"हंस योग",desc:"बृहस्पति स्वगृह/उच्च केंद्र में — धर्म, सुचरित्र।"},
+    {name:"मालव्य योग",desc:"शुक्र स्वगृह/उच्च केंद्र में — सौंदर्य, सुविधा, आकर्षण।"},
+    {name:"चंद्र-मंगल योग",desc:"चंद्र और मंगल युति — प्रयास से आर्थिक सफलता।"},
+    {name:"नीचभंग राजयोग",desc:"नीच ग्रह का भंग — संघर्ष के बाद उत्थान।"},
+  ],
+  gems:[
+    {gem:"माणिक्य",planet:"सूर्य — Surya",b:"नेतृत्व, जीवन शक्ति, आत्मविश्वास"},
+    {gem:"मोती",planet:"चंद्र — Chandra",b:"भावनात्मक संतुलन, अंतर्ज्ञान"},
+    {gem:"पुखराज",planet:"बृहस्पति — Guru",b:"ज्ञान, धन, विवाह"},
+    {gem:"पन्ना",planet:"बुध — Budha",b:"बुद्धि, व्यापार"},
+  ],
+  preds:[
+    {t:"विवाह और संबंध",txt:"सप्तम भाव का स्वामी एकादश भाव में एक पूर्ण साझेदारी का संकेत देता है। 2025-2027 का काल विवाह के लिए अत्यंत शुभ है। शुक्र की स्थिति गहरे भावनात्मक बंधन का संकेत देती है।"},
+    {t:"करियर और वित्त",txt:"दशम भाव का स्वामी उच्च स्थान में है — व्यावसायिक उत्कृष्टता का संकेत। 2025 के बाद बृहस्पति का प्रभाव धन संचय लाएगा। तकनीक, परामर्श या प्रशासनिक क्षेत्र में उन्नति होगी।"},
+    {t:"स्वास्थ्य और कल्याण",txt:"लग्नेश की स्थिति पाचन और यकृत स्वास्थ्य पर ध्यान देने की मांग करती है। नियमित योग और प्राणायाम की सिफारिश है। 2026 के बाद जीवन शक्ति में सुधार होगा।"},
+    {t:"अध्यात्म और मोक्ष",txt:"केतु के साथ नवम भाव पूर्व जन्म के आध्यात्मिक पुण्य का संकेत देता है। 40 वर्ष की आयु में तीर्थयात्रा और ध्यान की ओर आकर्षण बढ़ेगा।"},
+  ],
+  remedies:["रविवार को आदित्य हृदयम का पाठ करें","सोमवार को शिव लिंग पर दूध अर्पित करें","मंगलवार को लाल वस्तुओं का दान करें","गुरुवार को विष्णु सहस्रनाम का पाठ करें","शनिवार को तिल के तेल के दीपक जलाएं","गुरु पुष्य योग पर पुखराज धारण करें"],
+  dasha_planets:["सूर्य","चंद्र","मंगल","राहु","बृहस्पति","शनि","बुध","केतु","शुक्र"],
+  antardasha_label:"राहु महादशा — अंतर्दशा:",
+  nadi_reading:"का नाड़ी पठन",
+  nadi_no_api:"पवित्र नाड़ी पत्तियाँ प्रकट करती हैं:",
+  nadi_suffix:"इस खंड में पूर्व जन्मों के महत्वपूर्ण कर्मिक संस्कार हैं। वर्तमान दशा काल में आपके जीवन के इस क्षेत्र में परिवर्तन आएगा। सोमवार को निकटतम शिव मंदिर में बिल्व पत्र अर्पित करें। आपके जन्म समय लिखे ब्रह्मांडीय खाके में चुनौतियाँ और दैवी कृपा दोनों हैं।",
+},
+ta:{
+  yogas_title:"முக்கிய யோகங்கள்",
+  gems_title:"பரிந்துரைக்கப்பட்ட ரத்தினங்கள்",
+  dasha_title:"விம்சோத்தரி தசை",
+  antardasha_title:"அந்தர்தசை — உட்காலம்",
+  current:"நடப்பு",
+  pred_title:"வேத கணிப்புகள்",
+  remedies_title:"பரிகாரங்கள்",
+  yogas:[
+    {name:"கஜகேசரி யோகம்",desc:"சந்திரனிடமிருந்து கேந்திரத்தில் குரு — புகழ், செழிப்பு, ஞானம்."},
+    {name:"புத-ஆதித்ய யோகம்",desc:"சூரியன் மற்றும் புதன் சேர்க்கை — அறிவு, தலைமை."},
+    {name:"ஹம்ச யோகம்",desc:"குரு சொந்த/உச்சம் கேந்திரத்தில் — நேர்மை, நல்ல குணம்."},
+    {name:"மாளவ்ய யோகம்",desc:"சுக்கிரன் சொந்த/உச்சம் கேந்திரத்தில் — அழகு, சுகங்கள்."},
+    {name:"சந்திர-மங்கல யோகம்",desc:"சந்திரன் மற்றும் செவ்வாய் சேர்க்கை — முயற்சியால் வெற்றி."},
+    {name:"நீசபங்க ராஜயோகம்",desc:"நீச கிரகம் நீங்கியது — போராட்டத்திற்கு பிறகு உயர்வு."},
+  ],
+  gems:[
+    {gem:"மாணிக்கம்",planet:"சூரியன் — Surya",b:"தலைமை, உயிர் ஆற்றல், தன்னம்பிக்கை"},
+    {gem:"முத்து",planet:"சந்திரன் — Chandra",b:"உணர்வு சமநிலை, உள்ளுணர்வு"},
+    {gem:"புஷ்பராகம்",planet:"குரு — Guru",b:"ஞானம், செல்வம், திருமணம்"},
+    {gem:"மரகதம்",planet:"புதன் — Budha",b:"அறிவு, வணிகம்"},
+  ],
+  preds:[
+    {t:"திருமணம் மற்றும் உறவுகள்",txt:"7ஆம் இடத்தின் அதிபதி 11ஆம் இடத்தில் இருப்பது முழுமையான கூட்டாண்மையை குறிக்கிறது. 2025-2027 திருமணத்திற்கு மிகவும் சாதகமான காலம். சுக்கிரனின் நிலை ஆழமான உணர்வு பந்தங்களை குறிக்கிறது."},
+    {t:"தொழில் மற்றும் நிதி",txt:"10ஆம் இடத்தின் அதிபதி உச்சத்தில் — தொழில் சிறப்பை குறிக்கிறது. 2025க்கு பிறகு குரு தொடுதல் செல்வ சேர்க்கை கொண்டுவரும். தொழில்நுட்பம், ஆலோசனை அல்லது நிர்வாக துறைகளில் முன்னேற்றம்."},
+    {t:"ஆரோக்கியம் மற்றும் நலன்",txt:"லக்னாதிபதியின் நிலை ஜீரண மண்டல ஆரோக்கியத்தில் கவனம் தேவை என்பதை குறிக்கிறது. தொடர்ந்து யோகா மற்றும் பிராணாயாமம் பரிந்துரைக்கப்படுகிறது."},
+    {t:"ஆன்மிகம் மற்றும் மோட்சம்",txt:"கேது உடன் 9ஆம் இடம் முன் ஜன்ம ஆன்மிக புண்ணியத்தை குறிக்கிறது. 40 வயதில் தீர்த்த யாத்திரை மற்றும் தியானத்தில் ஈர்ப்பு அதிகரிக்கும்."},
+  ],
+  remedies:["ஞாயிறு அன்று ஆதித்ய ஹிருதயம் பாடுங்கள்","திங்கள் அன்று சிவலிங்கத்தில் பால் படைக்கவும்","செவ்வாய் அன்று சிவப்பு பொருட்களை தானம் செய்யுங்கள்","வியாழன் அன்று விஷ்ணு சஹஸ்ரநாமம் ஓதுங்கள்","சனி அன்று எள் எண்ணெய் தீபம் ஏற்றுங்கள்","குரு புஷ்ய யோகத்தில் புஷ்பராகம் அணியுங்கள்"],
+  dasha_planets:["சூரியன்","சந்திரன்","செவ்வாய்","ராகு","குரு","சனி","புதன்","கேது","சுக்கிரன்"],
+  antardasha_label:"ராகு மகாதசை — அந்தர்தசை:",
+  nadi_reading:"க்கான நாடி வாசிப்பு",
+  nadi_no_api:"புனித நாடி ஓலைகள் வெளிப்படுத்துகின்றன:",
+  nadi_suffix:"இந்த கண்டத்தில் முன் ஜன்மங்களின் கர்மிக சம்ஸ்காரங்கள் உள்ளன. நடப்பு தசை காலத்தில் உங்கள் வாழ்க்கையின் இந்த பகுதியில் மாற்றம் ஏற்படும். திங்கள் அன்று அருகிலுள்ள சிவன் கோயிலில் வில்வ மலர் சேர்க்கவும்.",
+},
+te:{
+  yogas_title:"ప్రధాన యోగాలు",
+  gems_title:"సిఫారసు రత్నాలు",
+  dasha_title:"వింశోత్తరీ దశ",
+  antardasha_title:"అంతర్దశ — ఉప-కాలాలు",
+  current:"నడుస్తున్న",
+  pred_title:"వేద అంచనాలు",
+  remedies_title:"పరిహారాలు",
+  yogas:[
+    {name:"గజకేసరి యోగం",desc:"చంద్రుడి నుండి కేంద్రంలో గురువు — కీర్తి, సమృద్ధి, జ్ఞానం."},
+    {name:"బుధ-ఆదిత్య యోగం",desc:"సూర్యుడు మరియు బుధుడు సమ్మేళనం — తెలివి, నాయకత్వం."},
+    {name:"హంస యోగం",desc:"గురువు స్వగృహ/ఉచ్చ కేంద్రంలో — నీతి, మంచి స్వభావం."},
+    {name:"మాలవ్య యోగం",desc:"శుక్రుడు స్వగృహ/ఉచ్చ కేంద్రంలో — అందం, సుఖాలు."},
+    {name:"చంద్ర-మంగళ యోగం",desc:"చంద్రుడు మరియు మంగళుడు సమ్మేళనం — ప్రయత్నం ద్వారా విజయం."},
+    {name:"నీచభంగ రాజయోగం",desc:"నీచ గ్రహం నిలగడిపోవడం — సంఘర్షణ తర్వాత ఉన్నతి."},
+  ],
+  gems:[
+    {gem:"మాణిక్యం",planet:"సూర్యుడు — Surya",b:"నాయకత్వం, జీవ శక్తి, ఆత్మవిశ్వాసం"},
+    {gem:"ముత్యం",planet:"చంద్రుడు — Chandra",b:"భావోద్వేగ సమతుల్యత, అంతర్జ్ఞానం"},
+    {gem:"పుష్పరాగం",planet:"గురువు — Guru",b:"జ్ఞానం, సంపద, వివాహం"},
+    {gem:"పచ్చ",planet:"బుధుడు — Budha",b:"తెలివి, వ్యాపారం"},
+  ],
+  preds:[
+    {t:"వివాహం మరియు సంబంధాలు",txt:"7వ భావాధిపతి 11వ భావంలో ఉండటం సంతోషకరమైన భాగస్వామ్యాన్ని సూచిస్తుంది. 2025-2027 వివాహానికి చాలా అనుకూలమైన కాలం. శుక్రుడి స్థానం లోతైన భావోద్వేగ బంధాలను సూచిస్తుంది."},
+    {t:"వృత్తి మరియు ఆర్థికం",txt:"10వ భావాధిపతి ఉచ్చలో ఉండటం వృత్తి నైపుణ్యాన్ని సూచిస్తుంది. 2025 తర్వాత గురువు ప్రభావం సంపద చేరికను తెస్తుంది. సాంకేతిక, సలహా లేదా పరిపాలన రంగాలలో రాణిస్తారు."},
+    {t:"ఆరోగ్యం మరియు శ్రేయస్సు",txt:"లగ్నాధిపతి స్థానం జీర్ణ మరియు కాలేయ ఆరోగ్యంపై శ్రద్ధ అవసరమని సూచిస్తుంది. నిరంతర యోగా మరియు ప్రాణాయామం సిఫారసు చేయబడుతుంది."},
+    {t:"ఆధ్యాత్మికత మరియు మోక్షం",txt:"కేతువుతో 9వ భావం పూర్వ జన్మ ఆధ్యాత్మిక పుణ్యాన్ని సూచిస్తుంది. 40 వయస్సులో తీర్థయాత్ర మరియు ధ్యానంపై ఆకర్షణ పెరుగుతుంది."},
+  ],
+  remedies:["ఆదివారం ఆదిత్య హృదయం పఠించండి","సోమవారం శివలింగంపై పాలు అర్పించండి","మంగళవారం ఎర్ర వస్తువులు దానం చేయండి","గురువారం విష్ణు సహస్రనామం జపించండి","శనివారం నువ్వుల నూనె దీపాలు వెలిగించండి","గురు పుష్య యోగంలో పుష్పరాగం ధరించండి"],
+  dasha_planets:["సూర్యుడు","చంద్రుడు","మంగళుడు","రాహువు","గురువు","శని","బుధుడు","కేతువు","శుక్రుడు"],
+  antardasha_label:"రాహువు మహాదశ — అంతర్దశ:",
+  nadi_reading:"కోసం నాడి పఠనం",
+  nadi_no_api:"పవిత్ర నాడి ఆకులు వెల్లడిస్తున్నాయి:",
+  nadi_suffix:"ఈ కండంలో పూర్వ జన్మాల కర్మిక సంస్కారాలు ఉన్నాయి. నడుస్తున్న దశ కాలంలో మీ జీవితంలో ఈ భాగంలో మార్పు వస్తుంది. సోమవారం సమీప శివాలయంలో బిల్వ పత్రాలు సమర్పించండి.",
+},
+kn:{
+  yogas_title:"ಪ್ರಮುಖ ಯೋಗಗಳು",
+  gems_title:"ಶಿಫಾರಸು ರತ್ನಗಳು",
+  dasha_title:"ವಿಂಶೋತ್ತರೀ ದಶ",
+  antardasha_title:"ಅಂತರ್ದಶ — ಉಪ-ಅವಧಿಗಳು",
+  current:"ನಡೆಯುತ್ತಿರುವ",
+  pred_title:"ವೈದಿಕ ಭವಿಷ್ಯ",
+  remedies_title:"ಪರಿಹಾರಗಳು",
+  yogas:[
+    {name:"ಗಜಕೇಸರಿ ಯೋಗ",desc:"ಚಂದ್ರನಿಂದ ಕೇಂದ್ರದಲ್ಲಿ ಗುರು — ಕೀರ್ತಿ, ಸಮೃದ್ಧಿ, ಜ್ಞಾನ."},
+    {name:"ಬುಧ-ಆದಿತ್ಯ ಯೋಗ",desc:"ಸೂರ್ಯ ಮತ್ತು ಬುಧ ಸಂಯೋಗ — ಬುದ್ಧಿ, ನಾಯಕತ್ವ."},
+    {name:"ಹಂಸ ಯೋಗ",desc:"ಗುರು ಸ್ವಗೃಹ/ಉಚ್ಚ ಕೇಂದ್ರದಲ್ಲಿ — ನ್ಯಾಯ, ಒಳ್ಳೆಯ ಗುಣ."},
+    {name:"ಮಾಲವ್ಯ ಯೋಗ",desc:"ಶುಕ್ರ ಸ್ವಗೃಹ/ಉಚ್ಚ ಕೇಂದ್ರದಲ್ಲಿ — ಸೌಂದರ್ಯ, ಸುಖ."},
+    {name:"ಚಂದ್ರ-ಮಂಗಳ ಯೋಗ",desc:"ಚಂದ್ರ ಮತ್ತು ಮಂಗಳ ಸಂಯೋಗ — ಪ್ರಯತ್ನದಿಂದ ಆರ್ಥಿಕ ಯಶಸ್ಸು."},
+    {name:"ನೀಚಭಂಗ ರಾಜಯೋಗ",desc:"ನೀಚ ಗ್ರಹ ರದ್ದಾಗುವುದು — ಸಂಘರ್ಷದ ನಂತರ ಉನ್ನತಿ."},
+  ],
+  gems:[
+    {gem:"ಮಾಣಿಕ್ಯ",planet:"ಸೂರ್ಯ — Surya",b:"ನಾಯಕತ್ವ, ಜೀವ ಶಕ್ತಿ, ಆತ್ಮವಿಶ್ವಾಸ"},
+    {gem:"ಮುತ್ತು",planet:"ಚಂದ್ರ — Chandra",b:"ಭಾವನಾತ್ಮಕ ಸಮತೋಲನ, ಅಂತರ್ಜ್ಞಾನ"},
+    {gem:"ಪುಷ್ಪರಾಗ",planet:"ಗುರು — Guru",b:"ಜ್ಞಾನ, ಸಂಪತ್ತು, ವಿವಾಹ"},
+    {gem:"ಮರಕತ",planet:"ಬುಧ — Budha",b:"ಬುದ್ಧಿ, ವ್ಯಾಪಾರ"},
+  ],
+  preds:[
+    {t:"ವಿವಾಹ ಮತ್ತು ಸಂಬಂಧಗಳು",txt:"7ನೇ ಭಾವಾಧಿಪತಿ 11ನೇ ಭಾವದಲ್ಲಿ ಇರುವುದು ಸಂತೃಪ್ತ ಸಂಗಾತಿಯನ್ನು ಸೂಚಿಸುತ್ತದೆ. 2025-2027 ವಿವಾಹಕ್ಕೆ ಅತ್ಯಂತ ಅನುಕೂಲಕರ ಕಾಲ."},
+    {t:"ವೃತ್ತಿ ಮತ್ತು ಆರ್ಥಿಕ",txt:"10ನೇ ಭಾವಾಧಿಪತಿ ಉಚ್ಚದಲ್ಲಿ — ವೃತ್ತಿ ಶ್ರೇಷ್ಠತೆ ಸೂಚಿಸುತ್ತದೆ. 2025 ನಂತರ ಗುರುವಿನ ಪ್ರಭಾವ ಸಂಪತ್ತು ಸಂಗ್ರಹ ತರುತ್ತದೆ."},
+    {t:"ಆರೋಗ್ಯ ಮತ್ತು ಕ್ಷೇಮ",txt:"ಲಗ್ನಾಧಿಪತಿ ಸ್ಥಾನ ಜೀರ್ಣ ಆರೋಗ್ಯದ ಬಗ್ಗೆ ಗಮನ ಅಗತ್ಯ ಎಂದು ಸೂಚಿಸುತ್ತದೆ. ನಿಯಮಿತ ಯೋಗ ಮತ್ತು ಪ್ರಾಣಾಯಾಮ ಶಿಫಾರಸು."},
+    {t:"ಆಧ್ಯಾತ್ಮ ಮತ್ತು ಮೋಕ್ಷ",txt:"ಕೇತುವಿನೊಂದಿಗೆ 9ನೇ ಭಾವ ಹಿಂದಿನ ಜನ್ಮದ ಆಧ್ಯಾತ್ಮಿಕ ಪುಣ್ಯ ಸೂಚಿಸುತ್ತದೆ. 40 ವಯಸ್ಸಿನಲ್ಲಿ ತೀರ್ಥಯಾತ್ರೆ ಮತ್ತು ಧ್ಯಾನದಲ್ಲಿ ಆಕರ್ಷಣೆ ಹೆಚ್ಚಾಗುತ್ತದೆ."},
+  ],
+  remedies:["ಭಾನುವಾರ ಆದಿತ್ಯ ಹೃದಯಂ ಪಠಿಸಿ","ಸೋಮವಾರ ಶಿವಲಿಂಗಕ್ಕೆ ಹಾಲು ಅರ್ಪಿಸಿ","ಮಂಗಳವಾರ ಕೆಂಪು ವಸ್ತುಗಳನ್ನು ದಾನ ಮಾಡಿ","ಗುರುವಾರ ವಿಷ್ಣು ಸಹಸ್ರನಾಮ ಪಠಿಸಿ","ಶನಿವಾರ ಎಳ್ಳೆಣ್ಣೆ ದೀಪ ಹಚ್ಚಿ","ಗುರು ಪುಷ್ಯ ಯೋಗದಲ್ಲಿ ಪುಷ್ಪರಾಗ ಧರಿಸಿ"],
+  dasha_planets:["ಸೂರ್ಯ","ಚಂದ್ರ","ಮಂಗಳ","ರಾಹು","ಗುರು","ಶನಿ","ಬುಧ","ಕೇತು","ಶುಕ್ರ"],
+  antardasha_label:"ರಾಹು ಮಹಾದಶ — ಅಂತರ್ದಶ:",
+  nadi_reading:"ಗಾಗಿ ನಾಡಿ ಓದು",
+  nadi_no_api:"ಪವಿತ್ರ ನಾಡಿ ಓಲೆಗಳು ಹೇಳುತ್ತವೆ:",
+  nadi_suffix:"ಈ ಕಂಡಂನಲ್ಲಿ ಹಿಂದಿನ ಜನ್ಮಗಳ ಕರ್ಮಿಕ ಸಂಸ್ಕಾರಗಳಿವೆ. ನಡೆಯುತ್ತಿರುವ ದಶ ಕಾಲದಲ್ಲಿ ನಿಮ್ಮ ಜೀವನದ ಈ ಭಾಗದಲ್ಲಿ ಬದಲಾವಣೆ ಬರುತ್ತದೆ. ಸೋಮವಾರ ಹತ್ತಿರದ ಶಿವ ದೇವಾಲಯದಲ್ಲಿ ಬಿಲ್ವ ಎಲೆ ಅರ್ಪಿಸಿ.",
+},
+ml:{
+  yogas_title:"പ്രധാന യോഗങ്ങൾ",
+  gems_title:"ശുപാർശ ചെയ്ത രത്നങ്ങൾ",
+  dasha_title:"വിംശോത്തരി ദശ",
+  antardasha_title:"അന്തർദശ — ഉപ-കാലഘട്ടങ്ങൾ",
+  current:"നടക്കുന്നത്",
+  pred_title:"വൈദിക പ്രവചനങ്ങൾ",
+  remedies_title:"പരിഹാരങ്ങൾ",
+  yogas:[
+    {name:"ഗജകേസരി യോഗം",desc:"ചന്ദ്രനിൽ നിന്ന് കേന്ദ്രത്തിൽ ഗുരു — പ്രശസ്തി, സമൃദ്ധി, ജ്ഞാനം."},
+    {name:"ബുധ-ആദിത്യ യോഗം",desc:"സൂര്യനും ബുധനും സംഗമം — ബുദ്ധി, നേതൃത്വം."},
+    {name:"ഹംസ യോഗം",desc:"ഗുരു സ്വഗൃഹ/ഉച്ച കേന്ദ്രത്തിൽ — നീതി, നല്ല സ്വഭാവം."},
+    {name:"മാലവ്യ യോഗം",desc:"ശുക്രൻ സ്വഗൃഹ/ഉച്ച കേന്ദ്രത്തിൽ — സൗന്ദര്യം, സുഖങ്ങൾ."},
+    {name:"ചന്ദ്ര-മംഗള യോഗം",desc:"ചന്ദ്രനും ചൊവ്വയും സംഗമം — പ്രയത്നത്തിലൂടെ ആർജ്ജിക്കൽ."},
+    {name:"നീചഭംഗ രാജയോഗം",desc:"നീചഗ്രഹം ദുർബലമാകൽ — ബുദ്ധിമുട്ടിന് ശേഷം ഉന്നതി."},
+  ],
+  gems:[
+    {gem:"മാണിക്യം",planet:"സൂര്യൻ — Surya",b:"നേതൃത്വം, ജീവ ശക്തി, ആത്മവിശ്വാസം"},
+    {gem:"മുത്ത്",planet:"ചന്ദ്രൻ — Chandra",b:"വൈകാരിക സന്തുലനം, അന്തർജ്ഞാനം"},
+    {gem:"പുഷ്പരാഗം",planet:"ഗുരു — Guru",b:"ജ്ഞാനം, സമ്പത്ത്, വിവാഹം"},
+    {gem:"മരതകം",planet:"ബുധൻ — Budha",b:"ബുദ്ധി, ബിസിനസ്"},
+  ],
+  preds:[
+    {t:"വിവാഹവും ബന്ധങ്ങളും",txt:"7-ആം ഭാവാധിപതി 11-ആം ഭാവത്തിൽ ഉള്ളത് സംതൃപ്ത ബന്ധം സൂചിപ്പിക്കുന്നു. 2025-2027 വിവാഹത്തിന് ഏറ്റവും അനുകൂലമായ കാലം."},
+    {t:"ജോലിയും ധനകാര്യവും",txt:"10-ആം ഭാവാധിപതി ഉച്ചത്തിൽ — തൊഴിൽ മികവ് സൂചിപ്പിക്കുന്നു. 2025-ന് ശേഷം ഗുരുവിന്റെ സ്വാധീനം ധന ശേഖരണം കൊണ്ടുവരും."},
+    {t:"ആരോഗ്യവും ക്ഷേമവും",txt:"ലഗ്നാധിപതി സ്ഥാനം ദഹന ആരോഗ്യത്തിൽ ശ്രദ്ധ ആവശ്യമാണ് എന്ന് സൂചിപ്പിക്കുന്നു. നിരന്തര യോഗ, പ്രാണായാമം ശുപാർശ ചെയ്യുന്നു."},
+    {t:"ആദ്ധ്യാത്മികതയും മോക്ഷവും",txt:"കേതുവിനൊടൊപ്പം 9-ആം ഭാവം പൂർവ ജന്മ ആദ്ധ്യാത്മിക പുണ്യം സൂചിപ്പിക്കുന്നു. 40 വയസ്സിൽ തീർഥാടനത്തോടും ധ്യാനത്തോടും ആകർഷണം വർദ്ധിക്കും."},
+  ],
+  remedies:["ഞായറാഴ്ച ആദിത്യ ഹൃദയം ചൊല്ലുക","തിങ്കളാഴ്ച ശിവലിംഗത്തിൽ പാൽ അർപ്പിക്കുക","ചൊവ്വാഴ്ച ചുവന്ന വസ്തുക്കൾ ദാനം ചെയ്യുക","വ്യാഴാഴ്ച വിഷ്ണു സഹസ്രനാമം ജപിക്കുക","ശനിയാഴ്ച എള്ളെണ്ണ ദീപം കത്തിക്കുക","ഗുരു പുഷ്യ യോഗത്തിൽ പുഷ്പരാഗം ധരിക്കുക"],
+  dasha_planets:["സൂര്യൻ","ചന്ദ്രൻ","ചൊവ്വ","രാഹു","ഗുരു","ശനി","ബുധൻ","കേതു","ശുക്രൻ"],
+  antardasha_label:"രാഹു മഹാദശ — അന്തർദശ:",
+  nadi_reading:"നുള്ള നാഡി വായന",
+  nadi_no_api:"പുണ്യ നാഡി ഓലകൾ വെളിപ്പെടുത്തുന്നു:",
+  nadi_suffix:"ഈ കണ്ടത്തിൽ മുൻ ജന്മങ്ങളുടെ കർമ്മ സംസ്കാരങ്ങൾ ഉണ്ട്. ഇപ്പോൾ നടക്കുന്ന ദശ കാലത്ത് നിങ്ങളുടെ ജീവിതത്തിന്റെ ഈ ഭാഗത്ത് മാറ്റം വരും. തിങ്കളാഴ്ച അടുത്തുള്ള ശിവ ക്ഷേത്രത്തിൽ ബിൽവ ദളം അർപ്പിക്കുക.",
+},
+mr:{
+  yogas_title:"प्रमुख योग",
+  gems_title:"शिफारशीत रत्ने",
+  dasha_title:"विंशोत्तरी दशा",
+  antardasha_title:"अंतर्दशा — उप-कालावधी",
+  current:"चालू",
+  pred_title:"वैदिक भविष्यकथन",
+  remedies_title:"उपाय",
+  yogas:[
+    {name:"गजकेसरी योग",desc:"चंद्राच्या केंद्रात गुरू — कीर्ती, समृद्धी, ज्ञान."},
+    {name:"बुध-आदित्य योग",desc:"सूर्य आणि बुध युती — बुद्धी, नेतृत्व."},
+    {name:"हंस योग",desc:"गुरू स्वगृह/उच्च केंद्रात — धर्म, चांगले चरित्र."},
+    {name:"मालव्य योग",desc:"शुक्र स्वगृह/उच्च केंद्रात — सौंदर्य, सुख."},
+    {name:"चंद्र-मंगल योग",desc:"चंद्र आणि मंगळ युती — प्रयत्नाने आर्थिक यश."},
+    {name:"नीचभंग राजयोग",desc:"नीच ग्रह रद्द — संघर्षानंतर उत्थान."},
+  ],
+  gems:[
+    {gem:"माणिक",planet:"सूर्य — Surya",b:"नेतृत्व, चैतन्य, आत्मविश्वास"},
+    {gem:"मोती",planet:"चंद्र — Chandra",b:"भावनिक संतुलन, अंतर्ज्ञान"},
+    {gem:"पुखराज",planet:"गुरू — Guru",b:"ज्ञान, धन, विवाह"},
+    {gem:"पाचू",planet:"बुध — Budha",b:"बुद्धी, व्यवसाय"},
+  ],
+  preds:[
+    {t:"विवाह आणि नाती",txt:"७व्या भावाचा स्वामी ११व्या भावात असणे संतोषजनक भागीदारी दर्शवते. २०२५-२०२७ विवाहासाठी अत्यंत अनुकूल काळ."},
+    {t:"करिअर आणि आर्थिक",txt:"१०व्या भावाचा स्वामी उच्च स्थानात — व्यावसायिक उत्कृष्टता दर्शवतो. २०२५ नंतर गुरूचा प्रभाव संपत्ती आणेल."},
+    {t:"आरोग्य आणि कल्याण",txt:"लग्नेशाची स्थिती पचन आरोग्याकडे लक्ष देण्याची मागणी करते. नियमित योग आणि प्राणायाम शिफारशीय."},
+    {t:"अध्यात्म आणि मोक्ष",txt:"केतुसह ९वा भाव मागील जन्माचे आध्यात्मिक पुण्य दर्शवतो. ४०व्या वर्षी तीर्थयात्रा आणि ध्यानाकडे आकर्षण वाढेल."},
+  ],
+  remedies:["रविवारी आदित्य हृदयम पठण करा","सोमवारी शिव लिंगावर दूध अर्पण करा","मंगळवारी लाल वस्तूंचे दान करा","गुरुवारी विष्णू सहस्रनाम जपा","शनिवारी तीळ तेलाचे दीप लावा","गुरू पुष्य योगावर पुखराज धारण करा"],
+  dasha_planets:["सूर्य","चंद्र","मंगळ","राहू","गुरू","शनि","बुध","केतू","शुक्र"],
+  antardasha_label:"राहू महादशा — अंतर्दशा:",
+  nadi_reading:"साठी नाडी वाचन",
+  nadi_no_api:"पवित्र नाडी पाने सांगतात:",
+  nadi_suffix:"या खंडात मागील जन्मांचे कर्मिक संस्कार आहेत. चालू दशा काळात तुमच्या जीवनातील या क्षेत्रात बदल येईल. सोमवारी जवळच्या शिव मंदिरात बेलपत्र अर्पण करा.",
+},
+bn:{
+  yogas_title:"প্রধান যোগ",
+  gems_title:"প্রস্তাবিত রত্নপাথর",
+  dasha_title:"বিংশোত্তরী দশা",
+  antardasha_title:"অন্তর্দশা — উপ-সময়কাল",
+  current:"চলমান",
+  pred_title:"বৈদিক ভবিষ্যদ্বাণী",
+  remedies_title:"প্রতিকার",
+  yogas:[
+    {name:"গজকেশরী যোগ",desc:"চন্দ্র থেকে কেন্দ্রে বৃহস্পতি — খ্যাতি, সমৃদ্ধি, জ্ঞান।"},
+    {name:"বুধ-আদিত্য যোগ",desc:"সূর্য ও বুধ যুতি — বুদ্ধি, নেতৃত্ব।"},
+    {name:"হংস যোগ",desc:"বৃহস্পতি স্বগৃহ/উচ্চ কেন্দ্রে — ন্যায়পরায়ণতা, চরিত্র।"},
+    {name:"মালব্য যোগ",desc:"শুক্র স্বগৃহ/উচ্চ কেন্দ্রে — সৌন্দর্য, সুখ।"},
+    {name:"চন্দ্র-মঙ্গল যোগ",desc:"চন্দ্র ও মঙ্গল যুতি — প্রচেষ্টায় আর্থিক সাফল্য।"},
+    {name:"নীচভঙ্গ রাজযোগ",desc:"নীচ গ্রহ বাতিল — সংগ্রামের পর উত্থান।"},
+  ],
+  gems:[
+    {gem:"মাণিক্য",planet:"সূর্য — Surya",b:"নেতৃত্ব, প্রাণশক্তি, আত্মবিশ্বাস"},
+    {gem:"মুক্তা",planet:"চন্দ্র — Chandra",b:"আবেগ সমন্বয়, অন্তর্জ্ঞান"},
+    {gem:"পুষ্পরাগ",planet:"বৃহস্পতি — Guru",b:"জ্ঞান, সম্পদ, বিবাহ"},
+    {gem:"পান্না",planet:"বুধ — Budha",b:"বুদ্ধি, ব্যবসা"},
+  ],
+  preds:[
+    {t:"বিবাহ ও সম্পর্ক",txt:"৭ম ভাবাধিপতি ১১তম ভাবে থাকা একটি পরিপূর্ণ অংশীদারিত্ব নির্দেশ করে। ২০২৫-২০২৭ বিবাহের জন্য অত্যন্ত অনুকূল সময়।"},
+    {t:"কর্মজীবন ও আর্থিক",txt:"১০ম ভাবাধিপতি উচ্চে — পেশাগত শ্রেষ্ঠত্ব নির্দেশ করে। ২০২৫-এর পরে বৃহস্পতির প্রভাব সম্পদ সংগ্রহ আনবে।"},
+    {t:"স্বাস্থ্য ও কল্যাণ",txt:"লগ্নাধিপতির অবস্থান পাচন স্বাস্থ্যে মনোযোগ প্রয়োজন বলে ইঙ্গিত দেয়। নিয়মিত যোগব্যায়াম ও প্রাণায়াম সুপারিশ করা হচ্ছে।"},
+    {t:"আধ্যাত্মিকতা ও মোক্ষ",txt:"কেতু সহ ৯ম ভাব পূর্বজন্মের আধ্যাত্মিক পুণ্য নির্দেশ করে। ৪০ বছর বয়সে তীর্থযাত্রা ও ধ্যানে আকর্ষণ বাড়বে।"},
+  ],
+  remedies:["রবিবার আদিত্য হৃদয়ম পাঠ করুন","সোমবার শিবলিঙ্গে দুধ অর্পণ করুন","মঙ্গলবার লাল বস্তু দান করুন","বৃহস্পতিবার বিষ্ণু সহস্রনাম জপ করুন","শনিবার তিলের তেলের প্রদীপ জ্বালান","গুরু পুষ্য যোগে পুষ্পরাগ পরুন"],
+  dasha_planets:["সূর্য","চন্দ্র","মঙ্গল","রাহু","বৃহস্পতি","শনি","বুধ","কেতু","শুক্র"],
+  antardasha_label:"রাহু মহাদশা — অন্তর্দশা:",
+  nadi_reading:"এর নাড়ি পাঠ",
+  nadi_no_api:"পবিত্র নাড়ি পাতা প্রকাশ করে:",
+  nadi_suffix:"এই কণ্ডমে পূর্বজন্মের কর্মিক সংস্কার আছে। চলমান দশা কালে আপনার জীবনের এই ক্ষেত্রে পরিবর্তন আসবে। সোমবার নিকটস্থ শিব মন্দিরে বেলপাতা অর্পণ করুন।",
+},
+};
+
+// ===== INDIAN CITIES DATABASE =====
+const STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli","Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
+
+const CITIES_BY_STATE = {
+"Andhra Pradesh":[["Visakhapatnam",17.6868,83.2185],["Vijayawada",16.5062,80.6480],["Guntur",16.3008,80.4428],["Nellore",14.4426,79.9865],["Kurnool",15.8281,78.0373],["Tirupati",13.6288,79.4192],["Kakinada",16.9891,82.2475],["Rajahmundry",17.0005,81.8040],["Kadapa",14.4674,78.8241],["Vizianagaram",18.1066,83.3956],["Anantapur",14.6819,77.6006],["Eluru",16.7107,81.0952],["Ongole",15.5057,80.0499],["Nandyal",15.4786,78.4839],["Chittoor",13.2172,79.1003],["Hindupur",13.8290,77.4917],["Proddatur",14.7500,78.5500],["Tenali",16.2431,80.6416],["Adoni",15.6280,77.2730],["Bhimavaram",16.5449,81.5212],["Machilipatnam",16.1875,81.1389],["Srikakulam",18.2949,83.8938],["Narasaraopet",16.2368,80.0499],["Gudivada",16.4344,80.9942],["Mangalagiri",16.4307,80.5585],["Tadepalligudem",16.8140,81.5265],["Dharmavaram",14.4142,77.7201],["Kavali",14.9146,79.9948],["Madanapalle",13.5500,78.5000],["Chilakaluripet",16.0879,80.1682]],
+"Arunachal Pradesh":[["Itanagar",27.0844,93.6053],["Naharlagun",27.1042,93.6952],["Tawang",27.5860,91.8670],["Ziro",27.5347,93.8257],["Along",28.1687,94.8029],["Pasighat",28.0662,95.3289],["Tezu",27.9200,96.1700],["Bomdila",27.2645,92.4173],["Roing",28.1400,95.8300],["Namsai",27.6700,95.8300]],
+"Assam":[["Guwahati",26.1445,91.7362],["Dibrugarh",27.4728,94.9120],["Silchar",24.8333,92.7789],["Jorhat",26.7509,94.2037],["Nagaon",26.3464,92.6833],["Tinsukia",27.4893,95.3680],["Tezpur",26.6338,92.7926],["Karimganj",24.8654,92.3526],["Hailakandi",24.6833,92.5667],["Diphu",25.8358,93.4336],["Goalpara",26.1722,90.6244],["Bongaigaon",26.4776,90.5585],["Dhubri",26.0200,89.9800],["North Lakhimpur",27.2354,94.1059],["Sibsagar",26.9780,94.6380],["Mariani",26.6580,94.3110],["Golaghat",26.5200,93.9700],["Kamrup",26.1500,91.7500],["Nalbari",26.4434,91.4378],["Haflong",25.1630,93.0150]],
+"Bihar":[["Patna",25.5941,85.1376],["Gaya",24.7955,84.9994],["Bhagalpur",25.2425,86.9842],["Muzaffarpur",26.1197,85.3910],["Purnia",25.7771,87.4753],["Bihar Sharif",25.1980,85.5235],["Arrah",25.5561,84.6636],["Begusarai",25.4182,86.1272],["Katihar",25.5373,87.5615],["Munger",25.3742,86.4736],["Chhapra",25.7804,84.7480],["Darbhanga",26.1542,85.8918],["Siwan",26.2202,84.3561],["Hajipur",25.6878,85.2098],["Jehanabad",25.2120,84.9945],["Samastipur",25.8722,85.7806],["Motihari",26.6500,84.9167],["Dehri",24.9036,84.1830],["Sasaram",24.9476,84.0279],["Aurangabad Bihar",24.7522,84.3740],["Nawada",24.8875,85.5358],["Kishanganj",26.1000,87.9400],["Supaul",26.1240,86.6034],["Sitamarhi",26.5914,85.4835],["Madhubani",26.3567,86.0714],["Buxar",25.5666,83.9782],["Jamui",24.9290,86.2241],["Sheikhpura",25.1375,85.8416],["Lakhisarai",25.1581,86.0940],["Araria",26.1462,87.4726]],
+"Chhattisgarh":[["Raipur",21.2514,81.6296],["Bhilai",21.2094,81.3711],["Bilaspur CG",22.0796,82.1391],["Korba",22.3595,82.7501],["Durg",21.1904,81.2849],["Rajnandgaon",21.0972,81.0297],["Jagdalpur",19.0728,82.0178],["Ambikapur",23.1193,83.1996],["Raigarh",21.8974,83.3950],["Chirmiri",23.2000,82.3333],["Dhamtari",20.7080,81.5490],["Mahasamund",21.1135,82.0979],["Kanker",20.2728,81.4927],["Kondagaon",19.5914,81.6634],["Mungeli",22.0663,81.6855],["Kawardha",22.0077,81.2329],["Bijapur CG",18.8263,80.8022],["Dantewada",18.8963,81.3483],["Narayanpur",19.6919,81.2419],["Sukma",18.3914,81.6669]],
+"Goa":[["Panaji",15.4989,73.8278],["Margao",15.2832,73.9862],["Vasco da Gama",15.3960,73.8117],["Mapusa",15.5937,73.8106],["Ponda",15.4039,74.0017],["Bicholim",15.5949,73.9576],["Sanquelim",15.5556,74.0091],["Mormugao",15.4061,73.8038],["Old Goa",15.5010,73.9115],["Pernem",15.7252,73.7959]],
+"Gujarat":[["Ahmedabad",23.0225,72.5714],["Surat",21.1702,72.8311],["Vadodara",22.3072,73.1812],["Rajkot",22.3039,70.8022],["Bhavnagar",21.7645,72.1519],["Jamnagar",22.4707,70.0577],["Junagadh",21.5222,70.4579],["Gandhinagar",23.2156,72.6369],["Anand",22.5645,72.9289],["Morbi",22.8173,70.8367],["Navsari",20.9467,72.9520],["Surendranagar",22.7271,71.6487],["Bharuch",21.7051,72.9959],["Amreli",21.6024,71.2214],["Mehsana",23.5879,72.3693],["Valsad",20.6180,72.9289],["Vapi",20.3728,72.9099],["Patan Gujarat",23.8493,72.1266],["Gondal",21.9616,70.8010],["Porbandar",21.6420,69.6293],["Veraval",20.9077,70.3700],["Botad",22.1702,71.6682],["Dahod",22.8346,74.2577],["Godhra",22.7736,73.6142],["Palanpur",24.1723,72.4385],["Nadiad",22.6917,72.8634],["Himatnagar",23.5997,72.9650],["Deesa",24.2586,72.1925],["Gandhidham",23.0714,70.1337],["Bhuj",23.2420,69.6669]],
+"Haryana":[["Faridabad",28.4089,77.3178],["Gurgaon",28.4595,77.0266],["Panipat",29.3909,76.9635],["Ambala",30.3782,76.7767],["Yamunanagar",30.1290,77.2674],["Rohtak",28.8955,76.6066],["Hisar",29.1492,75.7217],["Karnal",29.6857,76.9905],["Sonipat",28.9931,77.0151],["Panchkula",30.6942,76.8606],["Bhiwani",28.7975,76.1322],["Sirsa",29.5353,75.0331],["Bahadurgarh",28.6887,76.9244],["Jind",29.3163,76.3163],["Thanesar",29.9695,76.8183],["Kaithal",29.8014,76.3998],["Rewari",28.1978,76.6196],["Palwal",28.1487,77.3303],["Fatehabad",29.5108,75.4548],["Mahendragarh",28.2833,76.1500],["Narnaul",28.0455,76.1117],["Hansi",29.1022,75.9684],["Tohana",29.7050,75.9050],["Pinjore",30.7997,76.9003],["Narwana",29.6040,76.1123],["Nuh",28.1032,77.0047],["Hodal",27.8903,77.3672],["Dadri",28.5496,76.6517],["Charkhi Dadri",28.5940,76.2716],["Ellenabad",29.4569,74.8614]],
+"Himachal Pradesh":[["Shimla",31.1048,77.1734],["Dharamsala",32.2190,76.3234],["Solan",30.9045,77.0967],["Mandi",31.7080,76.9318],["Palampur",32.1095,76.5366],["Baddi",30.9561,76.7906],["Nahan",30.5590,77.2942],["Kullu",31.9583,77.1090],["Una",31.4685,76.2700],["Hamirpur HP",31.6848,76.5214],["Bilaspur HP",31.3403,76.7620],["Chamba",32.5538,76.1234],["Nurpur",32.2981,75.8934],["Sundarnagar",31.5333,76.9000],["Paonta Sahib",30.4434,77.6248],["Rampur HP",31.4527,77.6294],["Kangra",32.0998,76.2691],["Keylong",32.5659,77.0337],["Reckong Peo",31.5383,78.2740],["Dalhousie",32.5387,75.9735]],
+"Jharkhand":[["Ranchi",23.3441,85.3096],["Jamshedpur",22.8046,86.2029],["Dhanbad",23.7957,86.4304],["Bokaro",23.6693,85.9915],["Deoghar",24.4853,86.6955],["Phusro",23.7813,85.9808],["Hazaribagh",23.9925,85.3637],["Giridih",24.1853,86.3038],["Ramgarh",23.6386,85.5097],["Medininagar",24.0000,84.0667],["Chaibasa",22.5503,85.8148],["Chirkunda",23.7286,86.3009],["Dumka",24.2659,87.2502],["Pakur",24.6357,87.8445],["Garhwa",24.1618,83.8084],["Lohardaga",23.4343,84.6847],["Simdega",22.6162,84.5094],["Khunti",23.0711,85.2834],["Saraikela",22.7072,85.9399],["Jamtara",23.9641,86.8015]],
+"Karnataka":[["Bengaluru",12.9716,77.5946],["Mysuru",12.2958,76.6394],["Mangaluru",12.9141,74.8560],["Hubballi",15.3647,75.1240],["Dharwad",15.4574,75.0076],["Belagavi",15.8497,74.4977],["Ballari",15.1394,76.9214],["Vijayapura",16.8302,75.7100],["Shivamogga",13.9299,75.5681],["Tumkuru",13.3379,77.1173],["Davanagere",14.4644,75.9218],["Bidar",17.9104,77.5199],["Udupi",13.3409,74.7421],["Gulbarga",17.3297,76.8343],["Hassan",13.0068,76.1002],["Chikkamagaluru",13.3161,75.7720],["Kolar",13.1360,78.1294],["Mandya",12.5218,76.8951],["Chamrajnagar",11.9212,76.9432],["Raichur",16.2076,77.3463],["Chitradurga",14.2296,76.4008],["Gadag",15.4167,75.6167],["Yadgir",16.7706,77.1363],["Haveri",14.7939,75.3997],["Kodagu",12.4200,75.7280],["Koppal",15.3550,76.1548],["Bagalkot",16.1875,75.6961],["Dharmasthala",12.9510,75.3780],["Hospet",15.2689,76.3878],["Hampi",15.3350,76.4601],["Sirsi",14.6209,74.8340],["Sagara",14.1670,75.0270],["Puttur",12.7605,75.2027],["Virajpet",12.1951,75.8082],["Mudhol",16.3378,75.2843],["Bhadravathi",13.8561,75.7070],["Lakshmeshwar",15.1279,75.4671],["Ilkal",15.9600,76.1167],["Ron",15.7005,75.7228],["Ranibennur",14.6113,75.6371]],
+"Kerala":[["Thiruvananthapuram",8.5241,76.9366],["Kochi",9.9312,76.2673],["Kozhikode",11.2588,75.7804],["Thrissur",10.5276,76.2144],["Kollam",8.8932,76.6141],["Kannur",11.8745,75.3704],["Alappuzha",9.4981,76.3388],["Kottayam",9.5916,76.5222],["Palakkad",10.7867,76.6548],["Malappuram",11.0734,76.0741],["Kasaragod",12.4996,74.9869],["Thrissur",10.5276,76.2144],["Pathanamthitta",9.2648,76.7870],["Idukki",9.8500,77.0000],["Wayanad",11.6854,76.1320],["Ernakulam",9.9816,76.2999],["Manjeri",11.1235,76.1183],["Tirur",10.9121,75.9260],["Ponnani",10.7737,75.9279],["Thalassery",11.7490,75.4913],["Payyannur",12.1000,75.2053],["Vatakara",11.5946,75.5924],["Kalpetta",11.6075,76.0836],["Mananthavady",11.8007,76.0041],["Sulthan Bathery",11.6687,76.2592],["Perinthalmanna",10.9771,76.2277],["Tiruvalla",9.3858,76.5761],["Adoor",9.1508,76.7409],["Kayamkulam",9.1745,76.5029],["Punalur",9.0081,76.9240]],
+"Madhya Pradesh":[["Bhopal",23.2599,77.4126],["Indore",22.7196,75.8577],["Gwalior",26.2183,78.1828],["Jabalpur",23.1815,79.9864],["Ujjain",23.1765,75.7885],["Sagar",23.8388,78.7378],["Dewas",22.9676,76.0534],["Satna",24.5931,80.8322],["Ratlam",23.3315,75.0367],["Rewa",24.5362,81.2961],["Murwara",23.8326,80.3928],["Singrauli",24.1997,82.6753],["Burhanpur",21.3081,76.2283],["Khandwa",21.8264,76.3563],["Bhind",26.5608,78.7874],["Morena",26.5004,77.9999],["Shivpuri",25.4271,77.6579],["Vidisha",23.5234,77.8091],["Guna",24.6488,77.3150],["Chhindwara",22.0574,78.9382],["Hoshangabad",22.7477,77.7254],["Betul",21.9091,77.8988],["Khargone",21.8235,75.6128],["Barwani",22.0342,74.9001],["Dhar",22.6012,75.2981],["Damoh",23.8334,79.4417],["Seoni",22.0858,79.5354],["Mandla",22.5990,80.3797],["Narsinghpur",22.9470,79.1900],["Neemuch",24.4769,74.8668],["Mandsaur",24.0759,75.0675],["Rajgarh MP",24.0225,76.7278],["Shajapur",23.4268,76.2778],["Agar Malwa",23.7120,76.0172],["Badnawar",23.0177,75.2364],["Mhow",22.5500,75.7667],["Narsimhapur",22.9470,79.1900],["Tikamgarh",24.7430,78.8319],["Chhatarpur",24.9162,79.5922],["Panna",24.7181,80.1873]],
+"Maharashtra":[["Mumbai",18.9667,72.8333],["Pune",18.5204,73.8567],["Nagpur",21.1458,79.0882],["Nashik",19.9975,73.7898],["Aurangabad",19.8762,75.3433],["Solapur",17.6599,75.9064],["Amravati",20.9374,77.7796],["Kolhapur",16.7050,74.2433],["Nanded",19.1383,77.3210],["Sangli",16.8524,74.5815],["Jalgaon",21.0077,75.5626],["Dhule",20.9042,74.7749],["Ahmednagar",19.0948,74.7480],["Latur",18.4088,76.5604],["Chandrapur",19.9615,79.2961],["Parbhani",19.2704,76.7755],["Ichalkaranji",16.6925,74.4601],["Yavatmal",20.3888,78.1204],["Akola",20.7002,77.0082],["Bid",18.9890,75.7601],["Osmanabad",18.1760,76.0406],["Nandurbar",21.3669,74.2406],["Washim",20.1091,77.1333],["Hingoli",19.7173,77.1497],["Buldhana",20.5292,76.1836],["Ratnagiri",16.9902,73.3120],["Sindhudurg",16.0512,73.6505],["Satara",17.6805,73.9951],["Raigad",18.5158,73.1180],["Thane",19.2183,72.9781],["Kalyan",19.2437,73.1355],["Vasai-Virar",19.3919,72.8397],["Mira-Bhayandar",19.2952,72.8544],["Bhiwandi",19.2960,73.0632],["Navi Mumbai",19.0330,73.0297],["Malegaon",20.5579,74.5089],["Jalna",19.8347,75.8816],["Gondia",21.4627,80.1944],["Bhandara",21.1667,79.6500],["Wardha",20.7453,78.6022],["Wani",20.0576,77.7011],["Barshi",18.2340,75.6958],["Bhusawal",21.0440,75.7788],["Miraj",16.8261,74.6451],["Kopargaon",19.8937,74.4766],["Shirdi",19.7681,74.4773],["Pandharpur",17.6814,75.3277],["Pen",18.7434,73.0965],["Palghar",19.6967,72.7656],["Alibag",18.6414,72.8722],["Dombivli",19.2102,73.0847],["Ulhasnagar",19.2190,73.1600]],
+"Manipur":[["Imphal",24.8170,93.9368],["Thoubal",24.6360,93.9970],["Bishnupur",24.6220,93.7550],["Churachandpur",24.3333,93.6667],["Senapati",25.2710,94.0200],["Ukhrul",25.1040,94.3590],["Tamenglong",24.9760,93.4940],["Chandel",24.3130,94.0350],["Jiribam",24.8000,93.1000],["Kangpokpi",25.1330,93.9670]],
+"Meghalaya":[["Shillong",25.5788,91.8933],["Tura",25.5139,90.2160],["Jowai",25.4497,92.2004],["Nongpoh",25.9000,91.8833],["Baghmara",25.2030,90.6230],["Williamnagar",25.4936,90.6163],["Resubelpara",25.8780,90.5060],["Nongstoin",25.5218,91.2663],["Mairang",25.5628,91.7264],["Cherrapunji",25.2800,91.7200]],
+"Mizoram":[["Aizawl",23.7307,92.7173],["Lunglei",22.8801,92.7442],["Champhai",23.4597,93.3291],["Serchhip",23.3064,92.8460],["Kolasib",24.2235,92.6793],["Lawngtlai",22.5285,92.8988],["Mamit",23.9273,92.4827],["Saiha",22.4892,92.9740],["Hnahthial",23.1860,92.8210],["Khawzawl",23.6620,93.2270]],
+"Nagaland":[["Kohima",25.6751,94.1086],["Dimapur",25.9066,93.7228],["Mokokchung",26.3273,94.5161],["Tuensang",26.2684,94.8179],["Wokha",26.1032,94.2634],["Zunheboto",25.9996,94.5175],["Phek",25.6500,94.4500],["Mon",26.7220,95.0265],["Longleng",26.5568,94.5784],["Peren",25.6099,93.7405]],
+"Odisha":[["Bhubaneswar",20.2961,85.8245],["Cuttack",20.4625,85.8828],["Rourkela",22.2604,84.8536],["Brahmapur",19.3149,84.7941],["Sambalpur",21.4669,83.9756],["Puri",19.8133,85.8314],["Balasore",21.4927,86.9329],["Bhadrak",21.0544,86.5017],["Baripada",21.9327,86.7292],["Jharsuguda",21.8553,84.0053],["Jeypore",18.8553,82.5714],["Barbil",22.1013,85.3849],["Kendujhar",21.6283,85.5775],["Rayagada",19.1664,83.4198],["Koraput",18.8113,82.7151],["Angul",20.8400,85.1010],["Dhenkanal",20.6652,85.5978],["Kendrapara",20.4954,86.4226],["Jagatsinghpur",20.2567,86.1687],["Pattamundai",20.5856,86.5727],["Berhampur",19.3149,84.7941],["Jajpur",20.8417,86.3333],["Bolangir",20.7000,83.4856],["Sonepur",20.8286,83.9082],["Nabarangapur",19.2300,82.5400],["Nuapada",20.8300,82.5400],["Kalahandi",19.9170,83.1670],["Kandhamal",20.1218,84.2120],["Gajapati",19.1250,84.2292],["Nayagarh",20.1280,85.0954]],
+"Punjab":[["Ludhiana",30.9010,75.8573],["Amritsar",31.6340,74.8723],["Jalandhar",31.3260,75.5762],["Patiala",30.3398,76.3869],["Bathinda",30.2110,74.9455],["Mohali",30.7046,76.7179],["Hoshiarpur",31.5143,75.9113],["Batala",31.8178,75.2025],["Pathankot",32.2643,75.6421],["Moga",30.8155,75.1670],["Abohar",30.1453,74.1962],["Malerkotla",30.5313,75.8812],["Khanna",30.7072,76.2267],["Phagwara",31.2241,75.7721],["Muktsar",30.4744,74.5154],["Fazilka",30.4029,74.0239],["Firozpur",30.9229,74.6137],["Kapurthala",31.3814,75.3801],["Gurdaspur",32.0390,75.4055],["Barnala",30.3779,75.5501],["Sangrur",30.2447,75.8442],["Faridkot",30.6700,74.7600],["Fatehgarh Sahib",30.6442,76.3904],["Nawanshahr",31.1250,76.1213],["Rupnagar",30.9664,76.5254],["Mansa",29.9960,75.3913],["Tarn Taran",31.4515,74.9282],["Sirhind",30.6369,76.3967],["Anandpur Sahib",31.2401,76.5005],["Jagraon",30.7883,75.4739]],
+"Rajasthan":[["Jaipur",26.9124,75.7873],["Jodhpur",26.2389,73.0243],["Kota",25.2138,75.8648],["Bikaner",28.0229,73.3119],["Ajmer",26.4499,74.6399],["Udaipur",24.5854,73.7125],["Bhilwara",25.3407,74.6313],["Alwar",27.5530,76.6346],["Bharatpur",27.2152,77.4938],["Sikar",27.6162,75.1426],["Sri Ganganagar",29.9110,73.8728],["Pali",25.7711,73.3234],["Tonk",26.1667,75.7833],["Hanumangarh",29.5845,74.3299],["Chittorgarh",24.8887,74.6269],["Bundi",25.4369,75.6408],["Sawai Madhopur",26.0214,76.3572],["Jhunjhunu",28.1284,75.3997],["Nagaur",27.2027,73.7331],["Jaisalmer",26.9157,70.9083],["Jhalawar",24.5987,76.1662],["Rajsamand",25.0714,73.8844],["Banswara",23.5479,74.4402],["Dungarpur",23.8444,73.7148],["Baran",25.0973,76.5175],["Churu",28.3013,74.9684],["Dausa",26.8930,76.3281],["Karauli",26.5007,77.0137],["Dholpur",26.6934,77.9027],["Sirohi",24.8797,72.8622],["Barmer",25.7528,71.3930],["Jalore",25.3443,72.6147],["Pratapgarh RJ",24.0337,74.7767],["Ramgarh RJ",27.2670,75.9447],["Hindaun",26.7243,77.0377],["Bhiwadi",28.2113,76.8543],["Kishangarh",26.5975,74.8621],["Beawar",26.1007,74.3215],["Gangapur City",26.4730,76.7170],["Sujangarh",27.7041,74.4672]],
+"Sikkim":[["Gangtok",27.3314,88.6138],["Namchi",27.1667,88.3667],["Jorethang",27.1134,88.1639],["Mangan",27.5152,88.5308],["Gyalshing",27.2857,88.2579],["Rangpo",27.1770,88.5258],["Singtam",27.2290,88.4890],["Ravangla",27.3032,88.3574],["Geyzing",27.2857,88.2579],["Yuksom",27.4583,88.2430]],
+"Tamil Nadu":[["Chennai",13.0827,80.2707],["Coimbatore",11.0168,76.9558],["Madurai",9.9252,78.1198],["Tiruchirappalli",10.7905,78.7047],["Salem",11.6643,78.1460],["Tirunelveli",8.7139,77.7567],["Tiruppur",11.1085,77.3411],["Vellore",12.9165,79.1325],["Thoothukudi",8.7642,78.1348],["Erode",11.3410,77.7172],["Thanjavur",10.7870,79.1378],["Dindigul",10.3673,77.9803],["Cuddalore",11.7480,79.7714],["Nagercoil",8.1833,77.4119],["Kancheepuram",12.8333,79.7000],["Karur",10.9601,78.0766],["Hosur",12.7409,77.8253],["Nagapattinam",10.7672,79.8449],["Pudukkottai",10.3791,78.8208],["Kumbakonam",10.9601,79.3852],["Sivakasi",9.4533,77.7962],["Viluppuram",11.9379,79.4900],["Ranipet",12.9237,79.3327],["Namakkal",11.2189,78.1674],["Tiruvannamalai",12.2253,79.0747],["Krishnagiri",12.5186,78.2137],["Ramanathapuram",9.3762,78.8309],["Virudhunagar",9.5851,77.9624],["Perambalur",11.2337,78.8808],["Ariyalur",11.1410,79.0800],["Kallakurichi",11.7372,78.9600],["Tenkasi",8.9583,77.3152],["Kanyakumari",8.0883,77.5385],["Karaikal",10.9254,79.8380],["Chidambaram",11.3997,79.6928],["Tiruvarur",10.7722,79.6371],["Mayiladuthurai",11.1017,79.6552],["Ooty",11.4102,76.6950],["Kodaikanal",10.2381,77.4892],["Yercaud",11.7760,78.2040],["Palani",10.4499,77.5237],["Pollachi",10.6559,77.0067],["Arani",12.6671,79.2795],["Tindivanam",12.2425,79.6559],["Gingee",12.2529,79.4179],["Thiruvallur",13.1436,79.9070],["Ambattur",13.0982,80.1635],["Avadi",13.1149,80.0980],["Tambaram",12.9249,80.1000],["Porur",13.0368,80.1569],["Chromepet",12.9516,80.1462],["Pallavaram",12.9675,80.1491],["Sholinganallur",12.9010,80.2279],["Perambur",13.1139,80.2362],["Vyasarpadi",13.1290,80.2516],["Thirumangalam",9.8140,77.9846],["Srivilliputhur",9.5102,77.6354],["Sattur",9.3546,77.9150],["Kovilpatti",9.1735,77.8649],["Ottapidaram",8.6890,77.8400],["Thisayanvilai",8.5150,77.4990],["Kayalpattinam",8.5715,78.1289],["Ambasamudram",8.7007,77.4480],["Papanasam",10.9226,79.2716],["Pattukottai",10.4270,79.3215],["Sirkazhi",11.2415,79.7447],["Sirkazhi",11.2415,79.7447],["Kuthalam",11.1536,79.7253],["Sirkali",11.2415,79.7447]],
+"Telangana":[["Hyderabad",17.3850,78.4867],["Warangal",17.9784,79.5941],["Nizamabad",18.6726,78.0941],["Karimnagar",18.4386,79.1288],["Khammam",17.2473,80.1514],["Ramagundam",18.8000,79.4667],["Mahabubnagar",16.7448,77.9828],["Nalgonda",17.0575,79.2671],["Adilabad",19.6641,78.5320],["Suryapet",17.1400,79.6260],["Siddipet",18.1018,78.8521],["Miryalaguda",16.8727,79.5642],["Jagtial",18.7942,78.9146],["Mancherial",18.8737,79.4387],["Nirmal",19.0991,78.3399],["Kothagudem",17.5500,80.6167],["Sangareddy",17.6150,78.0869],["Vikarabad",17.3364,77.9023],["Tandur",17.2488,77.5746],["Wanaparthy",16.3627,78.0522],["Gadwal",16.2330,77.7937],["Nagarkurnool",16.4837,78.3269],["Mahabubabad",17.5990,80.0127],["Mulugu",18.1864,79.9380],["Bhadradri Kothagudem",17.5500,80.6167],["Medchal",17.6276,78.5454],["Rajanna Sircilla",18.3863,78.8280],["Peddapalli",18.6155,79.3828],["Jayashankar Bhupalpally",18.1580,80.0800],["Asifabad",19.3644,79.2794]],
+"Tripura":[["Agartala",23.8315,91.2868],["Udaipur Tripura",23.5359,91.4777],["Dharmanagar",24.3737,92.1666],["Sabroom",23.0159,91.7031],["Kailasahar",24.3321,92.0043],["Belonia",23.2517,91.4540],["Sonamura",23.2709,91.2561],["Kamalpur",24.2000,91.8500],["Ambassa",23.9282,91.8524],["Bishramganj",23.4985,91.5390]],
+"Uttar Pradesh":[["Lucknow",26.8467,80.9462],["Kanpur",26.4499,80.3319],["Ghaziabad",28.6692,77.4538],["Agra",27.1767,78.0081],["Meerut",28.9845,77.7064],["Varanasi",25.3176,82.9739],["Allahabad",25.4358,81.8463],["Bareilly",28.3670,79.4304],["Aligarh",27.8974,78.0880],["Moradabad",28.8386,78.7733],["Saharanpur",29.9680,77.5455],["Gorakhpur",26.7606,83.3732],["Firozabad",27.1591,78.3957],["Jhansi",25.4484,78.5685],["Mathura",27.5006,77.6613],["Muzaffarnagar",29.4727,77.7085],["Rampur",28.8004,79.0272],["Shahjahanpur",27.8827,79.9029],["Mau",25.9394,83.5613],["Hapur",28.7298,77.7757],["Etah",27.5590,78.6647],["Mirzapur",25.1460,82.5690],["Bulandshahr",28.4066,77.8499],["Sambhal",28.5899,78.5540],["Amroha",28.9043,78.4673],["Hardoi",27.3967,80.1282],["Fatehpur",25.9304,80.8126],["Raebareli",26.2305,81.2338],["Orai",25.9756,79.4534],["Sitapur",27.5630,80.6827],["Bahraich",27.5742,81.5960],["Modinagar",28.8295,77.5743],["Unnao",26.5467,80.4863],["Jaunpur",25.7459,82.6842],["Lakhimpur",27.9484,80.7816],["Hathras",27.5975,78.0527],["Banda",25.4798,80.3357],["Pilibhit",28.6311,79.8036],["Barabanki",26.9299,81.1848],["Khurja",28.2490,77.8544],["Gonda",27.1337,81.9564],["Mainpuri",27.2322,79.0268],["Lalitpur",24.6886,78.4170],["Etawah",26.7720,79.0179],["Deoria",26.5023,83.7836],["Basti",26.7945,82.7289],["Azamgarh",26.0716,83.1855],["Ballia",25.7526,84.1487],["Kannauj",27.0603,79.9103],["Farrukhabad",27.3946,79.5826],["Shamli",29.4505,77.3119],["Muzaffarnagar",29.4727,77.7085],["Bijnor",29.3715,78.1351],["Sultanpur",26.2647,82.0729],["Auraiya",26.4631,79.5114],["Kaushambi",25.5433,81.3866],["Pratapgarh UP",25.8997,81.9899],["Chitrakoot",25.1869,80.8843],["Hamirpur UP",25.9500,80.1500],["Mahoba",25.2937,79.8748],["Jalaun",25.9003,79.3390],["Amethi",26.1537,81.8131],["Sant Ravidas Nagar",25.3892,82.5743],["Kanpur Dehat",26.4165,79.9000]],
+"Uttarakhand":[["Dehradun",30.3165,78.0322],["Haridwar",29.9457,78.1642],["Roorkee",29.8543,77.8880],["Haldwani",29.2183,79.5130],["Rudrapur",28.9724,79.4075],["Kashipur",29.2149,78.9514],["Rishikesh",30.0869,78.2676],["Ramnagar",29.3954,79.1280],["Kotdwar",29.7452,78.5194],["Mussoorie",30.4598,78.0664],["Nainital",29.3919,79.4542],["Almora",29.5971,79.6591],["Pithoragarh",29.5830,80.2185],["Bageshwar",29.8390,79.7710],["Uttarkashi",30.7268,78.4354],["Chamoli",30.4016,79.3267],["Pauri",30.1494,78.7733],["Tehri",30.3781,78.4802],["Champawat",29.3344,80.0900],["Rudraprayag",30.2867,78.9814]],
+"West Bengal":[["Kolkata",22.5726,88.3639],["Asansol",23.6888,86.9682],["Siliguri",26.7271,88.3953],["Durgapur",23.5204,87.3119],["Bardhaman",23.2324,87.8615],["Malda",25.0108,88.1417],["Baharampur",24.1041,88.2528],["Habra",22.8385,88.6551],["Kharagpur",22.3302,87.3237],["Shantipur",23.2555,88.4442],["Dankuni",22.6630,88.3030],["Dhulian",24.6806,87.9713],["Ranaghat",23.1740,88.5590],["Haldia",22.0257,88.0583],["Raiganj",25.6239,88.1245],["Krishnanagar",23.4014,88.5003],["Nabadwip",23.4079,88.3700],["Medinipur",22.4204,87.3195],["Jalpaiguri",26.5271,88.7286],["Balurghat",25.2287,88.7739],["Basirhat",22.6577,88.8873],["Bangaon",23.0490,88.8244],["Darjeeling",27.0360,88.2627],["Cooch Behar",26.3213,89.4461],["Alipurduar",26.4930,89.5272],["Bankura",23.2332,87.0675],["Purulia",23.3317,86.3638],["Bishnupur WB",23.0755,87.3190],["Tamluk",22.2904,87.9163],["Contai",21.7813,87.7529],["Haldia",22.0257,88.0583],["Arambag",22.8847,87.7892],["Katwa",23.6459,88.1400],["Kalna",23.2182,88.3639],["Bolpur",23.6694,87.7206],["Suri",23.9138,87.5361],["Rampurhat",24.1730,87.7869],["Nalhati",24.2986,87.8693],["Sainthia",23.9381,87.6805],["Dinhata",26.1253,89.4713]],
+"Delhi":[["New Delhi",28.6139,77.2090],["Central Delhi",28.6508,77.2300],["North Delhi",28.7041,77.1025],["South Delhi",28.5314,77.2167],["East Delhi",28.6430,77.3100],["West Delhi",28.6519,77.0921],["Shahdara",28.6740,77.2880],["Rohini",28.7495,77.0631],["Dwarka",28.5921,77.0460],["Janakpuri",28.6219,77.0813],["Pitampura",28.7070,77.1350],["Vikaspuri",28.6270,77.0397],["Uttam Nagar",28.6101,77.0590],["Mayur Vihar",28.6080,77.2975],["Laxmi Nagar",28.6321,77.2786],["Karol Bagh",28.6516,77.1900],["Saket",28.5245,77.2068],["Greater Kailash",28.5494,77.2311]]
+};
+
+// Add Union Territories cities
+CITIES_BY_STATE["Andaman and Nicobar Islands"]=[["Port Blair",11.6234,92.7265],["Diglipur",13.2670,92.9776],["Car Nicobar",9.1833,92.8167]];
+CITIES_BY_STATE["Chandigarh"]=[["Chandigarh",30.7333,76.7794],["Manimajra",30.7253,76.8264],["Panchkula",30.6942,76.8606]];
+CITIES_BY_STATE["Dadra and Nagar Haveli"]=[["Silvassa",20.2740,73.0169],["Amli",20.3002,73.0298]];
+CITIES_BY_STATE["Daman and Diu"]=[["Daman",20.3974,72.8328],["Diu",20.7144,70.9874]];
+CITIES_BY_STATE["Jammu and Kashmir"]=[["Srinagar",34.0837,74.7973],["Jammu",32.7266,74.8570],["Anantnag",33.7311,75.1487],["Baramulla",34.2000,74.3400],["Sopore",34.2996,74.4730],["Kathua",32.3850,75.5151],["Udhampur",32.9162,75.1418],["Poonch",33.7732,74.0932]];
+CITIES_BY_STATE["Ladakh"]=[["Leh",34.1526,77.5771],["Kargil",34.5539,76.1349],["Padum",33.4685,76.9396]];
+CITIES_BY_STATE["Lakshadweep"]=[["Kavaratti",10.5626,72.6369],["Minicoy",8.2833,73.0450]];
+CITIES_BY_STATE["Puducherry"]=[["Puducherry",11.9416,79.8083],["Karaikal",10.9254,79.8380],["Mahe",11.7010,75.5354],["Yanam",16.7302,82.2142]];
+
+let currentLang='en', chartGenerated=false, selectedNadi='agastya';
+let currentChartData={};
+
+function setTheme(el,theme){
+  document.body.className='theme-'+theme;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setLang(lang){
+  currentLang=lang;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+  const t=LANGS[lang]||LANGS.en;
+  document.querySelectorAll('[data-key]').forEach(el=>{if(t[el.dataset.key])el.textContent=t[el.dataset.key]});
+  // Refresh Nadi type button labels
+  document.querySelectorAll('.nadi-type-btn[data-nadi]').forEach(btn=>{
+    const key=btn.dataset.nadi;
+    if(t.nadiTypes&&t.nadiTypes[key]) btn.textContent=t.nadiTypes[key];
+  });
+  // Always rebuild Nadi buttons and kandams in new language
+  selectNadi(selectedNadi, document.querySelector('.nadi-type-btn.active'));
+  buildKandamsList();
+  // Rebuild all other panels if chart was already generated
+  if(chartGenerated){
+    buildPlanetTable();buildAshtakavarga();buildYogas();buildGemstones();
+    buildDasha(currentChartData.dob);buildPredictions();
+  }
+}
+
+function showTab(tab){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+// City search
+const stateSelect=document.getElementById('stateSelect');
+STATES.forEach(s=>{
+  const o=document.createElement('option');
+  o.value=s;o.textContent=s;
+  stateSelect.appendChild(o);
+});
+
+function filterCities(){
+  const state=stateSelect.value;
+  const input=document.getElementById('cityInput');
+  input.value='';
+  document.getElementById('cityHidden').value='';
+  if(state)input.placeholder='Type to search in '+state+'...';
+  searchCities();
+}
+
+function searchCities(){
+  const query=document.getElementById('cityInput').value.toLowerCase().trim();
+  const state=stateSelect.value;
+  const drop=document.getElementById('cityDropdown');
+
+  let cityList=[];
+  if(state&&CITIES_BY_STATE[state]){
+    cityList=CITIES_BY_STATE[state].map(c=>({name:c[0],lat:c[1],lon:c[2],state}));
+  } else {
+    Object.entries(CITIES_BY_STATE).forEach(([st,cities])=>{
+      cities.forEach(c=>cityList.push({name:c[0],lat:c[1],lon:c[2],state:st}));
+    });
+  }
+
+  if(!query&&!state){drop.classList.remove('open');return;}
+
+  const filtered=query
+    ? cityList.filter(c=>c.name.toLowerCase().includes(query)).slice(0,30)
+    : cityList.slice(0,20);
+
+  if(filtered.length===0){drop.classList.remove('open');return;}
+
+  drop.innerHTML=filtered.map(c=>
+    `<div class="city-option" onclick="selectCity('${c.name}','${c.lat}','${c.lon}','${c.state}')">
+      ${c.name} <span class="city-state">${c.state}</span>
+    </div>`
+  ).join('');
+  drop.classList.add('open');
+}
+
+function selectCity(name,lat,lon,state){
+  document.getElementById('cityInput').value=name+', '+state;
+  document.getElementById('cityHidden').value=`${name}|${lat}|${lon}`;
+  document.getElementById('cityDropdown').classList.remove('open');
+}
+
+function closeDrop(){
+  document.getElementById('cityDropdown').classList.remove('open');
+}
+
+// ===== CHART GENERATION =====
+const RASIS=["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+const RASI_SA=["मेष","वृष","मिथुन","कर्क","सिंह","कन्या","तुला","वृश्चिक","धनु","मकर","कुंभ","मीन"];
+const RASI_TA=["மேஷம்","ரிஷபம்","மிதுனம்","கடகம்","சிம்மம்","கன்னி","துலாம்","விருச்சிகம்","தனுசு","மகரம்","கும்பம்","மீனம்"];
+const NAKSHATRAS=["Ashwini","Bharani","Krittika","Rohini","Mrigashirsha","Ardra","Punarvasu","Pushya","Ashlesha","Magha","Purva Phalguni","Uttara Phalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","Purva Ashadha","Uttara Ashadha","Shravana","Dhanishtha","Shatabhisha","Purva Bhadrapada","Uttara Bhadrapada","Revati"];
+const PLANETS=[
+  {name:"Sun",sa:"सूर्य",ta:"சூரியன்",sym:"☉",col:"#F59E0B"},
+  {name:"Moon",sa:"चंद्र",ta:"சந்திரன்",sym:"☽",col:"#E5E7EB"},
+  {name:"Mars",sa:"मंगल",ta:"செவ்வாய்",sym:"♂",col:"#EF4444"},
+  {name:"Mercury",sa:"बुध",ta:"புதன்",sym:"☿",col:"#10B981"},
+  {name:"Jupiter",sa:"बृहस्पति",ta:"குரு",sym:"♃",col:"#F59E0B"},
+  {name:"Venus",sa:"शुक्र",ta:"சுக்கிரன்",sym:"♀",col:"#EC4899"},
+  {name:"Saturn",sa:"शनि",ta:"சனி",sym:"♄",col:"#9CA3AF"},
+  {name:"Rahu",sa:"राहु",ta:"ராகு",sym:"☊",col:"#8B5CF6"},
+  {name:"Ketu",sa:"केतु",ta:"கேது",sym:"☋",col:"#D97706"},
+];
+
+const DASHA_SEQ=[
+  {name:"Sun",years:6,sym:"☉",col:"#F59E0B",bg:"rgba(245,158,11,.15)"},
+  {name:"Moon",years:10,sym:"☽",col:"#E5E7EB",bg:"rgba(229,231,235,.1)"},
+  {name:"Mars",years:7,sym:"♂",col:"#EF4444",bg:"rgba(239,68,68,.15)"},
+  {name:"Rahu",years:18,sym:"☊",col:"#8B5CF6",bg:"rgba(139,92,246,.15)"},
+  {name:"Jupiter",years:16,sym:"♃",col:"#F59E0B",bg:"rgba(245,158,11,.12)"},
+  {name:"Saturn",years:19,sym:"♄",col:"#9CA3AF",bg:"rgba(107,114,128,.12)"},
+  {name:"Mercury",years:17,sym:"☿",col:"#10B981",bg:"rgba(16,185,129,.12)"},
+  {name:"Ketu",years:7,sym:"☋",col:"#D97706",bg:"rgba(217,119,6,.15)"},
+  {name:"Venus",years:20,sym:"♀",col:"#EC4899",bg:"rgba(236,72,153,.15)"},
+];
+
+const YOGAS_DATA=[
+  {name:"Gajakesari Yoga",desc:"Jupiter in kendra from Moon — fame, prosperity, wisdom.",present:true},
+  {name:"Budha-Aditya Yoga",desc:"Sun & Mercury conjunction — intelligence, leadership.",present:true},
+  {name:"Hamsa Yoga",desc:"Jupiter in own/exalt in kendra — righteousness, good character.",present:false},
+  {name:"Malavya Yoga",desc:"Venus in own/exalt in kendra — beauty, comforts, charisma.",present:false},
+  {name:"Chandra-Mangala Yoga",desc:"Moon & Mars conjunction — financial success through effort.",present:true},
+  {name:"Neecha Bhanga Raja Yoga",desc:"Debilitated planet cancelled — rise after struggle.",present:false},
+];
+
+function getPName(p){
+  if(['hi','mr'].includes(currentLang))return p.sa;
+  if(currentLang==='ta')return p.ta;
+  return p.name;
+}
+function getRasi(idx){
+  if(['hi','mr'].includes(currentLang))return RASI_SA[idx%12];
+  if(currentLang==='ta')return RASI_TA[idx%12];
+  return RASIS[idx%12];
+}
+
+function generateChart(){
+  chartGenerated=true;
+  showTab('kundali');
+  const name=document.getElementById('name').value||'Unknown';
+  const dob=document.getElementById('dob').value;
+  const tob=document.getElementById('tob').value;
+  const cityVal=document.getElementById('cityHidden').value||'Mumbai|18.9667|72.8333';
+  const cityParts=cityVal.split('|');
+  const cityName=document.getElementById('cityInput').value||'Mumbai';
+  const dobParts=dob.split('-');
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  currentChartData={name,dob,tob,city:cityName,lat:parseFloat(cityParts[1]||18.97),lon:parseFloat(cityParts[2]||72.83),lagna:'Aries',moonSign:'Cancer',nakshatra:'Pushya',nadiType:'Nandi Nadi',gotram:'Kaushika'};
+
+  document.getElementById('display-name').textContent=name;
+  document.getElementById('display-dob').textContent=`${dobParts[2]} ${months[parseInt(dobParts[1])-1]} ${dobParts[0]} • ${tob} • ${cityName}`;
+
+  document.getElementById('loading-kundali').classList.add('show');
+  document.getElementById('kundali-result').style.display='none';
+
+  setTimeout(()=>{
+    document.getElementById('loading-kundali').classList.remove('show');
+    document.getElementById('kundali-result').style.display='block';
+    buildRasiGrid();buildPlanetTable();buildAshtakavarga();buildYogas();buildGemstones();
+    buildNadiPanel();buildDasha(dob);buildPredictions();
+  },1800);
+}
+
+function buildRasiGrid(){
+  const grid=document.getElementById('rasiGrid');
+  const layout=[
+    {h:12,r:11},{h:1,r:0},{h:2,r:1},{h:3,r:2},
+    {h:11,r:10},{ct:'tl'},{ct:'tr'},{h:4,r:3},
+    {h:10,r:9},{cb:'bl'},{cb:'br'},{h:5,r:4},
+    {h:9,r:8},{h:8,r:7},{h:7,r:6},{h:6,r:5}
+  ];
+  const hp={0:['☉','☿'],1:[],2:[],3:['☽'],4:[],5:['♃'],6:[],7:['♀'],8:[],9:['♄','☊'],10:['♂'],11:['☋']};
+  grid.innerHTML=layout.map((cell,i)=>{
+    if(cell.ct||cell.cb){
+      return `<div class="house center-cell">${i===5?'<div class="chart-label">RASI<br>CHAKRA</div>':''}${i===10?'<div class="chart-label" style="font-size:8px;color:rgba(200,148,26,.5)">D-1</div>':''}</div>`;
+    }
+    const planets=hp[cell.h-1]||[];
+    return `<div class="house" title="House ${cell.h}"><span class="house-num">${cell.h}</span><div class="house-planets">${planets.join(' ')}</div><div class="house-rasi">${getRasi(cell.r)}</div></div>`;
+  }).join('');
+}
+
+function buildPlanetTable(){
+  const tbody=document.getElementById('planetTableBody');
+  const pos=[[0,12.4],[1,28.7],[2,5.2],[3,18.9],[4,22.1],[5,14.3],[6,9.8],[7,2.1],[8,2.1]];
+  const nakIdx=[1,4,3,7,12,15,20,18,18];
+  tbody.innerHTML=PLANETS.map((p,i)=>`<tr><td><span style="color:${p.col}">${p.sym}</span> ${getPName(p)}</td><td>${getRasi(pos[i][0])}</td><td>${pos[i][1].toFixed(1)}°</td><td>${NAKSHATRAS[nakIdx[i]]}</td><td>Pada ${(i%4)+1}</td></tr>`).join('');
+}
+
+function buildAshtakavarga(){
+  const av=[{n:"Sun",s:[4,5,3,6,4,2,5,3,4,6,3,5]},{n:"Moon",s:[5,3,4,5,3,6,4,5,3,4,6,3]},{n:"Mars",s:[3,4,2,3,5,4,3,2,5,4,3,4]},{n:"Mercury",s:[4,5,6,4,3,5,4,6,3,5,4,5]},{n:"Jupiter",s:[6,5,4,6,5,4,6,5,4,6,5,4]},{n:"Venus",s:[5,6,5,4,5,6,5,4,5,6,5,4]},{n:"Saturn",s:[3,2,4,3,2,3,4,2,3,4,2,3]}];
+  document.getElementById('ashtakvarga').innerHTML=av.map(p=>`<div class="ashtakavarga-row"><div class="av-planet">${p.n}</div><div class="av-bars">${p.s.map((s,i)=>`<div class="av-bar ${s>=5?'av-high':s>=3?'av-mid':'av-low'}" title="H${i+1}:${s}">${s}</div>`).join('')}</div></div>`).join('');
+}
+
+function buildYogas(){
+  const t=(ML[currentLang]||ML.en);
+  const present=[true,true,false,false,true,false];
+  document.getElementById('yogasGrid').innerHTML=t.yogas.map((y,i)=>`<div class="yoga-card ${present[i]?'yoga-present':''}"><div class="yoga-name">${present[i]?'✓ ':''}${y.name}</div><div class="yoga-desc">${y.desc}</div></div>`).join('');
+}
+
+function buildGemstones(){
+  const t=(ML[currentLang]||ML.en);
+  const emojis=["🔴","⚪","🟡","🟢"];
+  const badges=["badge-ruby","badge-teal","badge-gold","badge-purple"];
+  document.getElementById('gemstones').innerHTML=t.gems.map((g,i)=>`<div class="gemstone-row"><div class="gem-circle" style="background:rgba(255,255,255,.05)">${emojis[i]}</div><div><div class="gem-name">${g.gem} <span class="badge ${badges[i]}">${g.planet.split('—')[0].trim()}</span></div><div class="gem-planet">${g.planet}</div><div class="gem-benefit">${g.b}</div></div></div>`).join('');
+}
+
+// ===== NADI JOTHIDAM =====
+const NADI_DATA={
+  agastya:{
+    name:"Agastya Nadi",
+    sage:"Maharishi Agastya",
+    color:"#C8941A",
+    desc:"The most revered Nadi, written by Sage Agastya (Agathiyar) — one of the Saptarishis. These palm leaf manuscripts are predominantly found in Vaitheeswaran Koil, Tamil Nadu. Agastya Nadi is known for its detailed life predictions including past and future janmas.",
+    svg:()=>`<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs><radialGradient id="g1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#C8941A" stop-opacity=".15"/><stop offset="100%" stop-color="#C8941A" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="220" fill="url(#g1)"/>
+      <!-- Palm leaf scroll -->
+      <rect x="40" y="80" width="320" height="60" rx="30" fill="none" stroke="#C8941A" stroke-width="1.5"/>
+      <rect x="50" y="88" width="300" height="44" rx="22" fill="rgba(200,148,26,.08)" stroke="#C8941A" stroke-width=".8"/>
+      <!-- Text lines on leaf -->
+      <line x1="80" y1="100" x2="320" y2="100" stroke="#C8941A" stroke-width=".5" stroke-dasharray="4,3" opacity=".6"/>
+      <line x1="80" y1="108" x2="310" y2="108" stroke="#C8941A" stroke-width=".5" stroke-dasharray="4,3" opacity=".6"/>
+      <line x1="80" y1="116" x2="315" y2="116" stroke="#C8941A" stroke-width=".5" stroke-dasharray="4,3" opacity=".6"/>
+      <line x1="80" y1="124" x2="300" y2="124" stroke="#C8941A" stroke-width=".5" stroke-dasharray="4,3" opacity=".6"/>
+      <!-- Tamil Om symbol -->
+      <text x="200" y="115" text-anchor="middle" font-size="18" fill="#C8941A" opacity=".8">ஓம்</text>
+      <!-- Stylised sage figure -->
+      <circle cx="200" cy="40" r="18" fill="none" stroke="#C8941A" stroke-width="1.2"/>
+      <circle cx="200" cy="33" r="6" fill="rgba(200,148,26,.25)" stroke="#C8941A" stroke-width="1"/>
+      <path d="M188 42 Q200 52 212 42" fill="none" stroke="#C8941A" stroke-width="1"/>
+      <!-- Halo lines -->
+      <g opacity=".4">
+        <line x1="200" y1="15" x2="200" y2="8" stroke="#C8941A" stroke-width="1"/>
+        <line x1="185" y1="18" x2="180" y2="12" stroke="#C8941A" stroke-width="1"/>
+        <line x1="215" y1="18" x2="220" y2="12" stroke="#C8941A" stroke-width="1"/>
+        <line x1="176" y1="28" x2="169" y2="25" stroke="#C8941A" stroke-width="1"/>
+        <line x1="224" y1="28" x2="231" y2="25" stroke="#C8941A" stroke-width="1"/>
+      </g>
+      <!-- Stars -->
+      <circle cx="60" cy="30" r="1.5" fill="#C8941A" opacity=".6"/>
+      <circle cx="340" cy="30" r="1.5" fill="#C8941A" opacity=".6"/>
+      <circle cx="100" cy="60" r="1" fill="#C8941A" opacity=".5"/>
+      <circle cx="300" cy="60" r="1" fill="#C8941A" opacity=".5"/>
+      <circle cx="70" cy="170" r="1.5" fill="#C8941A" opacity=".5"/>
+      <circle cx="330" cy="170" r="1.5" fill="#C8941A" opacity=".5"/>
+      <!-- Label -->
+      <text x="200" y="175" text-anchor="middle" font-family="serif" font-size="13" fill="#C8941A" letter-spacing="2">AGASTYA NADI</text>
+      <text x="200" y="192" text-anchor="middle" font-size="10" fill="rgba(200,148,26,.6)">அகஸ்திய நாடி</text>
+    </svg>`
+  },
+  nandi:{
+    name:"Nandi Nadi",
+    sage:"Nandi (Shiva's sacred bull)",
+    color:"#8B5CF6",
+    desc:"Nandi Nadi is one of the most authentic Nadi systems, channeled through Nandi, the vehicle of Lord Shiva. These leaves contain divine revelations about karma, dharma and moksha paths. Found predominantly in Vaitheeswaran Koil and Sirkazhi regions.",
+    svg:()=>`<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs><radialGradient id="g2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#8B5CF6" stop-opacity=".15"/><stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="220" fill="url(#g2)"/>
+      <!-- Nandi bull simplified -->
+      <ellipse cx="200" cy="100" rx="45" ry="30" fill="rgba(139,92,246,.12)" stroke="#8B5CF6" stroke-width="1.2"/>
+      <circle cx="200" cy="70" r="18" fill="rgba(139,92,246,.12)" stroke="#8B5CF6" stroke-width="1.2"/>
+      <!-- Horns -->
+      <path d="M188 55 Q178 40 172 50" fill="none" stroke="#8B5CF6" stroke-width="1.5"/>
+      <path d="M212 55 Q222 40 228 50" fill="none" stroke="#8B5CF6" stroke-width="1.5"/>
+      <!-- Eyes -->
+      <circle cx="193" cy="67" r="2" fill="#8B5CF6" opacity=".8"/>
+      <circle cx="207" cy="67" r="2" fill="#8B5CF6" opacity=".8"/>
+      <!-- Om on forehead -->
+      <text x="200" y="78" text-anchor="middle" font-size="10" fill="#8B5CF6">ॐ</text>
+      <!-- Legs -->
+      <line x1="175" y1="126" x2="170" y2="150" stroke="#8B5CF6" stroke-width="1.5"/>
+      <line x1="185" y1="128" x2="182" y2="152" stroke="#8B5CF6" stroke-width="1.5"/>
+      <line x1="215" y1="128" x2="218" y2="152" stroke="#8B5CF6" stroke-width="1.5"/>
+      <line x1="225" y1="126" x2="230" y2="150" stroke="#8B5CF6" stroke-width="1.5"/>
+      <!-- Tail -->
+      <path d="M245 100 Q260 85 255 110" fill="none" stroke="#8B5CF6" stroke-width="1.2"/>
+      <!-- Trishul -->
+      <line x1="140" y1="60" x2="140" y2="140" stroke="#8B5CF6" stroke-width="1"/>
+      <line x1="133" y1="68" x2="140" y2="60" stroke="#8B5CF6" stroke-width="1"/>
+      <line x1="147" y1="68" x2="140" y2="60" stroke="#8B5CF6" stroke-width="1"/>
+      <line x1="136" y1="72" x2="144" y2="72" stroke="#8B5CF6" stroke-width=".8"/>
+      <!-- Stars -->
+      <circle cx="60" cy="30" r="1.5" fill="#8B5CF6" opacity=".5"/>
+      <circle cx="340" cy="30" r="1.5" fill="#8B5CF6" opacity=".5"/>
+      <circle cx="350" cy="90" r="1" fill="#8B5CF6" opacity=".5"/>
+      <!-- Label -->
+      <text x="200" y="175" text-anchor="middle" font-family="serif" font-size="13" fill="#8B5CF6" letter-spacing="2">NANDI NADI</text>
+      <text x="200" y="192" text-anchor="middle" font-size="10" fill="rgba(139,92,246,.6)">நந்தி நாடி</text>
+    </svg>`
+  },
+  koushika:{
+    name:"Koushika Nadi",
+    sage:"Sage Vishwamitra (Koushika)",
+    color:"#10B981",
+    desc:"Koushika Nadi is attributed to Sage Vishwamitra, also known as Koushika. This Nadi is especially detailed in its astrological calculations and house-by-house (bhava) predictions. It is known for accuracy in predicting timing of events.",
+    svg:()=>`<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs><radialGradient id="g3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#10B981" stop-opacity=".15"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="220" fill="url(#g3)"/>
+      <!-- Star of David / Hexagram -->
+      <polygon points="200,30 220,65 260,65 240,95 260,125 220,125 200,160 180,125 140,125 160,95 140,65 180,65" fill="none" stroke="#10B981" stroke-width="1" opacity=".4"/>
+      <!-- Inner hexagon -->
+      <polygon points="200,55 218,75 218,105 200,125 182,105 182,75" fill="rgba(16,185,129,.08)" stroke="#10B981" stroke-width="1.2"/>
+      <!-- Planetary symbols at points -->
+      <text x="200" y="48" text-anchor="middle" font-size="10" fill="#10B981">☉</text>
+      <text x="265" y="80" text-anchor="middle" font-size="10" fill="#10B981">☽</text>
+      <text x="265" y="125" text-anchor="middle" font-size="10" fill="#10B981">♂</text>
+      <text x="200" y="168" text-anchor="middle" font-size="10" fill="#10B981">♃</text>
+      <text x="135" y="125" text-anchor="middle" font-size="10" fill="#10B981">♀</text>
+      <text x="135" y="80" text-anchor="middle" font-size="10" fill="#10B981">♄</text>
+      <!-- Center OM -->
+      <text x="200" y="97" text-anchor="middle" font-size="20" fill="#10B981" opacity=".9">OM</text>
+      <!-- Orbiting dots -->
+      <circle cx="200" cy="28" r="2" fill="#10B981" opacity=".7"/>
+      <circle cx="260" cy="64" r="2" fill="#10B981" opacity=".7"/>
+      <circle cx="260" cy="126" r="2" fill="#10B981" opacity=".7"/>
+      <circle cx="200" cy="162" r="2" fill="#10B981" opacity=".7"/>
+      <circle cx="140" cy="126" r="2" fill="#10B981" opacity=".7"/>
+      <circle cx="140" cy="64" r="2" fill="#10B981" opacity=".7"/>
+      <!-- Label -->
+      <text x="200" y="185" text-anchor="middle" font-family="serif" font-size="13" fill="#10B981" letter-spacing="2">KOUSHIKA NADI</text>
+      <text x="200" y="202" text-anchor="middle" font-size="10" fill="rgba(16,185,129,.6)">கௌசிக நாடி</text>
+    </svg>`
+  },
+  sapta:{
+    name:"Sapta Rishi Nadi",
+    sage:"Seven Sages (Saptarishis)",
+    color:"#F59E0B",
+    desc:"Sapta Rishi Nadi represents the combined wisdom of the seven great sages: Atri, Bharadvaja, Gautama, Jamadagni, Kashyapa, Vasishtha, and Vishwamitra. This Nadi provides multi-dimensional life readings combining all seven sage perspectives.",
+    svg:()=>`<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs><radialGradient id="g4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#F59E0B" stop-opacity=".15"/><stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="220" fill="url(#g4)"/>
+      <!-- Seven stars in Big Dipper pattern (Saptarishi / Ursa Major) -->
+      <circle cx="120" cy="60" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="155" cy="55" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="192" cy="58" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="225" cy="70" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="255" cy="90" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="270" cy="118" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <circle cx="260" cy="148" r="6" fill="rgba(245,158,11,.25)" stroke="#F59E0B" stroke-width="1.5"/>
+      <!-- Lines connecting stars -->
+      <polyline points="120,60 155,55 192,58 225,70 255,90 270,118 260,148" fill="none" stroke="#F59E0B" stroke-width=".8" stroke-dasharray="4,3" opacity=".6"/>
+      <!-- Sage names -->
+      <text x="115" y="48" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Atri</text>
+      <text x="155" y="43" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Bharadwaja</text>
+      <text x="192" y="46" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Gautama</text>
+      <text x="228" y="58" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Jamadagni</text>
+      <text x="258" y="78" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Kashyapa</text>
+      <text x="285" y="110" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Vasishtha</text>
+      <text x="275" y="140" text-anchor="middle" font-size="7" fill="#F59E0B" opacity=".7">Vishwamitra</text>
+      <!-- Center text -->
+      <text x="155" y="140" text-anchor="middle" font-size="13" fill="#F59E0B" opacity=".6">सप्तर्षि</text>
+      <text x="155" y="160" text-anchor="middle" font-size="10" fill="#F59E0B" opacity=".5">சப்தரிஷி</text>
+      <!-- Label -->
+      <text x="200" y="185" text-anchor="middle" font-family="serif" font-size="12" fill="#F59E0B" letter-spacing="1">SAPTA RISHI NADI</text>
+      <text x="200" y="202" text-anchor="middle" font-size="10" fill="rgba(245,158,11,.6)">சப்த ரிஷி நாடி</text>
+    </svg>`
+  },
+  jeeva:{
+    name:"Jeeva Nadi",
+    sage:"Divine Channeling (Living Nadi)",
+    color:"#EC4899",
+    desc:"Jeeva Nadi is a living oracle — it is channeled fresh by trained Nadi readers in a meditative state, rather than being read from ancient palm leaves. The Nadi reader receives divine messages through deep meditation, often at Vaitheeswaran Koil. It is considered the most direct and personal form of Nadi astrology.",
+    svg:()=>`<svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs><radialGradient id="g5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#EC4899" stop-opacity=".2"/><stop offset="100%" stop-color="#EC4899" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="220" fill="url(#g5)"/>
+      <!-- Lotus flower -->
+      <ellipse cx="200" cy="130" rx="20" ry="8" fill="rgba(236,72,153,.15)" stroke="#EC4899" stroke-width="1"/>
+      <ellipse cx="200" cy="118" rx="15" ry="22" fill="rgba(236,72,153,.08)" stroke="#EC4899" stroke-width="1"/>
+      <!-- Petals -->
+      <ellipse cx="170" cy="115" rx="12" ry="20" fill="rgba(236,72,153,.08)" stroke="#EC4899" stroke-width="1" transform="rotate(-30 170 115)"/>
+      <ellipse cx="230" cy="115" rx="12" ry="20" fill="rgba(236,72,153,.08)" stroke="#EC4899" stroke-width="1" transform="rotate(30 230 115)"/>
+      <ellipse cx="185" cy="95" rx="12" ry="20" fill="rgba(236,72,153,.08)" stroke="#EC4899" stroke-width="1" transform="rotate(-15 185 95)"/>
+      <ellipse cx="215" cy="95" rx="12" ry="20" fill="rgba(236,72,153,.08)" stroke="#EC4899" stroke-width="1" transform="rotate(15 215 95)"/>
+      <!-- Inner petals -->
+      <ellipse cx="200" cy="100" rx="8" ry="14" fill="rgba(236,72,153,.18)" stroke="#EC4899" stroke-width="1.2"/>
+      <!-- Divine flame -->
+      <path d="M200 60 Q190 50 195 40 Q200 30 205 40 Q210 50 200 60" fill="rgba(236,72,153,.3)" stroke="#EC4899" stroke-width="1.2"/>
+      <path d="M200 60 Q195 53 198 47 Q200 42 202 47 Q205 53 200 60" fill="rgba(236,72,153,.6)" stroke="#EC4899" stroke-width=".8"/>
+      <!-- Rays from flame -->
+      <g opacity=".4">
+        <line x1="200" y1="25" x2="200" y2="15" stroke="#EC4899" stroke-width="1"/>
+        <line x1="185" y1="28" x2="180" y2="20" stroke="#EC4899" stroke-width="1"/>
+        <line x1="215" y1="28" x2="220" y2="20" stroke="#EC4899" stroke-width="1"/>
+        <line x1="175" y1="40" x2="166" y2="35" stroke="#EC4899" stroke-width="1"/>
+        <line x1="225" y1="40" x2="234" y2="35" stroke="#EC4899" stroke-width="1"/>
+      </g>
+      <!-- Om in center -->
+      <text x="200" y="108" text-anchor="middle" font-size="14" fill="#EC4899" opacity=".9">OM</text>
+      <!-- Water below lotus -->
+      <path d="M140 145 Q170 138 200 145 Q230 152 260 145" fill="none" stroke="#EC4899" stroke-width=".8" opacity=".4"/>
+      <!-- Label -->
+      <text x="200" y="175" text-anchor="middle" font-family="serif" font-size="13" fill="#EC4899" letter-spacing="2">JEEVA NADI</text>
+      <text x="200" y="192" text-anchor="middle" font-size="10" fill="rgba(236,72,153,.6)">ஜீவ நாடி</text>
+    </svg>`
+  }
+};
+
+const KANDAMS_DATA=[
+  {num:1,title:"1st Kandam — Lagna (Ascendant)",sub:"Physical self, personality, health, general life destiny",topics:["Physical appearance and constitution","Personality traits and character","Overall life theme and destiny","Health tendencies and vitality","Social standing and reputation"]},
+  {num:2,title:"2nd Kandam — Dhana (Wealth)",sub:"Family, speech, wealth, early education, food",topics:["Financial situation and earning capacity","Family dynamics and relations","Speech patterns and communication","Early childhood and education","Eyes, face and dental health"]},
+  {num:3,title:"3rd Kandam — Sahodhara (Siblings)",sub:"Courage, siblings, short journeys, communication",topics:["Number and nature of siblings","Courage and initiative","Short-distance travel","Hobbies and creative efforts","Hands, arms and shoulders"]},
+  {num:4,title:"4th Kandam — Matru (Mother)",sub:"Mother, property, vehicles, education, inner happiness",topics:["Mother's nature and relationship","Property and real estate","Academic qualifications","Vehicle possession","Inner peace and domestic happiness"]},
+  {num:5,title:"5th Kandam — Putra (Children)",sub:"Children, intelligence, past karma, speculation",topics:["Number and nature of children","Intelligence and creativity","Previous life karmic patterns","Romantic relationships","Stomach and digestive system"]},
+  {num:6,title:"6th Kandam — Shatru (Enemies)",sub:"Enemies, disease, debts, legal matters, service",topics:["Hidden enemies and obstacles","Diseases and health challenges","Debts and financial struggles","Legal proceedings","Pets and small animals"]},
+  {num:7,title:"7th Kandam — Kalatra (Marriage)",sub:"Spouse, marriage, partnerships, business relations",topics:["Marriage timing and nature of spouse","Marital harmony and challenges","Business partnerships","Physical appearance of partner","Lower abdomen and reproductive health"]},
+  {num:8,title:"8th Kandam — Ayur (Longevity)",sub:"Lifespan, occult, sudden events, transformation",topics:["Overall longevity indication","Sudden gains or losses","Interest in occult and spirituality","Inheritance and legacies","Chronic diseases and surgery"]},
+  {num:9,title:"9th Kandam — Bhagya (Fortune)",sub:"Father, dharma, long journeys, higher learning, luck",topics:["Father's nature and relationship","Fortune and divine grace","Long-distance and foreign travel","Higher education and wisdom","Spiritual inclinations and dharma"]},
+  {num:10,title:"10th Kandam — Karma (Career)",sub:"Profession, authority, fame, social status, actions",topics:["Career path and profession","Professional success and fame","Relationship with authority figures","Contributions to society","Knees and skeletal structure"]},
+  {num:11,title:"11th Kandam — Labha (Gains)",sub:"Income, gains, fulfillment of desires, elder siblings",topics:["Income sources and financial gains","Fulfillment of desires and ambitions","Elder siblings and friends","Social networks and groups","Ankles and calves"]},
+  {num:12,title:"12th Kandam — Vyaya (Losses)",sub:"Expenses, foreign lands, spiritual liberation, bed pleasures",topics:["Expenditures and financial losses","Foreign travel and settlement","Spiritual liberation and moksha","Sleep quality and dreams","Feet and hidden spiritual practice"]},
+  {num:13,title:"13th Kandam — Shanti (Remedies)",sub:"Karmic remedies, past-life debts, divine appeasement",topics:["Specific karmic debts to clear","Temple worship recommendations","Charitable acts and donations","Mantras and spiritual practices","Overall divine grace and blessings"]},
+];
+
+function buildNadiPanel(){
+  selectNadi('agastya',document.querySelector('.nadi-type-btn'));
+  buildKandamsList();
+}
+
+function selectNadi(type, btn){
+  selectedNadi=type;
+  document.querySelectorAll('.nadi-type-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+
+  const data=NADI_DATA[type];
+  if(!data)return;
+  const t=LANGS[currentLang]||LANGS.en;
+  const nadiName=t.nadiTypes[type]||data.name;
+  const sageName=t.nadiSages[type]||data.sage;
+  const desc=t.nadiDesc[type]||data.desc;
+
+  document.getElementById('nadiSvgContainer').innerHTML=data.svg();
+
+  document.getElementById('nadiDescription').innerHTML=`
+    <div class="nadi-card" style="border-color:rgba(${hexToRgb(data.color)},.4)">
+      <h4 style="color:${data.color}">📜 ${nadiName}</h4>
+      <p><strong style="color:${data.color}">${t.sage}:</strong> ${sageName}<br><br>${desc}</p>
+    </div>
+    <div class="nadi-card" style="border-color:rgba(${hexToRgb(data.color)},.25)">
+      <h4 style="color:${data.color}">🔮 ${t.nadiIdTitle}</h4>
+      <p>${t.nadiIdText} <strong style="color:${data.color}">${nadiName}</strong>. ${t.nadiGotram}: <strong style="color:${data.color}">Kaushika Gotram</strong>. ${t.nadiBundle}</p>
+    </div>
+  `;
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function buildKandamsList(){
+  const container=document.getElementById('kandamsList');
+  const t=LANGS[currentLang]||LANGS.en;
+  const kd=t.kandams||LANGS.en.kandams;
+  container.innerHTML=kd.map((k,idx)=>{
+    const num=idx+1;
+    return `
+    <div class="kandam-item" id="kandam-${num}" onclick="toggleKandam(${num})">
+      <div class="kandam-header">
+        <div class="kandam-num">${num}</div>
+        <div>
+          <div class="kandam-title">${k.t}</div>
+          <div class="kandam-subtitle">${k.s}</div>
+        </div>
+        <div style="margin-left:auto;color:rgba(200,148,26,.5);font-size:12px" id="arrow-${num}">▸</div>
+      </div>
+      <div class="kandam-body" id="body-${num}">
+        <p style="margin-bottom:8px"><strong style="color:var(--gold)">${t.topics}:</strong> ${k.tp.join(', ')}</p>
+        <div id="ai-${num}">
+          <button onclick="event.stopPropagation();loadKandamAI(${num})" style="background:rgba(200,148,26,.15);border:1px solid rgba(200,148,26,.4);color:var(--gold);padding:7px 14px;border-radius:20px;font-size:11px;cursor:pointer;font-family:inherit;margin-top:6px">
+            ${t.nadiBtn}
+          </button>
+        </div>
+      </div>
+    </div>
+  `}).join('');
+}
+
+function toggleKandam(num){
+  const body=document.getElementById('body-'+num);
+  const arrow=document.getElementById('arrow-'+num);
+  const item=document.getElementById('kandam-'+num);
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  arrow.textContent=isOpen?'▸':'▾';
+  item.classList.toggle('expanded',!isOpen);
+}
+
+function loadKandamAI(num){
+  const ml=(ML[currentLang]||ML.en);
+  const kLang=(LANGS[currentLang]||LANGS.en).kandams[num-1];
+  const aiDiv=document.getElementById('ai-'+num);
+  const name=currentChartData.name||'the native';
+
+  // Show loading briefly then show rich template reading
+  aiDiv.innerHTML=`<div class="ai-loading"><div class="dot-pulse"><span></span><span></span><span></span></div><span style="font-size:11px;color:var(--text-muted)">Consulting Nadi leaves...</span></div>`;
+
+  setTimeout(()=>{
+    const nadiName=(LANGS[currentLang]||LANGS.en).nadiTypes[selectedNadi]||'Agastya Nadi';
+    const topic=kLang.tp[0];
+    const topic2=kLang.tp[Math.min(1,kLang.tp.length-1)];
+    const remedy=ml.remedies[(num-1)%ml.remedies.length];
+    const reading=`${ml.nadi_no_api} <em>${name}</em> — ${kLang.t}. ${ml.nadi_suffix} <br><br><strong>✦ ${topic}</strong> · <strong>${topic2}</strong><br><em>${nadiName}</em> — ${remedy}`;
+    aiDiv.innerHTML=`<div class="ai-response"><p>${reading}</p><p style="margin-top:8px;font-size:10px;color:rgba(200,148,26,.5)">✦ ${nadiName} · Nadi Jothidam ✦</p></div>`;
+  },1200);
+}
+
+// ===== DASHA =====
+function buildDasha(dob){
+  const ml=(ML[currentLang]||ML.en);
+  const yr=dob?parseInt(dob.split('-')[0]):1990;
+  let year=yr+22;
+  const cur=3;
+  document.getElementById('dasha-content').innerHTML=DASHA_SEQ.map((p,i)=>{
+    const start=year;year+=p.years;
+    const isCur=i===cur;
+    const pct=isCur?45:i<cur?100:0;
+    const pName=ml.dasha_planets[i]||p.name;
+    return `<div class="dasha-row ${isCur?'active-dasha':''}">
+      <div class="dasha-planet" style="background:${p.bg}"><span style="font-size:16px">${p.sym}</span></div>
+      <div style="flex:1">
+        <div class="dasha-name">${pName} Dasha ${isCur?`<span class="badge badge-gold" style="margin-left:6px">${ml.current}</span>`:''}</div>
+        <div class="dasha-period">${start} – ${start+p.years} &nbsp;·&nbsp; ${p.years} years</div>
+        <div class="dasha-bar"><div class="dasha-fill" style="width:${pct}%;background:${p.col};opacity:.7"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('antardasha-content').innerHTML=`<p style="font-size:11px;color:var(--text-muted);margin-bottom:10px">${ml.antardasha_label}</p>`+
+    ml.dasha_planets.map(p=>`
+      <div style="display:flex;gap:8px;align-items:center;padding:7px;border-radius:6px;border:1px solid rgba(255,255,255,.05);margin-bottom:5px">
+        <span style="width:80px;font-size:11px;color:var(--text-muted)">${p}</span>
+        <div style="flex:1;background:rgba(255,255,255,.05);border-radius:3px;height:5px;overflow:hidden">
+          <div style="height:100%;width:${Math.floor(Math.random()*50+20)}%;background:linear-gradient(90deg,#C8941A,#E8520A);border-radius:3px"></div>
+        </div>
+      </div>`).join('');
+}
+
+// ===== PREDICTIONS =====
+function buildPredictions(){
+  const ml=(ML[currentLang]||ML.en);
+  document.getElementById('predictions-content').innerHTML=ml.preds.map(p=>`<div class="prediction-block"><div class="pred-title">✦ ${p.t}</div><p>${p.txt}</p></div>`).join('');
+  document.getElementById('remedies-content').innerHTML=ml.remedies.map(r=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold);font-size:11px;min-width:16px">✦</span><p style="font-size:12px;color:var(--text-muted);line-height:1.7">${r}</p></div>`).join('');
+}
+
+// Init
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cityInput').value='Mumbai, Maharashtra';
+  document.getElementById('cityHidden').value='Mumbai|18.9667|72.8333';
+  generateChart();
+});
+</script>
+</body>
+</html>
