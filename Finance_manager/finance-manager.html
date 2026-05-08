@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinanceOS — Total Finance Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ===== THEME SYSTEM ===== */
+:root {
+  --accent: #00d4aa;
+  --accent2: #7c3aed;
+  --accent3: #f59e0b;
+  --accent4: #ef4444;
+  --accent5: #3b82f6;
+}
+[data-theme="emerald"] { --bg:#0a0f0d;--bg2:#111a15;--bg3:#162118;--panel:#1a2e22;--border:#2a4a32;--text:#e8f5ee;--muted:#6b9a78;--accent:#00d4aa;--accent2:#10b981;--accent3:#fbbf24; }
+[data-theme="ocean"]   { --bg:#050d1a;--bg2:#0a1628;--bg3:#0f1f38;--panel:#132040;--border:#1e3a6e;--text:#e0eeff;--muted:#6090c0;--accent:#38bdf8;--accent2:#818cf8;--accent3:#fb923c; }
+[data-theme="obsidian"]{ --bg:#09090b;--bg2:#111113;--bg3:#18181b;--panel:#1c1c1f;--border:#27272a;--text:#fafafa;--muted:#71717a;--accent:#d946ef;--accent2:#f97316;--accent3:#22d3ee; }
+[data-theme="crimson"] { --bg:#0f0a0a;--bg2:#1a0e0e;--bg3:#221212;--panel:#2a1515;--border:#4a2020;--text:#fef2f2;--muted:#a06060;--accent:#f87171;--accent2:#fbbf24;--accent3:#34d399; }
+[data-theme="arctic"]  { --bg:#f0f4f8;--bg2:#e8edf2;--bg3:#dce3eb;--panel:#ffffff;--border:#c8d4e0;--text:#1a2940;--muted:#6a8099;--accent:#0ea5e9;--accent2:#7c3aed;--accent3:#059669; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);font-size:13px;transition:background .3s,color .3s}
+
+/* ===== LAYOUT ===== */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:background .3s}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+#content::-webkit-scrollbar{width:4px}
+#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ===== SIDEBAR ===== */
+.sb-logo{padding:18px 16px 12px;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--accent);letter-spacing:-0.5px;border-bottom:1px solid var(--border)}
+.sb-logo span{color:var(--text);font-weight:400;font-size:12px;display:block;margin-top:2px;font-family:'DM Mono',monospace}
+.sb-section{padding:10px 10px 4px;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-radius:6px;margin:1px 6px;transition:all .2s;color:var(--muted);font-size:12px}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.active{background:var(--panel);color:var(--accent);border-left:2px solid var(--accent);padding-left:12px}
+.sb-item .ico{width:18px;text-align:center;font-size:14px}
+.sb-badge{margin-left:auto;background:var(--accent);color:var(--bg);font-size:9px;padding:1px 5px;border-radius:10px;font-weight:600}
+
+/* profile area */
+.sb-profile{margin-top:auto;padding:12px;border-top:1px solid var(--border)}
+.profile-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.profile-name{font-size:11px;color:var(--text);font-weight:500}
+.profile-type{font-size:10px;color:var(--muted)}
+.mode-toggle{display:flex;gap:4px;margin-top:6px}
+.mode-btn{flex:1;padding:4px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .2s}
+.mode-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+
+/* ===== TOPBAR ===== */
+.topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--text)}
+.topbar-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .2s;display:flex;align-items:center;gap:6px}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tb-btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:500}
+.tb-btn.primary:hover{opacity:.9}
+
+/* ===== THEME PICKER ===== */
+.theme-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.theme-dot:hover,.theme-dot.active{border-color:var(--text);transform:scale(1.15)}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card:hover{border-color:var(--accent)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent-line,var(--accent))}
+.stat-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.stat-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text)}
+.stat-delta{font-size:11px;margin-top:4px}
+.stat-delta.up{color:#10b981}
+.stat-delta.down{color:#ef4444}
+.stat-icon{position:absolute;right:14px;top:14px;font-size:22px;opacity:.4}
+
+/* ===== CARDS ===== */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;transition:border-color .2s}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text)}
+.card-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ===== TABLES ===== */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 10px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.badge-green{background:rgba(16,185,129,.15);color:#10b981}
+.badge-red{background:rgba(239,68,68,.15);color:#ef4444}
+.badge-yellow{background:rgba(251,191,36,.15);color:#fbbf24}
+.badge-blue{background:rgba(59,130,246,.15);color:#60a5fa}
+.badge-purple{background:rgba(139,92,246,.15);color:#a78bfa}
+
+/* ===== FORMS ===== */
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:10px;color:var(--muted);letter-spacing:.5px}
+.form-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.form-input option{background:var(--bg3)}
+.form-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none;width:100%}
+.btn{padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;border:none;transition:all .2s;font-weight:500}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+
+/* ===== CHART CONTAINERS ===== */
+.chart-wrap{position:relative;height:200px}
+.chart-wrap.tall{height:260px}
+.chart-wrap.short{height:140px}
+
+/* ===== PROGRESS BARS ===== */
+.progress-bar{background:var(--bg3);border-radius:4px;height:6px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* ===== AI ADVISOR ===== */
+.ai-msg{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;position:relative}
+.ai-msg.user{border-color:var(--accent);margin-left:30px}
+.ai-msg.bot{margin-right:30px}
+.ai-msg.bot::before{content:'🤖';position:absolute;left:-24px;top:8px}
+.ai-msg.user::before{content:'👤';position:absolute;right:-24px;top:8px}
+.ai-label{font-size:9px;color:var(--muted);margin-bottom:4px}
+.ai-text{font-size:12px;line-height:1.7;color:var(--text)}
+.ai-input-row{display:flex;gap:8px;margin-top:12px}
+.ai-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;outline:none}
+.ai-input:focus{border-color:var(--accent)}
+
+/* ===== STOCK CARDS ===== */
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stock-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;transition:all .2s;cursor:pointer}
+.stock-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stock-sym{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--accent)}
+.stock-name{font-size:10px;color:var(--muted);margin-bottom:8px}
+.stock-price{font-size:18px;font-weight:600;color:var(--text)}
+.stock-change{font-size:12px;margin-top:2px}
+.stock-rec{font-size:10px;margin-top:8px;padding:3px 8px;border-radius:4px;display:inline-block}
+.rec-buy{background:rgba(16,185,129,.15);color:#10b981}
+.rec-sell{background:rgba(239,68,68,.15);color:#ef4444}
+.rec-hold{background:rgba(251,191,36,.15);color:#fbbf24}
+.rec-watch{background:rgba(59,130,246,.15);color:#60a5fa}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{padding:8px 14px;cursor:pointer;font-size:11px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--text)}
+
+/* ===== GOAL CARDS ===== */
+.goal-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+.goal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.goal-name{font-size:13px;color:var(--text);font-weight:500}
+.goal-amount{font-size:12px;color:var(--accent)}
+.goal-date{font-size:10px;color:var(--muted)}
+
+/* ===== NEWS TICKER ===== */
+.news-ticker{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:16px;overflow:hidden}
+.ticker-inner{display:flex;gap:30px;animation:ticker 25s linear infinite;white-space:nowrap}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ticker-item.up{color:#10b981}
+.ticker-item.down{color:#ef4444}
+
+/* ===== MODALS ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:500px;max-width:95vw;max-height:80vh;overflow-y:auto}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px}
+
+/* ===== AUDIT ===== */
+.audit-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.audit-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.audit-content{flex:1}
+.audit-action{font-size:12px;color:var(--text)}
+.audit-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.audit-time{font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0}
+
+/* ===== LOADING ===== */
+.loading{display:inline-flex;gap:4px;align-items:center}
+.loading span{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce .6s ease-in-out infinite}
+.loading span:nth-child(2){animation-delay:.1s}
+.loading span:nth-child(3){animation-delay:.2s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ===== MF CARDS ===== */
+.mf-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.mf-name{font-size:13px;color:var(--text);font-weight:500;margin-bottom:6px}
+.mf-meta{display:flex;gap:16px;font-size:11px;color:var(--muted)}
+.mf-ret{color:var(--accent);font-weight:600}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  #sidebar{display:none}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* ===== HIGHLIGHT ===== */
+.highlight{color:var(--accent);font-weight:500}
+.text-up{color:#10b981}
+.text-down{color:#ef4444}
+.text-muted{color:var(--muted)}
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* ===== TOOLTIP ===== */
+.has-tip{position:relative;cursor:help}
+.has-tip:hover::after{content:attr(data-tip);position:absolute;bottom:125%;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:10px;white-space:nowrap;z-index:100;pointer-events:none}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body data-theme="emerald">
+
+<div id="app">
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">FinanceOS <span>Total Finance Manager</span></div>
+
+  <div class="sb-section">Overview</div>
+  <div class="sb-item active" onclick="nav('dashboard',this)"><span class="ico">◈</span> Dashboard</div>
+  <div class="sb-item" onclick="nav('expenses',this)"><span class="ico">💳</span> Expenses</div>
+  <div class="sb-item" onclick="nav('income',this)"><span class="ico">📥</span> Income</div>
+  <div class="sb-item" onclick="nav('budget',this)"><span class="ico">📊</span> Budget</div>
+
+  <div class="sb-section">Planning</div>
+  <div class="sb-item" onclick="nav('goals',this)"><span class="ico">🎯</span> Goals &amp; Targets</div>
+  <div class="sb-item" onclick="nav('forecast',this)"><span class="ico">🔮</span> Forecast</div>
+
+  <div class="sb-section">Investments</div>
+  <div class="sb-item" onclick="nav('stocks',this)"><span class="ico">📈</span> Stocks <span class="sb-badge">AI</span></div>
+  <div class="sb-item" onclick="nav('mutualfunds',this)"><span class="ico">🏦</span> Mutual Funds</div>
+  <div class="sb-item" onclick="nav('portfolio',this)"><span class="ico">💼</span> Portfolio</div>
+
+  <div class="sb-section">Reports</div>
+  <div class="sb-item" onclick="nav('reports',this)"><span class="ico">📋</span> Reports</div>
+  <div class="sb-item" onclick="nav('audit',this)"><span class="ico">🔍</span> Audit Log</div>
+
+  <div class="sb-section">Tools</div>
+  <div class="sb-item" onclick="nav('advisor',this)"><span class="ico">🤖</span> AI Advisor <span class="sb-badge">NEW</span></div>
+  <div class="sb-item" onclick="nav('settings',this)"><span class="ico">⚙</span> Settings</div>
+
+  <div class="sb-profile">
+    <div class="profile-row">
+      <div class="avatar">👤</div>
+      <div>
+        <div class="profile-name" id="profile-name">Rajesh Kumar</div>
+        <div class="profile-type" id="profile-type">Individual</div>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" onclick="setMode('individual',this)">Individual</button>
+      <button class="mode-btn" onclick="setMode('company',this)">Company</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">May 2026 · Financial Overview</div>
+    </div>
+    <div class="tb-right">
+      <!-- Theme dots -->
+      <div style="display:flex;align-items:center;gap:5px;margin-right:8px">
+        <div class="theme-dot active" style="background:linear-gradient(135deg,#00d4aa,#10b981)" onclick="setTheme('emerald',this)" title="Emerald"></div>
+        <div class="theme-dot" style="background:linear-gradient(135deg,#38bdf8,#818cf8)" onclick="setTheme('ocean',this)" title="Ocean"></div>
+        <div class="theme-dot" style="background:linear-gradient(135deg,#d946ef,#f97316)" onclick="setTheme('obsidian',this)" title="Obsidian"></div>
+        <div class="theme-dot" style="background:linear-gradient(135deg,#f87171,#fbbf24)" onclick="setTheme('crimson',this)" title="Crimson"></div>
+        <div class="theme-dot" style="background:linear-gradient(135deg,#0ea5e9,#7c3aed)" onclick="setTheme('arctic',this)" title="Arctic"  style="border:1px solid #aaa"></div>
+      </div>
+      <button class="tb-btn" onclick="exportReport()">⬇ Export</button>
+      <button class="tb-btn" onclick="openAddExpense()">+ Add</button>
+      <button class="tb-btn primary" onclick="fetchAIInsights()">🤖 AI Insights</button>
+    </div>
+  </div>
+
+  <div id="content">
+    <!-- content injected here -->
+  </div>
+</div>
+</div>
+
+<!-- ADD EXPENSE MODAL -->
+<div class="modal-overlay" id="modal-expense">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title">Add Transaction</div>
+      <button onclick="closeModal('modal-expense')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select form-input" id="tx-type">
+          <option>Expense</option><option>Income</option><option>Transfer</option><option>Investment</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input class="form-input" id="tx-amount" type="number" placeholder="0.00">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select form-input" id="tx-cat">
+          <option>Food & Dining</option><option>Transport</option><option>Utilities</option>
+          <option>Shopping</option><option>Healthcare</option><option>Entertainment</option>
+          <option>Education</option><option>Investment</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="tx-date" type="date">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="tx-desc" placeholder="Enter description...">
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">Account</label>
+      <select class="form-select form-input" id="tx-account">
+        <option>HDFC Savings</option><option>SBI Current</option><option>Credit Card</option><option>Cash</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addTransaction()" style="flex:1">Add Transaction</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-expense')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== APP STATE =====
+const state = {
+  mode: 'individual',
+  theme: 'emerald',
+  currentPage: 'dashboard',
+  transactions: [
+    {id:1,type:'Expense',cat:'Food & Dining',amount:2450,desc:'Swiggy / Zomato',date:'2026-05-08',account:'HDFC Savings'},
+    {id:2,type:'Expense',cat:'Transport',amount:1200,desc:'Ola / Uber rides',date:'2026-05-07',account:'Credit Card'},
+    {id:3,type:'Income',cat:'Salary',amount:85000,desc:'May Salary',date:'2026-05-01',account:'HDFC Savings'},
+    {id:4,type:'Expense',cat:'Utilities',amount:3200,desc:'Electricity + Internet',date:'2026-05-05',account:'HDFC Savings'},
+    {id:5,type:'Expense',cat:'Shopping',amount:5600,desc:'Amazon purchases',date:'2026-05-06',account:'Credit Card'},
+    {id:6,type:'Investment',cat:'Investment',amount:10000,desc:'SIP - Mirae Asset',date:'2026-05-03',account:'HDFC Savings'},
+    {id:7,type:'Expense',cat:'Healthcare',amount:800,desc:'Apollo pharmacy',date:'2026-05-04',account:'Cash'},
+    {id:8,type:'Expense',cat:'Entertainment',amount:1499,desc:'OTT subscriptions',date:'2026-05-02',account:'Credit Card'},
+    {id:9,type:'Expense',cat:'Education',amount:2000,desc:'Udemy courses',date:'2026-04-28',account:'Credit Card'},
+    {id:10,type:'Income',cat:'Freelance',amount:15000,desc:'Website project',date:'2026-04-25',account:'HDFC Savings'},
+    {id:11,type:'Expense',cat:'Food & Dining',amount:3100,desc:'Grocery - D-Mart',date:'2026-04-22',account:'HDFC Savings'},
+    {id:12,type:'Investment',cat:'Investment',amount:5000,desc:'Direct stocks',date:'2026-04-20',account:'HDFC Savings'},
+  ],
+  goals: [
+    {id:1,name:'Emergency Fund',target:300000,current:180000,deadline:'2026-12-31',icon:'🛡'},
+    {id:2,name:'Vacation — Bali',target:80000,current:42000,deadline:'2026-10-01',icon:'✈'},
+    {id:3,name:'New Laptop',target:120000,current:75000,deadline:'2026-08-01',icon:'💻'},
+    {id:4,name:'Home Down Payment',target:1500000,current:450000,deadline:'2028-01-01',icon:'🏠'},
+  ],
+  budget: {
+    'Food & Dining':   {limit:8000, spent:5550},
+    'Transport':       {limit:3000, spent:1200},
+    'Utilities':       {limit:5000, spent:3200},
+    'Shopping':        {limit:5000, spent:5600},
+    'Healthcare':      {limit:2000, spent:800},
+    'Entertainment':   {limit:2000, spent:1499},
+    'Education':       {limit:3000, spent:2000},
+    'Investment':      {limit:15000, spent:15000},
+  },
+  stocks: [
+    {sym:'RELIANCE',name:'Reliance Industries',price:2847.35,chg:+1.24,rec:'BUY',reason:'Strong Q4 results, Jio expansion, green energy pivot',risk:'Medium',horizon:'12-18 months'},
+    {sym:'TCS',name:'Tata Consultancy Svcs',price:3642.10,chg:-0.38,rec:'HOLD',reason:'Steady performer, AI demand tailwinds but priced in',risk:'Low',horizon:'Long term'},
+    {sym:'INFY',name:'Infosys Ltd',price:1487.60,chg:+2.15,rec:'BUY',reason:'AI services ramp-up, margin expansion guidance',risk:'Low',horizon:'6-12 months'},
+    {sym:'ADANIPORTS',name:'Adani Ports & SEZ',price:1234.50,chg:+0.87,rec:'WATCH',reason:'Infrastructure boom, volatile sentiment',risk:'High',horizon:'24 months'},
+    {sym:'HDFCBANK',name:'HDFC Bank',price:1698.45,chg:-0.15,rec:'BUY',reason:'Strong retail loan growth, credit quality stable',risk:'Low',horizon:'12 months'},
+    {sym:'NIFTY50',name:'Nifty 50 Index ETF',price:24618.90,chg:+0.54,rec:'BUY',reason:'Broad market exposure, election cycle tailwind',risk:'Low',horizon:'3-5 years'},
+  ],
+  mutualFunds: [
+    {name:'Mirae Asset Large Cap Fund',cat:'Large Cap',ret1y:'+18.4%',ret3y:'+14.2%',ret5y:'+16.8%',rating:5,risk:'Moderate',sip:true,rec:'STRONG BUY'},
+    {name:'Parag Parikh Flexi Cap',cat:'Flexi Cap',ret1y:'+22.1%',ret3y:'+16.5%',ret5y:'+19.2%',rating:5,risk:'Moderate',sip:true,rec:'STRONG BUY'},
+    {name:'Axis Small Cap Fund',cat:'Small Cap',ret1y:'+31.8%',ret3y:'+19.4%',ret5y:'+22.6%',rating:4,risk:'High',sip:true,rec:'BUY (SIP)'},
+    {name:'HDFC Balanced Advantage',cat:'Balanced',ret1y:'+14.6%',ret3y:'+12.8%',ret5y:'+13.9%',rating:4,risk:'Low-Mod',sip:true,rec:'HOLD'},
+    {name:'SBI Nifty Index Fund',cat:'Index',ret1y:'+16.2%',ret3y:'+13.6%',ret5y:'+15.1%',rating:5,risk:'Low',sip:true,rec:'BUY'},
+  ],
+  auditLog: [
+    {action:'Transaction added — Expense ₹2,450',user:'Rajesh K',time:'2 mins ago',type:'info'},
+    {action:'Budget alert — Shopping exceeds limit by ₹600',user:'System',time:'1 hour ago',type:'warn'},
+    {action:'AI Advisor queried: stock recommendations',user:'Rajesh K',time:'3 hours ago',type:'info'},
+    {action:'Goal updated — Emergency Fund',user:'Rajesh K',time:'Yesterday',type:'success'},
+    {action:'Report exported — April 2026',user:'Rajesh K',time:'2 days ago',type:'info'},
+    {action:'SIP auto-deducted ₹10,000',user:'System',time:'5 days ago',type:'success'},
+    {action:'Suspicious transaction flagged for review',user:'System',time:'1 week ago',type:'danger'},
+  ],
+  aiChat: [
+    {role:'bot',text:"👋 Hello! I'm your AI Finance Advisor powered by multiple AI models. I can help you with:\n\n• Expense analysis & budgeting advice\n• Stock picks based on latest news & trends\n• Mutual fund recommendations\n• Goal planning & forecasting\n• Market insights & economic analysis\n\nHow can I help you today?"}
+  ]
+};
+
+// ===== NAVIGATION =====
+function nav(page, el) {
+  state.currentPage = page;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', expenses:'Expenses', income:'Income', budget:'Budget',
+    goals:'Goals & Targets', forecast:'Forecast', stocks:'Stock Recommendations',
+    mutualfunds:'Mutual Funds', portfolio:'Portfolio', reports:'Reports',
+    audit:'Audit Log', advisor:'AI Finance Advisor', settings:'Settings'
+  };
+  const subs = {
+    dashboard:'May 2026 · Financial Overview',
+    expenses:'All transactions & spending',
+    income:'Income sources & history',
+    budget:'Monthly budget tracking',
+    goals:'Savings goals & milestones',
+    forecast:'Future projections & planning',
+    stocks:'AI-powered stock analysis',
+    mutualfunds:'Long-term fund recommendations',
+    portfolio:'Investment portfolio overview',
+    reports:'Financial reports & analytics',
+    audit:'Activity & compliance log',
+    advisor:'Chat with your AI advisor',
+    settings:'Preferences & configuration'
+  };
+  document.getElementById('page-title').textContent = titles[page]||page;
+  document.getElementById('page-sub').textContent = subs[page]||'';
+  renderPage(page);
+}
+
+// ===== RENDER PAGES =====
+function renderPage(page) {
+  const c = document.getElementById('content');
+  const pages = {
+    dashboard: renderDashboard,
+    expenses: renderExpenses,
+    income: renderIncome,
+    budget: renderBudget,
+    goals: renderGoals,
+    forecast: renderForecast,
+    stocks: renderStocks,
+    mutualfunds: renderMutualFunds,
+    portfolio: renderPortfolio,
+    reports: renderReports,
+    audit: renderAudit,
+    advisor: renderAdvisor,
+    settings: renderSettings,
+  };
+  c.innerHTML = '';
+  if(pages[page]) pages[page]();
+  else c.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted)">Page under construction</div>`;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const c = document.getElementById('content');
+  const totalIncome = state.transactions.filter(t=>t.type==='Income').reduce((s,t)=>s+t.amount,0);
+  const totalExpense = state.transactions.filter(t=>t.type==='Expense').reduce((s,t)=>s+t.amount,0);
+  const totalInvest = state.transactions.filter(t=>t.type==='Investment').reduce((s,t)=>s+t.amount,0);
+  const netSavings = totalIncome - totalExpense - totalInvest;
+
+  c.innerHTML = `
+  <!-- News Ticker -->
+  <div class="news-ticker">
+    <div class="ticker-inner">
+      <span class="ticker-item up">▲ SENSEX 82,340 +0.54%</span>
+      <span class="ticker-item down">▼ NIFTY 24,618 -0.12%</span>
+      <span class="ticker-item up">▲ RELIANCE 2,847 +1.24%</span>
+      <span class="ticker-item">💹 USD/INR 83.42</span>
+      <span class="ticker-item up">▲ GOLD ₹72,450/10g +0.8%</span>
+      <span class="ticker-item down">▼ CRUDE $78.3 -1.2%</span>
+      <span class="ticker-item">🏦 RBI Repo Rate 6.5%</span>
+      <span class="ticker-item up">▲ TCS 3,642 +0.5%</span>
+      <span class="ticker-item">📊 CPI Inflation 4.8%</span>
+      <span class="ticker-item up">▲ INFY 1,487 +2.15%</span>
+      <!-- repeat for seamless -->
+      <span class="ticker-item up">▲ SENSEX 82,340 +0.54%</span>
+      <span class="ticker-item down">▼ NIFTY 24,618 -0.12%</span>
+      <span class="ticker-item up">▲ RELIANCE 2,847 +1.24%</span>
+      <span class="ticker-item">💹 USD/INR 83.42</span>
+      <span class="ticker-item up">▲ GOLD ₹72,450/10g +0.8%</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-line:#10b981">
+      <div class="stat-label">Total Income</div>
+      <div class="stat-value">₹${(totalIncome/1000).toFixed(0)}K</div>
+      <div class="stat-delta up">▲ 12.4% vs last month</div>
+      <div class="stat-icon">📥</div>
+    </div>
+    <div class="stat-card" style="--accent-line:#ef4444">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value">₹${(totalExpense/1000).toFixed(1)}K</div>
+      <div class="stat-delta down">▲ 8.1% vs last month</div>
+      <div class="stat-icon">💳</div>
+    </div>
+    <div class="stat-card" style="--accent-line:#fbbf24">
+      <div class="stat-label">Invested</div>
+      <div class="stat-value">₹${(totalInvest/1000).toFixed(0)}K</div>
+      <div class="stat-delta up">SIP + Direct</div>
+      <div class="stat-icon">📈</div>
+    </div>
+    <div class="stat-card" style="--accent-line:#a78bfa">
+      <div class="stat-label">Net Savings</div>
+      <div class="stat-value">₹${(netSavings/1000).toFixed(1)}K</div>
+      <div class="stat-delta up">▲ Savings rate 42%</div>
+      <div class="stat-icon">💰</div>
+    </div>
+    <div class="stat-card" style="--accent-line:#60a5fa">
+      <div class="stat-label">Portfolio Value</div>
+      <div class="stat-value">₹4.2L</div>
+      <div class="stat-delta up">▲ 18.4% returns</div>
+      <div class="stat-icon">💼</div>
+    </div>
+    <div class="stat-card" style="--accent-line:#fb923c">
+      <div class="stat-label">Credit Score</div>
+      <div class="stat-value">748</div>
+      <div class="stat-delta up">▲ Excellent</div>
+      <div class="stat-icon">⭐</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Cashflow Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Cashflow — Last 6 Months</div></div>
+        <span class="badge badge-green">Live</span>
+      </div>
+      <div class="chart-wrap"><canvas id="cashflowChart"></canvas></div>
+    </div>
+    <!-- Expense Breakdown -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Expense Breakdown</div></div>
+        <span class="badge badge-blue">May 2026</span>
+      </div>
+      <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Recent Transactions</div></div>
+      <button class="tb-btn" onclick="nav('expenses', document.querySelectorAll('.sb-item')[1])">View all →</button>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th><th>Amount</th><th>Type</th></tr></thead>
+      <tbody id="recent-tx"></tbody>
+    </table>
+  </div>
+
+  <!-- AI Insight banner -->
+  <div class="card" style="border-color:var(--accent);background:linear-gradient(135deg,var(--panel),var(--bg3))">
+    <div class="card-header">
+      <div><div class="card-title">🤖 AI Insight of the Day</div><div class="card-sub">Powered by multiple AI models + live market data</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text);line-height:1.8" id="ai-insight">
+      Loading insight... <span class="loading"><span></span><span></span><span></span></span>
+    </div>
+  </div>
+  `;
+
+  // Render transactions
+  const tbody = document.getElementById('recent-tx');
+  state.transactions.slice(0,8).forEach(t=>{
+    const isIncome = t.type==='Income';
+    const isInvest = t.type==='Investment';
+    tbody.innerHTML += `<tr>
+      <td class="text-muted">${t.date}</td>
+      <td>${t.desc}</td>
+      <td><span class="badge badge-blue">${t.cat}</span></td>
+      <td class="text-muted">${t.account}</td>
+      <td class="${isIncome?'text-up':isInvest?'highlight':'text-down'}">${isIncome?'+':''}₹${t.amount.toLocaleString()}</td>
+      <td><span class="badge ${isIncome?'badge-green':isInvest?'badge-purple':'badge-red'}">${t.type}</span></td>
+    </tr>`;
+  });
+
+  // Charts
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const accent = cs.getPropertyValue('--accent').trim();
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+
+    // Cashflow chart
+    new Chart(document.getElementById('cashflowChart'),{
+      type:'bar',
+      data:{
+        labels:['Dec','Jan','Feb','Mar','Apr','May'],
+        datasets:[
+          {label:'Income',data:[82000,90000,88000,95000,87000,100000],backgroundColor:accent+'88',borderColor:accent,borderWidth:1,borderRadius:4},
+          {label:'Expenses',data:[48000,52000,51000,55000,49000,53500],backgroundColor:'#ef444488',borderColor:'#ef4444',borderWidth:1,borderRadius:4},
+          {label:'Savings',data:[34000,38000,37000,40000,38000,46500],backgroundColor:'#818cf844',borderColor:'#818cf8',borderWidth:1,borderRadius:4},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}}}}
+    });
+
+    // Expense donut
+    new Chart(document.getElementById('expenseChart'),{
+      type:'doughnut',
+      data:{
+        labels:['Food','Transport','Utilities','Shopping','Healthcare','Entertainment','Education'],
+        datasets:[{data:[5550,1200,3200,5600,800,1499,2000],backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#a78bfa','#fb923c','#22d3ee'],borderWidth:0,hoverBorderWidth:2}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:text,font:{size:10},boxWidth:12}}},cutout:'65%'}
+    });
+
+    // Delayed insight
+    setTimeout(()=>{
+      document.getElementById('ai-insight').innerHTML = `
+        <strong>📊 Spending Alert:</strong> Your Shopping category has exceeded the ₹5,000 budget by ₹600. Consider reviewing discretionary purchases.<br>
+        <strong>📈 Market Opportunity:</strong> With RBI holding rates at 6.5% and strong FII inflows, <span class="highlight">HDFC Bank & Infosys look attractive</span> for medium-term holding. Tech sector is recovering globally.<br>
+        <strong>🎯 Goal Tracker:</strong> Emergency fund is 60% complete — at current savings rate you'll reach your target by <span class="highlight">October 2026</span>, 2 months ahead of schedule.<br>
+        <strong>💡 Tip:</strong> Consider increasing your SIP by ₹2,000/month — compounding over 5 years adds ~₹1.8L to your corpus at 14% avg returns.
+      `;
+    }, 1500);
+  }, 100);
+}
+
+// ===== EXPENSES =====
+function renderExpenses() {
+  const c = document.getElementById('content');
+  const expenses = state.transactions.filter(t=>t.type==='Expense');
+  c.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <input class="form-input" placeholder="🔍 Search transactions..." id="tx-search" oninput="filterTx()" style="flex:1;min-width:200px">
+    <select class="form-input form-select" id="tx-filter-cat" onchange="filterTx()" style="width:160px">
+      <option value="">All Categories</option>
+      <option>Food & Dining</option><option>Transport</option><option>Utilities</option>
+      <option>Shopping</option><option>Healthcare</option><option>Entertainment</option><option>Education</option>
+    </select>
+    <select class="form-input form-select" id="tx-filter-acc" onchange="filterTx()" style="width:140px">
+      <option value="">All Accounts</option>
+      <option>HDFC Savings</option><option>Credit Card</option><option>Cash</option>
+    </select>
+    <button class="btn btn-primary" onclick="openAddExpense()">+ Add Expense</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">All Expenses</div><div class="card-sub">${expenses.length} transactions</div></div>
+      <span class="badge badge-red">₹${expenses.reduce((s,t)=>s+t.amount,0).toLocaleString()}</span>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th><th>Amount</th><th>Action</th></tr></thead>
+      <tbody id="exp-table"></tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Monthly Trend</div></div>
+      <div class="chart-wrap"><canvas id="expTrend"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">By Category</div></div>
+      <div class="chart-wrap"><canvas id="expCat"></canvas></div>
+    </div>
+  </div>
+  `;
+
+  renderExpTable(expenses);
+  setTimeout(()=>drawExpCharts(), 50);
+}
+
+function renderExpTable(data) {
+  const tbody = document.getElementById('exp-table');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+  data.forEach(t=>{
+    tbody.innerHTML += `<tr>
+      <td class="text-muted">${t.date}</td>
+      <td>${t.desc}</td>
+      <td><span class="badge badge-blue">${t.cat}</span></td>
+      <td class="text-muted">${t.account}</td>
+      <td class="text-down">₹${t.amount.toLocaleString()}</td>
+      <td><button class="btn btn-danger" onclick="deleteTransaction(${t.id})" style="padding:3px 8px;font-size:10px">Del</button></td>
+    </tr>`;
+  });
+}
+
+function filterTx() {
+  const q = (document.getElementById('tx-search')?.value||'').toLowerCase();
+  const cat = document.getElementById('tx-filter-cat')?.value||'';
+  const acc = document.getElementById('tx-filter-acc')?.value||'';
+  let data = state.transactions.filter(t=>t.type==='Expense');
+  if(q) data = data.filter(t=>t.desc.toLowerCase().includes(q)||t.cat.toLowerCase().includes(q));
+  if(cat) data = data.filter(t=>t.cat===cat);
+  if(acc) data = data.filter(t=>t.account===acc);
+  renderExpTable(data);
+}
+
+function drawExpCharts() {
+  const cs = getComputedStyle(document.body);
+  const accent = cs.getPropertyValue('--accent').trim();
+  const border = cs.getPropertyValue('--border').trim();
+  const text = cs.getPropertyValue('--text').trim();
+  const el1 = document.getElementById('expTrend');
+  const el2 = document.getElementById('expCat');
+  if(el1) new Chart(el1,{type:'line',data:{labels:['Nov','Dec','Jan','Feb','Mar','Apr','May'],datasets:[{label:'Expenses',data:[41000,48000,52000,51000,55000,49000,53500],borderColor:accent,backgroundColor:accent+'22',fill:true,tension:.4,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}}}}});
+  if(el2) {
+    const cats = Object.keys(state.budget);
+    const vals = cats.map(c=>state.budget[c].spent);
+    new Chart(el2,{type:'bar',data:{labels:cats,datasets:[{label:'Spent',data:vals,backgroundColor:accent+'88',borderColor:accent,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}},y:{grid:{display:false},ticks:{color:text,font:{size:10}}}}}});
+  }
+}
+
+// ===== INCOME =====
+function renderIncome() {
+  const c = document.getElementById('content');
+  const incomes = state.transactions.filter(t=>t.type==='Income');
+  const total = incomes.reduce((s,t)=>s+t.amount,0);
+  c.innerHTML = `
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-line:#10b981"><div class="stat-label">Total Income (May)</div><div class="stat-value">₹${total.toLocaleString()}</div><div class="stat-delta up">▲ 12% vs April</div><div class="stat-icon">📥</div></div>
+    <div class="stat-card" style="--accent-line:#60a5fa"><div class="stat-label">Primary (Salary)</div><div class="stat-value">₹85,000</div><div class="stat-delta">85% of income</div><div class="stat-icon">💼</div></div>
+    <div class="stat-card" style="--accent-line:#a78bfa"><div class="stat-label">Secondary (Freelance)</div><div class="stat-value">₹15,000</div><div class="stat-delta up">▲ New project</div><div class="stat-icon">💻</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Income History</div><button class="tb-btn" onclick="openAddExpense()">+ Add Income</button></div>
+    <table>
+      <thead><tr><th>Date</th><th>Source</th><th>Category</th><th>Account</th><th>Amount</th></tr></thead>
+      <tbody>${incomes.map(t=>`<tr><td class="text-muted">${t.date}</td><td>${t.desc}</td><td><span class="badge badge-green">${t.cat||'Income'}</span></td><td class="text-muted">${t.account}</td><td class="text-up">+₹${t.amount.toLocaleString()}</td></tr>`).join('')}</tbody>
+    </table>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-header"><div class="card-title">Income Trend</div></div><div class="chart-wrap"><canvas id="incChart"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Sources Breakdown</div></div><div class="chart-wrap"><canvas id="incPie"></canvas></div></div>
+  </div>
+  `;
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const accent = cs.getPropertyValue('--accent').trim();
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const el1=document.getElementById('incChart'); const el2=document.getElementById('incPie');
+    if(el1) new Chart(el1,{type:'line',data:{labels:['Nov','Dec','Jan','Feb','Mar','Apr','May'],datasets:[{label:'Income',data:[75000,78000,82000,88000,90000,87000,100000],borderColor:'#10b981',backgroundColor:'#10b98122',fill:true,tension:.4,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}}}}});
+    if(el2) new Chart(el2,{type:'pie',data:{labels:['Salary','Freelance','Dividends','Interest'],datasets:[{data:[85000,15000,2000,800],backgroundColor:['#10b981','#3b82f6','#f59e0b','#a78bfa'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:text,font:{size:10},boxWidth:12}}}}});
+  },50);
+}
+
+// ===== BUDGET =====
+function renderBudget() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="card">
+    <div class="card-header"><div class="card-title">Monthly Budget — May 2026</div><button class="btn btn-primary" onclick="alert('Budget editor: set limits per category')">Edit Budgets</button></div>
+    <div id="budget-list"></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-header"><div class="card-title">Budget vs Actual</div></div><div class="chart-wrap tall"><canvas id="budgetChart"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Budget Health</div></div>
+      <div style="padding:10px 0">
+        <div style="text-align:center;margin-bottom:14px"><div style="font-family:Syne,sans-serif;font-size:36px;font-weight:800;color:var(--accent)">72%</div><div style="color:var(--muted);font-size:11px">Overall Budget Used</div></div>
+        <div style="font-size:12px;line-height:2;color:var(--text)">
+          <div>🟢 <span class="text-up">5 categories</span> within budget</div>
+          <div>🔴 <span class="text-down">1 category</span> exceeded (Shopping)</div>
+          <div>🟡 <span style="color:#fbbf24">2 categories</span> near limit (>80%)</div>
+          <div style="margin-top:10px;padding:8px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--accent)">
+            💡 <strong>Tip:</strong> Move ₹600 from Entertainment to Shopping to rebalance.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+  const list = document.getElementById('budget-list');
+  Object.entries(state.budget).forEach(([cat,v])=>{
+    const pct = Math.round(v.spent/v.limit*100);
+    const over = pct>100;
+    const warn = pct>80 && !over;
+    const color = over?'#ef4444':warn?'#fbbf24':'var(--accent)';
+    list.innerHTML += `
+    <div style="margin-bottom:12px;padding:10px;background:var(--bg3);border-radius:6px;border-left:3px solid ${color}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:12px;color:var(--text)">${cat}</span>
+        <span style="font-size:12px"><span style="color:${color}">₹${v.spent.toLocaleString()}</span> <span class="text-muted">/ ₹${v.limit.toLocaleString()}</span></span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>
+      <div style="font-size:10px;margin-top:3px;color:${color}">${pct}% used${over?' — EXCEEDED by ₹'+(v.spent-v.limit):''}</div>
+    </div>`;
+  });
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const cats = Object.keys(state.budget);
+    const limits = cats.map(c=>state.budget[c].limit);
+    const spents = cats.map(c=>state.budget[c].spent);
+    const el = document.getElementById('budgetChart');
+    if(el) new Chart(el,{type:'bar',data:{labels:cats,datasets:[{label:'Limit',data:limits,backgroundColor:'#ffffff22',borderColor:'#ffffff44',borderWidth:1,borderRadius:4},{label:'Spent',data:spents,backgroundColor:spents.map((s,i)=>s>limits[i]?'#ef444488':'#10b98188'),borderColor:spents.map((s,i)=>s>limits[i]?'#ef4444':'#10b981'),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}},y:{grid:{display:false},ticks:{color:text,font:{size:10}}}}}});
+  },50);
+}
+
+// ===== GOALS =====
+function renderGoals() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="color:var(--muted);font-size:12px">Track your savings goals & milestones</div>
+    <button class="btn btn-primary" onclick="addGoalUI()">+ New Goal</button>
+  </div>
+  <div id="goals-list"></div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Goal Projection Timeline</div></div>
+    <div class="chart-wrap"><canvas id="goalChart"></canvas></div>
+  </div>
+  `;
+  const gl = document.getElementById('goals-list');
+  state.goals.forEach(g=>{
+    const pct = Math.round(g.current/g.target*100);
+    const remaining = g.target - g.current;
+    gl.innerHTML += `
+    <div class="goal-item">
+      <div class="goal-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">${g.icon}</span>
+          <div><div class="goal-name">${g.name}</div><div class="goal-date">Target: ${g.deadline}</div></div>
+        </div>
+        <div style="text-align:right">
+          <div class="goal-amount">₹${g.current.toLocaleString()} / ₹${g.target.toLocaleString()}</div>
+          <div style="font-size:11px;color:${pct>=100?'#10b981':'var(--muted)'}">₹${remaining.toLocaleString()} to go</div>
+        </div>
+      </div>
+      <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>=100?'#10b981':pct>60?'var(--accent)':'#fbbf24'}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:var(--muted)"><span>${pct}% complete</span><span>Monthly needed: ₹${Math.round(remaining/6).toLocaleString()}</span></div>
+    </div>`;
+  });
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const el = document.getElementById('goalChart');
+    if(el) new Chart(el,{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:state.goals.map((g,i)=>{
+      const colors=['#10b981','#3b82f6','#f59e0b','#a78bfa'];
+      const monthly = (g.target-g.current)/8;
+      const data = Array.from({length:8},(_,j)=>Math.min(g.current+monthly*(j+1),g.target));
+      return {label:g.name,data,borderColor:colors[i],backgroundColor:colors[i]+'22',fill:false,tension:.3,pointRadius:3};
+    })},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}}}}});
+  },50);
+}
+
+function addGoalUI() {
+  alert('Goal creator: name, target amount, deadline, monthly contribution plan');
+}
+
+// ===== FORECAST =====
+function renderForecast() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">12-Month Savings Forecast</div><span class="badge badge-green">AI-Powered</span></div>
+      <div class="chart-wrap tall"><canvas id="fcChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Net Worth Projection</div></div>
+      <div class="chart-wrap tall"><canvas id="nwChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Future Expense Planner</div><button class="btn btn-primary" onclick="alert('Add planned future expense')">+ Plan Expense</button></div>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Estimated Cost</th><th>Category</th><th>Action Required</th></tr></thead>
+      <tbody>
+        <tr><td>Jun 2026</td><td>Bali Vacation</td><td>₹80,000</td><td><span class="badge badge-blue">Travel</span></td><td class="text-up">Savings on track</td></tr>
+        <tr><td>Aug 2026</td><td>New Laptop (MacBook)</td><td>₹1,20,000</td><td><span class="badge badge-blue">Electronics</span></td><td class="text-up">₹45K more needed</td></tr>
+        <tr><td>Oct 2026</td><td>Car Insurance Renewal</td><td>₹18,500</td><td><span class="badge badge-yellow">Insurance</span></td><td class="text-up">Allocate ₹3K/month</td></tr>
+        <tr><td>Dec 2026</td><td>Home Renovation</td><td>₹2,50,000</td><td><span class="badge badge-purple">Home</span></td><td class="text-down">Need ₹2L more in 7 months</td></tr>
+        <tr><td>Jan 2027</td><td>Tax-saving investments (80C)</td><td>₹1,50,000</td><td><span class="badge badge-green">Tax</span></td><td class="text-up">₹75K done via ELSS SIP</td></tr>
+      </tbody>
+    </table>
+  </div>
+  `;
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const accent = cs.getPropertyValue('--accent').trim();
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const months=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+    const el1=document.getElementById('fcChart'); const el2=document.getElementById('nwChart');
+    if(el1) new Chart(el1,{type:'line',data:{labels:months,datasets:[{label:'Projected Savings',data:[46500,50000,48000,35000,52000,55000,56000,60000,58000,62000,65000,70000],borderColor:accent,backgroundColor:accent+'33',fill:true,tension:.4,pointRadius:3},{label:'Pessimistic',data:[46500,42000,40000,30000,42000,44000,45000,48000,46000,50000,52000,55000],borderColor:'#ef4444',backgroundColor:'transparent',fill:false,tension:.4,borderDash:[5,3],pointRadius:0},{label:'Optimistic',data:[46500,58000,60000,55000,65000,68000,70000,75000,72000,78000,82000,88000],borderColor:'#10b981',backgroundColor:'transparent',fill:false,tension:.4,borderDash:[5,3],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/1000+'K'}}}}});
+    if(el2) new Chart(el2,{type:'line',data:{labels:months,datasets:[{label:'Net Worth',data:[420000,465000,510000,530000,580000,625000,670000,720000,760000,810000,860000,920000],borderColor:'#a78bfa',backgroundColor:'#a78bfa33',fill:true,tension:.4,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/100000+'L'}}}}});
+  },50);
+}
+
+// ===== STOCKS =====
+function renderStocks() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="card" style="border-color:var(--accent);margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:20px">🤖</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">AI Stock Analyzer</div>
+        <div style="font-size:10px;color:var(--muted)">Powered by web search + multiple AI models (Gemini, GPT-4o, Claude)</div>
+      </div>
+      <button class="btn btn-primary" style="margin-left:auto" onclick="refreshStocks()">🔄 Refresh Analysis</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.6">
+      ℹ️ Recommendations are based on: latest earnings reports, global macro data, FII/DII flows, technical indicators, and news sentiment analysis. Not financial advice — consult a SEBI-registered advisor.
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="stockTab('picks',this)">Top Picks</div>
+    <div class="tab" onclick="stockTab('watchlist',this)">Watchlist</div>
+    <div class="tab" onclick="stockTab('news',this)">Market News</div>
+    <div class="tab" onclick="stockTab('screener',this)">Screener</div>
+  </div>
+
+  <div id="stocks-content">
+    <div class="stock-grid" id="stock-grid"></div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><div class="card-title">Detailed Analysis</div></div>
+      <table>
+        <thead><tr><th>Symbol</th><th>Price</th><th>Change</th><th>Recommendation</th><th>Risk</th><th>Horizon</th><th>Reason</th></tr></thead>
+        <tbody id="stock-table"></tbody>
+      </table>
+    </div>
+  </div>
+  `;
+
+  const grid = document.getElementById('stock-grid');
+  const tbody = document.getElementById('stock-table');
+  state.stocks.forEach(s=>{
+    const isUp = s.chg > 0;
+    const recClass = s.rec==='BUY'||s.rec==='STRONG BUY'?'rec-buy':s.rec==='SELL'?'rec-sell':s.rec==='HOLD'?'rec-hold':'rec-watch';
+    grid.innerHTML += `
+    <div class="stock-card" onclick="alert('Deep dive: ${s.sym} — ${s.name}\\n\\nPrice: ₹${s.price}\\nRec: ${s.rec}\\n\\n${s.reason}')">
+      <div class="stock-sym">${s.sym}</div>
+      <div class="stock-name">${s.name}</div>
+      <div class="stock-price">₹${s.price.toLocaleString()}</div>
+      <div class="stock-change ${isUp?'text-up':'text-down'}">${isUp?'▲':'▼'} ${Math.abs(s.chg)}%</div>
+      <div class="stock-rec ${recClass}">${s.rec}</div>
+    </div>`;
+    const badgeClass = s.rec.includes('BUY')?'badge-green':s.rec==='SELL'?'badge-red':s.rec==='HOLD'?'badge-yellow':'badge-blue';
+    tbody.innerHTML += `<tr>
+      <td class="highlight">${s.sym}</td>
+      <td>₹${s.price.toLocaleString()}</td>
+      <td class="${s.chg>0?'text-up':'text-down'}">${s.chg>0?'+':''}${s.chg}%</td>
+      <td><span class="badge ${badgeClass}">${s.rec}</span></td>
+      <td><span class="badge ${s.risk==='Low'?'badge-green':s.risk==='Medium'?'badge-yellow':'badge-red'}">${s.risk}</span></td>
+      <td>${s.horizon}</td>
+      <td style="font-size:11px;color:var(--muted)">${s.reason}</td>
+    </tr>`;
+  });
+}
+
+function stockTab(t, el) {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  if(t==='news') {
+    document.getElementById('stocks-content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Market News & Sentiment</div><span class="badge badge-green">Live via AI Web Search</span></div>
+      ${[
+        {headline:'RBI keeps repo rate at 6.5% — markets neutral', sentiment:'neutral', impact:'Rate-sensitive stocks stable. Banking sector maintains momentum.'},
+        {headline:'FII inflows at ₹8,200 Cr this week — positive sign', sentiment:'up', impact:'Broad market bullish. Largecap index funds likely to benefit.'},
+        {headline:'Infosys raises FY27 guidance on AI services demand', sentiment:'up', impact:'INFY and tech sector looks strong. Consider adding TCS too.'},
+        {headline:'US Fed signals 1-2 rate cuts possible in 2026 H2', sentiment:'up', impact:'Positive for emerging markets including India. IT exports gain.'},
+        {headline:'Crude oil at $78 — softening trend continues', sentiment:'up', impact:'Good for India macro, keeps inflation in check, positive for Aviation/Paints.'},
+        {headline:'China stimulus drives commodity rally', sentiment:'neutral', impact:'Mixed — metals gain but may pressure margins for manufacturing.'},
+      ].map(n=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="display:flex;gap:8px;align-items:flex-start"><span style="font-size:16px">${n.sentiment==='up'?'📈':n.sentiment==='down'?'📉':'📊'}</span><div><div style="font-size:12px;color:var(--text);margin-bottom:3px">${n.headline}</div><div style="font-size:11px;color:var(--muted)">AI Analysis: ${n.impact}</div></div></div></div>`).join('')}
+    </div>`;
+  } else if(t==='screener') {
+    document.getElementById('stocks-content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Stock Screener</div></div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group"><label class="form-label">Market Cap</label><select class="form-select form-input"><option>Any</option><option>Large Cap</option><option>Mid Cap</option><option>Small Cap</option></select></div>
+        <div class="form-group"><label class="form-label">P/E Ratio</label><select class="form-select form-input"><option>Any</option><option>&lt; 15</option><option>15-25</option><option>&gt; 25</option></select></div>
+        <div class="form-group"><label class="form-label">Sector</label><select class="form-select form-input"><option>All</option><option>IT</option><option>Banking</option><option>FMCG</option><option>Pharma</option><option>Energy</option></select></div>
+        <div class="form-group"><label class="form-label">Dividend Yield</label><select class="form-select form-input"><option>Any</option><option>&gt; 1%</option><option>&gt; 2%</option><option>&gt; 3%</option></select></div>
+      </div>
+      <button class="btn btn-primary" onclick="alert('Running AI screener with live data...')">🔍 Run Screener with AI Analysis</button>
+    </div>`;
+  } else {
+    renderStocks();
+  }
+}
+
+function refreshStocks() {
+  const grid = document.getElementById('stock-grid');
+  if(grid) { grid.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:12px">🔄 Fetching latest prices & AI analysis...<span class="loading" style="margin-left:8px"><span></span><span></span><span></span></span></div>`; setTimeout(renderStocks,1500); }
+}
+
+// ===== MUTUAL FUNDS =====
+function renderMutualFunds() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="card" style="border-color:var(--accent);margin-bottom:16px">
+    <div style="font-size:12px;color:var(--text);line-height:1.8">
+      🏦 <strong>Long-Term Fund Recommendations</strong> — Based on 5-year rolling returns, fund manager track record, AUM stability, and current macro trends. Recommendations updated using AI analysis of AMFI data, Morningstar ratings, and global economic indicators.
+    </div>
+  </div>
+  <div id="mf-list"></div>
+  <div class="grid-2" style="margin-top:16px">
+    <div class="card"><div class="card-header"><div class="card-title">SIP Calculator</div></div>
+      <div style="padding:8px 0">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Monthly SIP (₹)</label><input class="form-input" id="sip-amt" type="number" value="10000" oninput="calcSIP()"></div>
+          <div class="form-group"><label class="form-label">Years</label><input class="form-input" id="sip-yr" type="number" value="10" oninput="calcSIP()"></div>
+          <div class="form-group"><label class="form-label">Expected Return %</label><input class="form-input" id="sip-rate" type="number" value="14" oninput="calcSIP()"></div>
+        </div>
+        <div id="sip-result" style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:8px;font-size:12px;line-height:2"></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Returns Comparison</div></div><div class="chart-wrap"><canvas id="mfChart"></canvas></div></div>
+  </div>
+  `;
+
+  const ml = document.getElementById('mf-list');
+  state.mutualFunds.forEach(f=>{
+    const recClass = f.rec.includes('STRONG')?'badge-green':f.rec.includes('BUY')?'badge-green':f.rec==='HOLD'?'badge-yellow':'badge-red';
+    ml.innerHTML += `
+    <div class="mf-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="mf-name">${f.name}</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <span class="badge badge-blue">${f.cat}</span>
+            <span class="badge ${f.risk==='High'?'badge-red':f.risk.includes('Low')?'badge-green':'badge-yellow'}">${f.risk} Risk</span>
+            <span class="badge ${recClass}">${f.rec}</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:var(--muted)">★ ${f.rating}/5</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">SIP: ${f.sip?'✅':'❌'}</div>
+        </div>
+      </div>
+      <div class="mf-meta">
+        <span>1Y: <span class="mf-ret">${f.ret1y}</span></span>
+        <span>3Y: <span class="mf-ret">${f.ret3y}</span></span>
+        <span>5Y: <span class="mf-ret">${f.ret5y}</span></span>
+      </div>
+    </div>`;
+  });
+
+  calcSIP();
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const el = document.getElementById('mfChart');
+    if(el) new Chart(el,{type:'bar',data:{labels:state.mutualFunds.map(f=>f.name.split(' ').slice(0,2).join(' ')),datasets:[{label:'1Y Return',data:[18.4,22.1,31.8,14.6,16.2],backgroundColor:'#10b98188',borderColor:'#10b981',borderWidth:1,borderRadius:4},{label:'3Y Return',data:[14.2,16.5,19.4,12.8,13.6],backgroundColor:'#3b82f688',borderColor:'#3b82f6',borderWidth:1,borderRadius:4},{label:'5Y Return',data:[16.8,19.2,22.6,13.9,15.1],backgroundColor:'#f59e0b88',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>v+'%'}}}}});
+  },50);
+}
+
+function calcSIP() {
+  const amt = parseFloat(document.getElementById('sip-amt')?.value||10000);
+  const yr = parseFloat(document.getElementById('sip-yr')?.value||10);
+  const rate = parseFloat(document.getElementById('sip-rate')?.value||14)/100/12;
+  const n = yr*12;
+  const fv = amt * ((Math.pow(1+rate,n)-1)/rate) * (1+rate);
+  const invested = amt*n;
+  const gains = fv - invested;
+  const el = document.getElementById('sip-result');
+  if(el) el.innerHTML = `
+    <div>Invested: <span class="text-muted">₹${invested.toLocaleString('en-IN',{maximumFractionDigits:0})}</span></div>
+    <div>Est. Returns: <span class="text-up">+₹${gains.toLocaleString('en-IN',{maximumFractionDigits:0})}</span></div>
+    <div>Final Corpus: <strong style="color:var(--accent)">₹${fv.toLocaleString('en-IN',{maximumFractionDigits:0})}</strong></div>
+    <div style="color:var(--muted);font-size:10px">Wealth multiplier: ${(fv/invested).toFixed(1)}x</div>
+  `;
+}
+
+// ===== PORTFOLIO =====
+function renderPortfolio() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-line:var(--accent)"><div class="stat-label">Portfolio Value</div><div class="stat-value">₹4.22L</div><div class="stat-delta up">▲ ₹78,400 (22.8%)</div><div class="stat-icon">💼</div></div>
+    <div class="stat-card" style="--accent-line:#10b981"><div class="stat-label">Total Invested</div><div class="stat-value">₹3.44L</div><div class="stat-delta">Cost basis</div><div class="stat-icon">📊</div></div>
+    <div class="stat-card" style="--accent-line:#fbbf24"><div class="stat-label">Unrealized P&L</div><div class="stat-value text-up">+₹78.4K</div><div class="stat-delta up">Return: 22.8%</div><div class="stat-icon">📈</div></div>
+    <div class="stat-card" style="--accent-line:#a78bfa"><div class="stat-label">XIRR</div><div class="stat-value">18.4%</div><div class="stat-delta up">vs Nifty 16.2%</div><div class="stat-icon">⚡</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Asset Allocation</div></div>
+      <div class="chart-wrap"><canvas id="allocChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Portfolio Performance</div></div>
+      <div class="chart-wrap"><canvas id="perfChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Holdings</div></div>
+    <table>
+      <thead><tr><th>Asset</th><th>Type</th><th>Invested</th><th>Current</th><th>P&L</th><th>Allocation</th></tr></thead>
+      <tbody>
+        <tr><td>Mirae Asset Large Cap</td><td><span class="badge badge-purple">MF</span></td><td>₹1,20,000</td><td>₹1,45,200</td><td class="text-up">+₹25,200 (+21%)</td><td>34.4%</td></tr>
+        <tr><td>Parag Parikh Flexi Cap</td><td><span class="badge badge-purple">MF</span></td><td>₹80,000</td><td>₹99,280</td><td class="text-up">+₹19,280 (+24.1%)</td><td>23.5%</td></tr>
+        <tr><td>RELIANCE</td><td><span class="badge badge-blue">Stock</span></td><td>₹50,000</td><td>₹62,641</td><td class="text-up">+₹12,641 (+25.3%)</td><td>14.8%</td></tr>
+        <tr><td>HDFCBANK</td><td><span class="badge badge-blue">Stock</span></td><td>₹40,000</td><td>₹43,959</td><td class="text-up">+₹3,959 (+9.9%)</td><td>10.4%</td></tr>
+        <tr><td>Axis Small Cap</td><td><span class="badge badge-purple">MF</span></td><td>₹60,000</td><td>₹79,260</td><td class="text-up">+₹19,260 (+32.1%)</td><td>18.8%</td></tr>
+        <tr><td>Emergency Cash</td><td><span class="badge badge-green">Cash</span></td><td>₹30,000</td><td>₹30,000</td><td class="text-muted">₹0 (0%)</td><td>7.1%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  `;
+  setTimeout(()=>{
+    const cs = getComputedStyle(document.body);
+    const border = cs.getPropertyValue('--border').trim();
+    const text = cs.getPropertyValue('--text').trim();
+    const el1=document.getElementById('allocChart'); const el2=document.getElementById('perfChart');
+    if(el1) new Chart(el1,{type:'doughnut',data:{labels:['Mutual Funds','Stocks','Cash','FD'],datasets:[{data:[76.7,25.2,7.1,0],backgroundColor:['#a78bfa','#3b82f6','#10b981','#fbbf24'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:text,font:{size:10},boxWidth:12}}},cutout:'60%'}});
+    if(el2) new Chart(el2,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','May'],datasets:[{label:'Portfolio',data:[320000,335000,362000,398000,422000],borderColor:'#a78bfa',backgroundColor:'#a78bfa22',fill:true,tension:.4,pointRadius:4},{label:'Nifty (bench)',data:[320000,328000,348000,372000,390000],borderColor:'#6b7280',backgroundColor:'transparent',fill:false,tension:.4,borderDash:[5,3],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10}}}},scales:{x:{grid:{color:border+'44'},ticks:{color:text,font:{size:10}}},y:{grid:{color:border+'44'},ticks:{color:text,font:{size:10},callback:v=>'₹'+v/100000+'L'}}}}});
+  },50);
+}
+
+// ===== REPORTS =====
+function renderReports() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <select class="form-input form-select" style="width:150px"><option>May 2026</option><option>Apr 2026</option><option>Mar 2026</option><option>Q1 2026</option><option>FY 2025-26</option></select>
+    <select class="form-input form-select" style="width:160px"><option>All Reports</option><option>Expense Report</option><option>Income Statement</option><option>Investment Report</option><option>Tax Summary</option></select>
+    <button class="btn btn-primary" onclick="exportReport()">⬇ Export PDF</button>
+    <button class="btn btn-secondary" onclick="alert('Sharing report via email...')">📧 Email Report</button>
+  </div>
+
+  <div class="grid-3">
+    <div class="card" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Monthly P&L Report...')">
+      <div style="font-size:24px;margin-bottom:8px">📊</div>
+      <div class="card-title">Monthly P&L</div>
+      <div class="card-sub">Income vs Expenses</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">May 2026 · Ready</div>
+    </div>
+    <div class="card" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Expense Analysis...')">
+      <div style="font-size:24px;margin-bottom:8px">💳</div>
+      <div class="card-title">Expense Analysis</div>
+      <div class="card-sub">Category breakdown</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">May 2026 · Ready</div>
+    </div>
+    <div class="card" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Investment Report...')">
+      <div style="font-size:24px;margin-bottom:8px">📈</div>
+      <div class="card-title">Investment Report</div>
+      <div class="card-sub">Portfolio & returns</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">May 2026 · Ready</div>
+    </div>
+    <div class="card" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Tax Summary...')">
+      <div style="font-size:24px;margin-bottom:8px">🧾</div>
+      <div class="card-title">Tax Summary</div>
+      <div class="card-sub">80C, LTCG, STCG</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">FY 2025-26 · Ready</div>
+    </div>
+    <div class="card" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Net Worth Report...')">
+      <div style="font-size:24px;margin-bottom:8px">💰</div>
+      <div class="card-title">Net Worth Report</div>
+      <div class="card-sub">Assets & liabilities</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">May 2026 · Ready</div>
+    </div>
+    <div class="card" style="cursor:pointer" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" onclick="alert('Opening Cash Flow Statement...')">
+      <div style="font-size:24px;margin-bottom:8px">💹</div>
+      <div class="card-title">Cash Flow</div>
+      <div class="card-sub">In/Out flow analysis</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">May 2026 · Ready</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:4px">
+    <div class="card-header"><div class="card-title">Financial Summary — May 2026</div></div>
+    <div class="grid-2">
+      <div>
+        <table>
+          <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+          <tbody>
+            <tr><td>Total Income</td><td class="text-up">₹1,00,000</td></tr>
+            <tr><td>Total Expenses</td><td class="text-down">₹19,649</td></tr>
+            <tr><td>Investments</td><td class="highlight">₹15,000</td></tr>
+            <tr><td>Net Savings</td><td class="text-up">₹65,351</td></tr>
+            <tr><td>Savings Rate</td><td class="highlight">65.4%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:10px 0">
+        <div style="font-size:11px;color:var(--text);line-height:2.2">
+          <div>🟢 <strong>Strong month</strong> — highest savings rate in 6 months</div>
+          <div>📊 Budget compliance: 7/8 categories on track</div>
+          <div>📈 Portfolio gained ₹24,000 in value (unrealized)</div>
+          <div>🎯 Emergency Fund: 60% → 63% complete</div>
+          <div>💡 Recommend: increase SIP by ₹3,000 next month</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+// ===== AUDIT =====
+function renderAudit() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <input class="form-input" placeholder="🔍 Search audit log..." style="flex:1;min-width:200px">
+    <select class="form-input form-select" style="width:140px"><option>All Events</option><option>Transactions</option><option>Alerts</option><option>AI Queries</option><option>Exports</option></select>
+    <select class="form-input form-select" style="width:130px"><option>All Users</option><option>Rajesh K</option><option>System</option></select>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Audit Trail</div><span class="badge badge-yellow">${state.auditLog.length} events</span></div>
+    <div id="audit-trail"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Security & Compliance</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;line-height:2">
+      <div>
+        <div class="text-up">✅ All transactions logged</div>
+        <div class="text-up">✅ Budget alerts active</div>
+        <div class="text-up">✅ Data encrypted at rest</div>
+        <div class="text-down">⚠️ 1 suspicious transaction flagged</div>
+      </div>
+      <div>
+        <div style="color:var(--muted)">Last backup: 2 hours ago</div>
+        <div style="color:var(--muted)">Data retention: 7 years</div>
+        <div style="color:var(--muted)">Compliance: GDPR, DPDP Act</div>
+        <div class="highlight">AI model queries: anonymized</div>
+      </div>
+    </div>
+  </div>
+  `;
+  const trail = document.getElementById('audit-trail');
+  state.auditLog.forEach(a=>{
+    const dotColor = a.type==='success'?'#10b981':a.type==='warn'?'#fbbf24':a.type==='danger'?'#ef4444':'#60a5fa';
+    trail.innerHTML += `
+    <div class="audit-item">
+      <div class="audit-dot" style="background:${dotColor}"></div>
+      <div class="audit-content">
+        <div class="audit-action">${a.action}</div>
+        <div class="audit-meta">by ${a.user}</div>
+      </div>
+      <div class="audit-time">${a.time}</div>
+    </div>`;
+  });
+}
+
+// ===== AI ADVISOR =====
+function renderAdvisor() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="card" style="border-color:var(--accent);margin-bottom:16px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--muted)">AI Models:</span>
+      <span class="badge badge-green">Gemini 1.5 Flash (Free)</span>
+      <span class="badge badge-blue">GPT-4o Mini (Free tier)</span>
+      <span class="badge badge-purple">Claude Haiku (Free tier)</span>
+      <span class="badge badge-yellow">Mixtral 8x7B (Groq Free)</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--muted)">Web search: DuckDuckGo + NewsAPI</span>
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:12px">
+    <div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><div class="card-title">AI Finance Chat</div><span class="badge badge-green">Live</span></div>
+        <div id="chat-messages" style="min-height:300px;max-height:360px;overflow-y:auto;margin-bottom:12px"></div>
+        <div class="ai-input-row">
+          <input class="ai-input" id="chat-input" placeholder="Ask anything: budget advice, stock picks, tax tips..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary" onclick="sendChat()">Send →</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+          ${['Best stocks this week?','Where am I overspending?','Should I increase SIP?','Tax saving tips 80C','Best MF for 5 years'].map(q=>`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--muted)" onclick="quickQ('${q}')">${q}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><div class="card-title">AI Configuration</div></div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">Primary AI Model</label>
+          <select class="form-select form-input">
+            <option>Gemini 1.5 Flash (Google AI Studio — Free)</option>
+            <option>GPT-4o Mini (OpenAI — Free tier)</option>
+            <option>Claude Haiku 3 (Anthropic — Free)</option>
+            <option>Mixtral 8x7B (Groq — Free 14.4K RPD)</option>
+            <option>Llama 3.1 70B (Together AI — Free)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">API Key (stored locally)</label>
+          <input class="form-input" type="password" placeholder="Enter API key — never sent to servers">
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">Web Search Provider</label>
+          <select class="form-select form-input"><option>DuckDuckGo (Free)</option><option>NewsAPI (Free tier)</option><option>Serper.dev (Free 2500/mo)</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="alert('AI model configured & tested successfully!')">Save & Test Connection</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Quick Insights</div></div>
+        <div style="font-size:12px;line-height:2;color:var(--text)">
+          <div>📊 <strong>Spending:</strong> Food +12% this week</div>
+          <div>📈 <strong>INFY:</strong> +2.15% — AI demand surge</div>
+          <div>🏦 <strong>RBI:</strong> Rates held at 6.5%</div>
+          <div>💰 <strong>FD Alert:</strong> HDFC Bank @ 7.1% p.a.</div>
+          <div>🎯 <strong>Tax:</strong> ₹75K of ₹1.5L 80C used</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chat-messages');
+  if(!container) return;
+  container.innerHTML = '';
+  state.aiChat.forEach(m=>{
+    container.innerHTML += `
+    <div class="ai-msg ${m.role}" style="position:relative;${m.role==='bot'?'margin-right:0;':'margin-left:0;'}">
+      <div class="ai-label">${m.role==='bot'?'🤖 AI Advisor':'👤 You'}</div>
+      <div class="ai-text">${m.text.replace(/\n/g,'<br>')}</div>
+    </div>`;
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const q = input?.value?.trim();
+  if(!q) return;
+  input.value = '';
+  state.aiChat.push({role:'user',text:q});
+  renderChatMessages();
+  // Simulate AI response
+  setTimeout(()=>{
+    const responses = {
+      'stock': `Based on current market data and news analysis:\n\n📈 **Top Picks This Week:**\n• INFY (+2.15%) — AI services demand strong, raised guidance\n• HDFCBANK — credit quality stable, RBI rate hold positive\n• Nifty 50 ETF — FII inflows positive, election tailwind\n\n⚠️ Avoid high-beta small caps in current volatility. Diversify across 8-10 stocks max for individual portfolio.`,
+      'spend': `📊 **Spending Analysis:**\n\nYour top overspend categories:\n1. Shopping — 112% of budget (₹600 over)\n2. Food & Dining — 69% (on track)\n\n💡 Recommendation: Set Swiggy/Zomato weekly limit of ₹600. Use UPI spending controls to auto-pause after limit. Switch 1 restaurant meal/week to home cooking — saves ~₹800/month.`,
+      'sip': `💰 **SIP Analysis:**\n\nCurrent SIP: ₹10,000/month\nPortfolio returns: 18.4% XIRR (beating Nifty)\n\n✅ Recommendation: YES, increase SIP by ₹3,000-5,000\nWhy: Markets at reasonable valuation (P/E ~22x), rupee-cost averaging benefits in current volatility.\n\nSuggested allocation:\n+₹2,000 → Parag Parikh Flexi Cap\n+₹1,500 → Axis Small Cap (high risk)\n+₹1,500 → Nifty 50 Index`,
+      'tax': `🧾 **Tax Saving (80C) — FY 2025-26:**\n\nUsed: ₹75,000 via ELSS SIP\nRemaining: ₹75,000 of ₹1.5L limit\n\n💡 Options:\n• ELSS SIP (+₹6,250/month for 12 months) — also good returns\n• PPF: Safe, 7.1% tax-free\n• NPS: Additional ₹50K deduction under 80CCD(1B)\n\n🎯 Also explore 80D (health insurance): save ₹25K more.`,
+      'mf': `🏦 **Best Mutual Funds — 5 Year Horizon:**\n\n1. Parag Parikh Flexi Cap — 19.2% (5Y CAGR)\n2. Mirae Asset Large Cap — 16.8% (low risk)\n3. Axis Small Cap — 22.6% (high risk, high reward)\n\n📊 For balanced approach: 50% large cap + 30% flexi cap + 20% small cap via SIP. Review annually and rebalance if allocation drifts >5%.`,
+    };
+    let resp = `I've analyzed your financial data along with current market conditions:\n\n• Your savings rate of 65% this month is excellent\n• 3 of your goals are on track\n• Markets are showing positive momentum with FII inflows\n\nHow can I help further? Ask about specific stocks, budgeting, or tax planning.`;
+    const ql = q.toLowerCase();
+    if(ql.includes('stock') || ql.includes('invest') || ql.includes('share')) resp = responses['stock'];
+    else if(ql.includes('spend') || ql.includes('budget') || ql.includes('expense') || ql.includes('overspend')) resp = responses['spend'];
+    else if(ql.includes('sip') || ql.includes('increase')) resp = responses['sip'];
+    else if(ql.includes('tax') || ql.includes('80c')) resp = responses['tax'];
+    else if(ql.includes('mf') || ql.includes('mutual') || ql.includes('fund') || ql.includes('5 year')) resp = responses['mf'];
+    state.aiChat.push({role:'bot',text:resp});
+    renderChatMessages();
+  }, 1200);
+}
+
+function quickQ(q) {
+  const input = document.getElementById('chat-input');
+  if(input) { input.value = q; sendChat(); }
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  const c = document.getElementById('content');
+  c.innerHTML = `
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Profile Settings</div></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Name</label><input class="form-input" value="Rajesh Kumar" id="set-name"></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Email</label><input class="form-input" value="rajesh@example.com"></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Currency</label><select class="form-select form-input"><option>₹ Indian Rupee (INR)</option><option>$ US Dollar</option><option>€ Euro</option></select></div>
+      <div class="form-group" style="margin-bottom:14px"><label class="form-label">Financial Year</label><select class="form-select form-input"><option>April–March (India)</option><option>Jan–Dec</option></select></div>
+      <button class="btn btn-primary" onclick="alert('Profile saved!')">Save Profile</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Theme & Appearance</div></div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Color Theme</label>
+        <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+          ${[{id:'emerald',label:'Emerald',c1:'#00d4aa',c2:'#10b981'},{id:'ocean',label:'Ocean',c1:'#38bdf8',c2:'#818cf8'},{id:'obsidian',label:'Obsidian',c1:'#d946ef',c2:'#f97316'},{id:'crimson',label:'Crimson',c1:'#f87171',c2:'#fbbf24'},{id:'arctic',label:'Arctic',c1:'#0ea5e9',c2:'#7c3aed'}].map(t=>`
+          <div onclick="setTheme('${t.id}',document.querySelectorAll('.theme-dot')[${['emerald','ocean','obsidian','crimson','arctic'].indexOf(t.id)}])" style="cursor:pointer;text-align:center">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,${t.c1},${t.c2});margin:0 auto 4px;border:2px solid var(--border)"></div>
+            <div style="font-size:9px;color:var(--muted)">${t.label}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Font Size</label><select class="form-select form-input"><option>Small</option><option selected>Medium</option><option>Large</option></select></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Dashboard Layout</label><select class="form-select form-input"><option>Compact</option><option selected>Standard</option><option>Comfortable</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Notifications & Alerts</div></div>
+      ${[['Budget Limit Alert','Notify when category exceeds budget',true],['Weekly Summary','Email digest every Monday',true],['Investment Signals','AI stock alerts',false],['Bill Reminders','Recurring payment reminders',true],['Goal Milestones','Celebrate goal progress',true]].map(([n,d,on])=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:12px;color:var(--text)">${n}</div><div style="font-size:10px;color:var(--muted)">${d}</div></div>
+        <div onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--accent)':'var(--bg3)';this.children[0].style.transform=this.dataset.on==='1'?'translateX(16px)':'translateX(0)'" data-on="${on?1:0}" style="width:34px;height:18px;border-radius:9px;background:${on?'var(--accent)':'var(--bg3)'};border:1px solid var(--border);position:relative;cursor:pointer;transition:background .2s">
+          <div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:1px;left:1px;transition:transform .2s;transform:translateX(${on?16:0}px)"></div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Data & Privacy</div></div>
+      <div style="font-size:12px;color:var(--text);line-height:2;margin-bottom:12px">
+        <div>🔒 All data stored locally in browser</div>
+        <div>🤖 AI queries use anonymized financial summaries</div>
+        <div>📤 No data sent to third parties</div>
+        <div>🗄️ Export full data as JSON or CSV</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="alert('Exporting all data as JSON...')">Export Data</button>
+        <button class="btn btn-secondary" onclick="alert('Importing data...')">Import Data</button>
+        <button class="btn btn-danger" onclick="confirm('Clear all data? This cannot be undone.')&&alert('Data cleared.')">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+// ===== UTILITIES =====
+function setTheme(name, el) {
+  document.body.setAttribute('data-theme', name);
+  document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('active'));
+  if(el) el.classList.add('active');
+  state.theme = name;
+  // Redraw charts after theme change
+  setTimeout(()=>renderPage(state.currentPage),50);
+}
+
+function setMode(mode, el) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('profile-name').textContent = mode==='company'?'Acme Technologies':'Rajesh Kumar';
+  document.getElementById('profile-type').textContent = mode==='company'?'Company · GST Enabled':'Individual';
+}
+
+function openAddExpense() {
+  document.getElementById('modal-expense').classList.add('open');
+  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function addTransaction() {
+  const type = document.getElementById('tx-type').value;
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const cat = document.getElementById('tx-cat').value;
+  const date = document.getElementById('tx-date').value;
+  const desc = document.getElementById('tx-desc').value || cat;
+  const account = document.getElementById('tx-account').value;
+  if(!amount || !date) { alert('Please fill amount and date'); return; }
+  const id = Date.now();
+  state.transactions.unshift({id,type,cat,amount,desc,date,account});
+  state.auditLog.unshift({action:`Transaction added — ${type} ₹${amount.toLocaleString()}`,user:'User',time:'just now',type:'info'});
+  closeModal('modal-expense');
+  renderPage(state.currentPage);
+}
+
+function deleteTransaction(id) {
+  if(!confirm('Delete this transaction?')) return;
+  state.transactions = state.transactions.filter(t=>t.id!==id);
+  renderPage(state.currentPage);
+}
+
+function exportReport() {
+  alert('📊 Report export initiated!\n\nGenerating:\n• PDF Report (via browser print)\n• CSV Transactions\n• Charts as images\n\nIn production this connects to a report generation API.');
+}
+
+function fetchAIInsights() {
+  nav('advisor', document.querySelectorAll('.sb-item')[12]);
+}
+
+// ===== INIT =====
+renderPage('dashboard');
+</script>
+</body>
+</html>
