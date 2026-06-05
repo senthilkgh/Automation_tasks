@@ -1,0 +1,570 @@
+{
+  "name": "Internship Hunt Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message", "callback_query"],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "internship-bot-webhook",
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "is-callback",
+              "leftValue": "={{ $json.callback_query }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "route-message-type",
+      "name": "Callback or Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "has-document",
+              "leftValue": "={{ $json.message.document }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "route-has-doc",
+      "name": "Has PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 180]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "👋 Hi! I'm your Internship Hunt Bot.\n\nSend me your resume as a PDF and I'll:\n✅ Parse your skills & profile\n🔍 Search top internship portals\n📬 Apply to best matches (with your approval)\n🔔 Send follow-ups automatically\n\nSend your resume PDF to get started!",
+        "additionalFields": {}
+      },
+      "id": "send-welcome",
+      "name": "Send Welcome",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 300],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "📄 Got your resume! Parsing your profile with AI...",
+        "additionalFields": {}
+      },
+      "id": "ack-resume",
+      "name": "Ack Resume Upload",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 60],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot{{ $credentials.token }}/getFile?file_id={{ $json.message.document.file_id }}",
+        "options": {}
+      },
+      "id": "get-file-path",
+      "name": "Get File Path",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 60]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot{{ $credentials.token }}/{{ $json.result.file_path }}",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "download-pdf",
+      "name": "Download PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE_URL }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.AI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"{{ $env.AI_MODEL }}\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a resume parser. Extract structured JSON only. No markdown, no explanation. Return exactly this shape: {\\\"name\\\": string, \\\"skills\\\": [string], \\\"domain\\\": string, \\\"level\\\": string, \\\"experience_years\\\": number, \\\"education\\\": string, \\\"languages\\\": [string], \\\"summary\\\": string}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Parse this resume and return structured JSON: {{ $json.data.toString('base64') }}\"\n    }\n  ],\n  \"temperature\": 0.1\n}",
+        "options": {}
+      },
+      "id": "ai-parse-resume",
+      "name": "AI: Parse Resume",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 60],
+      "notes": "Set AI_BASE_URL, AI_API_KEY, AI_MODEL in n8n environment variables.\nClaude: https://api.anthropic.com/v1 | OpenAI: https://api.openai.com/v1 | Grok: https://api.x.ai/v1\nModel examples: claude-sonnet-4-6 | gpt-4o | grok-3"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = items[0].json.choices[0].message.content;\nlet profile;\ntry {\n  const cleaned = raw.replace(/```json|```/g, '').trim();\n  profile = JSON.parse(cleaned);\n} catch(e) {\n  profile = { name: 'Unknown', skills: [], domain: 'General', level: 'Internship', summary: raw };\n}\n\n// Store profile in workflow static data for later use\nconst staticData = this.getWorkflowStaticData('global');\nstaticData.profile = profile;\nstaticData.chatId = items[0].json._chatId || '';\n\nreturn [{ json: { profile, success: true } }];"
+      },
+      "id": "store-profile",
+      "name": "Store Profile",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 60]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ *Profile parsed!*\n\n👤 *Name:* {{ $json.profile.name }}\n🎯 *Domain:* {{ $json.profile.domain }}\n📊 *Level:* {{ $json.profile.level }}\n🛠 *Skills:* {{ $json.profile.skills.slice(0,8).join(', ') }}\n🎓 *Education:* {{ $json.profile.education }}\n\nNow searching internship portals... This takes ~30 seconds. I'll ping you with the top matches!",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-profile-confirm",
+      "name": "Send Profile Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2000, 60],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://jsearch.p.rapidapi.com/search?query={{ encodeURIComponent($('Store Profile').item.json.profile.domain + ' internship ' + $('Store Profile').item.json.profile.skills[0]) }}&num_pages=2&date_posted=week",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key", "value": "={{ $env.RAPIDAPI_KEY }}" },
+            { "name": "X-RapidAPI-Host", "value": "jsearch.p.rapidapi.com" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "search-jobs-api",
+      "name": "Search Jobs (JSearch API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 60],
+      "notes": "Uses JSearch on RapidAPI — free tier: 200 req/month. Set RAPIDAPI_KEY env var. Searches LinkedIn, Indeed, Glassdoor combined."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const jobs = items[0].json.data || [];\nconst profile = $('Store Profile').item.json.profile;\n\n// Basic scoring: keyword match against skills + domain\nconst scored = jobs.map(job => {\n  const text = ((job.job_title || '') + ' ' + (job.job_description || '')).toLowerCase();\n  const skillMatches = (profile.skills || []).filter(s => text.includes(s.toLowerCase())).length;\n  const domainMatch = text.includes((profile.domain || '').toLowerCase()) ? 2 : 0;\n  const levelMatch = text.includes('intern') ? 3 : 0;\n  const score = skillMatches + domainMatch + levelMatch;\n  return {\n    title: job.job_title,\n    company: job.employer_name,\n    location: job.job_city + ', ' + job.job_country,\n    url: job.job_apply_link,\n    posted: job.job_posted_at_datetime_utc,\n    description: (job.job_description || '').slice(0, 300),\n    score\n  };\n});\n\nconst top5 = scored.sort((a,b) => b.score - a.score).slice(0, 5);\nreturn top5.map(j => ({ json: j }));"
+      },
+      "id": "score-and-rank",
+      "name": "Score & Rank Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2440, 60]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE_URL }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.AI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"{{ $env.AI_MODEL }}\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You write concise, enthusiastic internship cover letters. Max 150 words. No placeholders. Professional but warm tone.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a cover letter for this candidate applying to this role.\\n\\nCandidate profile: {{ JSON.stringify($('Store Profile').item.json.profile) }}\\n\\nJob: {{ $json.title }} at {{ $json.company }}\\nDescription: {{ $json.description }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "id": "ai-cover-letter",
+      "name": "AI: Generate Cover Letter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2660, 60]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Merge cover letter into job object\nconst coverLetter = items[0].json.choices[0].message.content;\nconst job = $('Score & Rank Jobs').item.json;\n\n// Generate a short job ID for callback data\nconst jobId = Buffer.from(job.url || job.title).toString('base64').slice(0, 40);\n\n// Save to static data tracker\nconst staticData = this.getWorkflowStaticData('global');\nif (!staticData.pendingJobs) staticData.pendingJobs = {};\nstaticData.pendingJobs[jobId] = { ...job, coverLetter, status: 'pending', chatId: staticData.chatId };\n\nreturn [{ json: { ...job, coverLetter, jobId } }];"
+      },
+      "id": "merge-cover-letter",
+      "name": "Merge Cover Letter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2880, 60]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ (() => { const sd = $getWorkflowStaticData('global'); return sd.chatId || ''; })() }}",
+        "text": "=🎯 *Match {{ $itemIndex + 1 }} of 5*\n\n🏢 *{{ $json.company }}*\n💼 {{ $json.title }}\n📍 {{ $json.location }}\n\n_{{ $json.description.slice(0,200) }}..._\n\n✉️ *Cover letter ready* | Score: {{ $json.score }}/10\n\n👇 What should I do?",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": {
+            "inline_keyboard": [
+              [
+                { "text": "✅ Apply Now", "callback_data": "=approve_{{ $json.jobId }}" },
+                { "text": "⏭ Skip", "callback_data": "=skip_{{ $json.jobId }}" },
+                { "text": "👁 View Letter", "callback_data": "=view_{{ $json.jobId }}" }
+              ]
+            ]
+          }
+        }
+      },
+      "id": "send-job-for-approval",
+      "name": "Send Job for Approval",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [3100, 60],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const callbackData = items[0].json.callback_query.data;\nconst chatId = items[0].json.callback_query.message.chat.id;\nconst action = callbackData.startsWith('approve_') ? 'approve' :\n               callbackData.startsWith('skip_') ? 'skip' : 'view';\nconst jobId = callbackData.split('_').slice(1).join('_');\n\nreturn [{ json: { action, jobId, chatId, callbackQuery: items[0].json.callback_query } }];"
+      },
+      "id": "parse-callback",
+      "name": "Parse Callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 420]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "action-type",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "approve",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "route-callback-action",
+      "name": "Approve or Skip/View?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 420]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { jobId, chatId } = items[0].json;\nconst staticData = this.getWorkflowStaticData('global');\nconst job = (staticData.pendingJobs || {})[jobId];\n\nif (!job) return [{ json: { success: false, message: 'Job not found in tracker' } }];\n\n// Mark as approved\nif (!staticData.appliedJobs) staticData.appliedJobs = [];\nstaticData.appliedJobs.push({\n  ...job,\n  status: 'applied',\n  appliedAt: new Date().toISOString(),\n  followUpDue: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()\n});\ndelete staticData.pendingJobs[jobId];\n\nreturn [{ json: { job, chatId, success: true } }];"
+      },
+      "id": "mark-approved",
+      "name": "Mark Approved & Track",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 340]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=✅ *Application logged!*\n\n💼 {{ $json.job.title }} @ {{ $json.job.company }}\n\n📧 To complete: open the link and submit your cover letter.\n🔗 {{ $json.job.url }}\n\n⏰ I'll remind you to follow up in 7 days if no response.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "confirm-applied",
+      "name": "Confirm Applied",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 340],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const { jobId, chatId, action } = items[0].json;\nconst staticData = this.getWorkflowStaticData('global');\nconst job = (staticData.pendingJobs || {})[jobId];\n\nif (action === 'view' && job) {\n  return [{ json: { message: job.coverLetter, chatId, type: 'view' } }];\n}\nif (action === 'skip' && job) {\n  job.status = 'skipped';\n  return [{ json: { message: `⏭ Skipped *${job.title}* at *${job.company}*`, chatId, type: 'skip' } }];\n}\nreturn [{ json: { message: 'OK', chatId, type: 'unknown' } }];"
+      },
+      "id": "handle-skip-view",
+      "name": "Handle Skip / View",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-skip-view-reply",
+      "name": "Send Skip/View Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 500],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 24 }] }
+      },
+      "id": "daily-followup-trigger",
+      "name": "Daily Follow-up Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 620]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = this.getWorkflowStaticData('global');\nconst now = new Date();\nconst applied = staticData.appliedJobs || [];\n\nconst due = applied.filter(j => {\n  if (j.status !== 'applied') return false;\n  const followUpDate = new Date(j.followUpDue);\n  return followUpDate <= now;\n});\n\nif (due.length === 0) return [{ json: { skip: true } }];\nreturn due.map(j => ({ json: j }));"
+      },
+      "id": "find-followup-due",
+      "name": "Find Follow-ups Due",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 620]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "not-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ]
+        }
+      },
+      "id": "any-followups",
+      "name": "Any follow-ups?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 620]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AI_BASE_URL }}/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.AI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"{{ $env.AI_MODEL }}\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Write a short, polite internship follow-up email. Max 100 words. Friendly and professional.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a follow-up email for this application sent 7 days ago with no response yet.\\nRole: {{ $json.title }} at {{ $json.company }}\\nCandidate profile: {{ JSON.stringify($getWorkflowStaticData('global').profile) }}\"\n    }\n  ],\n  \"temperature\": 0.6\n}",
+        "options": {}
+      },
+      "id": "ai-followup-email",
+      "name": "AI: Generate Follow-up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 620]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const followupEmail = items[0].json.choices[0].message.content;\nconst job = $('Find Follow-ups Due').item.json;\n\n// Mark follow-up sent\nconst staticData = this.getWorkflowStaticData('global');\nconst applied = staticData.appliedJobs || [];\nconst idx = applied.findIndex(j => j.url === job.url);\nif (idx !== -1) {\n  applied[idx].status = 'followed_up';\n  applied[idx].followedUpAt = new Date().toISOString();\n}\n\nreturn [{ json: { ...job, followupEmail, chatId: staticData.chatId } }];"
+      },
+      "id": "save-followup",
+      "name": "Save Follow-up Status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 620]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=📬 *Follow-up ready!*\n\n💼 *{{ $json.title }}* @ *{{ $json.company }}*\nApplied 7 days ago — no response yet.\n\n*Suggested follow-up email:*\n\n```\n{{ $json.followupEmail }}\n```\n\n📋 Copy and send via email/portal. I've marked this as followed up.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "send-followup-to-telegram",
+      "name": "Send Follow-up to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1340, 620],
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds", "name": "Telegram Bot" }
+      }
+    },
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+      },
+      "id": "scheduled-search-trigger",
+      "name": "Scheduled Job Search (6h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 760]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = this.getWorkflowStaticData('global');\nconst profile = staticData.profile;\nif (!profile) return [{ json: { skip: true, reason: 'No profile stored yet. Send resume first.' } }];\nreturn [{ json: { profile, chatId: staticData.chatId } }];"
+      },
+      "id": "load-profile-for-scheduled",
+      "name": "Load Stored Profile",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 760]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "has-profile",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ]
+        }
+      },
+      "id": "has-profile-check",
+      "name": "Profile exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 760]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Callback or Message?", "type": "main", "index": 0 }]]
+    },
+    "Callback or Message?": {
+      "main": [
+        [{ "node": "Parse Callback", "type": "main", "index": 0 }],
+        [{ "node": "Has PDF?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has PDF?": {
+      "main": [
+        [{ "node": "Ack Resume Upload", "type": "main", "index": 0 }],
+        [{ "node": "Send Welcome", "type": "main", "index": 0 }]
+      ]
+    },
+    "Ack Resume Upload": {
+      "main": [[{ "node": "Get File Path", "type": "main", "index": 0 }]]
+    },
+    "Get File Path": {
+      "main": [[{ "node": "Download PDF", "type": "main", "index": 0 }]]
+    },
+    "Download PDF": {
+      "main": [[{ "node": "AI: Parse Resume", "type": "main", "index": 0 }]]
+    },
+    "AI: Parse Resume": {
+      "main": [[{ "node": "Store Profile", "type": "main", "index": 0 }]]
+    },
+    "Store Profile": {
+      "main": [[{ "node": "Send Profile Confirmation", "type": "main", "index": 0 }]]
+    },
+    "Send Profile Confirmation": {
+      "main": [[{ "node": "Search Jobs (JSearch API)", "type": "main", "index": 0 }]]
+    },
+    "Search Jobs (JSearch API)": {
+      "main": [[{ "node": "Score & Rank Jobs", "type": "main", "index": 0 }]]
+    },
+    "Score & Rank Jobs": {
+      "main": [[{ "node": "AI: Generate Cover Letter", "type": "main", "index": 0 }]]
+    },
+    "AI: Generate Cover Letter": {
+      "main": [[{ "node": "Merge Cover Letter", "type": "main", "index": 0 }]]
+    },
+    "Merge Cover Letter": {
+      "main": [[{ "node": "Send Job for Approval", "type": "main", "index": 0 }]]
+    },
+    "Parse Callback": {
+      "main": [[{ "node": "Approve or Skip/View?", "type": "main", "index": 0 }]]
+    },
+    "Approve or Skip/View?": {
+      "main": [
+        [{ "node": "Mark Approved & Track", "type": "main", "index": 0 }],
+        [{ "node": "Handle Skip / View", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mark Approved & Track": {
+      "main": [[{ "node": "Confirm Applied", "type": "main", "index": 0 }]]
+    },
+    "Handle Skip / View": {
+      "main": [[{ "node": "Send Skip/View Reply", "type": "main", "index": 0 }]]
+    },
+    "Daily Follow-up Check": {
+      "main": [[{ "node": "Find Follow-ups Due", "type": "main", "index": 0 }]]
+    },
+    "Find Follow-ups Due": {
+      "main": [[{ "node": "Any follow-ups?", "type": "main", "index": 0 }]]
+    },
+    "Any follow-ups?": {
+      "main": [[{ "node": "AI: Generate Follow-up Email", "type": "main", "index": 0 }]]
+    },
+    "AI: Generate Follow-up Email": {
+      "main": [[{ "node": "Save Follow-up Status", "type": "main", "index": 0 }]]
+    },
+    "Save Follow-up Status": {
+      "main": [[{ "node": "Send Follow-up to Telegram", "type": "main", "index": 0 }]]
+    },
+    "Scheduled Job Search (6h)": {
+      "main": [[{ "node": "Load Stored Profile", "type": "main", "index": 0 }]]
+    },
+    "Load Stored Profile": {
+      "main": [[{ "node": "Profile exists?", "type": "main", "index": 0 }]]
+    },
+    "Profile exists?": {
+      "main": [[{ "node": "Search Jobs (JSearch API)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "createdAt": "2024-01-01T00:00:00.000Z", "updatedAt": "2024-01-01T00:00:00.000Z", "id": "internship-bot", "name": "Internship Bot" }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "n8nVersion": "1.0.0"
+  }
+}
