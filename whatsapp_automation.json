@@ -1,0 +1,333 @@
+{
+  "name": "WhatsApp Inbox Reader & AI Replier",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-inbox",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "id": "filter-fromme",
+              "leftValue": "={{ $json.body.payload.fromMe }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            },
+            {
+              "id": "filter-type",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "message",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-filter",
+      "name": "Only Incoming Messages",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "sender",
+              "value": "={{ $json.body.payload.from }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "message",
+              "value": "={{ $json.body.payload.body }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "senderName",
+              "value": "={{ $json.body.payload.notifyName ?? $json.body.payload.from.replace('@c.us','') }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "timestamp",
+              "value": "={{ $json.body.payload.timestamp }}",
+              "type": "number"
+            },
+            {
+              "id": "a5",
+              "name": "session",
+              "value": "={{ $json.body.session }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "chatId",
+              "value": "={{ $json.body.payload.from }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-extract",
+      "name": "Extract Message Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "reply:",
+                    "operator": { "type": "string", "operation": "startsWith" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "ai_reply"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message }}",
+                    "rightValue": "summarize",
+                    "operator": { "type": "string", "operation": "contains" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "summarize"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "log_only" }
+      },
+      "id": "node-switch",
+      "name": "Route by Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "llama-3.3-70b-versatile",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful WhatsApp assistant. Be concise and friendly. The user wants you to reply to or help with their WhatsApp message. Reply in the same language as the incoming message."
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.message.replace(/^reply:\\s*/i,'') }}\n\n(This message is from: {{ $json.senderName }})"
+            }
+          ],
+          "temperature": 0.7,
+          "max_tokens": 500
+        },
+        "options": {}
+      },
+      "id": "node-groq-reply",
+      "name": "Groq AI Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 180],
+      "credentials": {
+        "httpHeaderAuth": { "id": "groq-cred", "name": "Groq API Key" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "llama-3.3-70b-versatile",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Summarize the following WhatsApp message in 2-3 bullet points. Be brief."
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.message }}"
+            }
+          ],
+          "temperature": 0.3,
+          "max_tokens": 300
+        },
+        "options": {}
+      },
+      "id": "node-groq-summarize",
+      "name": "Groq AI Summarize",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 380],
+      "credentials": {
+        "httpHeaderAuth": { "id": "groq-cred", "name": "Groq API Key" }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "aiResponse",
+              "value": "={{ $json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-extract-ai-reply",
+      "name": "Extract AI Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1340, 180]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "aiResponse",
+              "value": "={{ '📋 Summary:\\n' + $json.choices[0].message.content }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "node-extract-ai-summary",
+      "name": "Extract AI Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1340, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://waha:3000/api/sendText",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+          "text": "={{ $json.aiResponse }}",
+          "session": "={{ $('Extract Message Data').item.json.session }}"
+        },
+        "options": {}
+      },
+      "id": "node-send-reply",
+      "name": "Send Reply via WAHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 180]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://waha:3000/api/sendText",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "chatId": "={{ $('Extract Message Data').item.json.chatId }}",
+          "text": "={{ $json.aiResponse }}",
+          "session": "={{ $('Extract Message Data').item.json.session }}"
+        },
+        "options": {}
+      },
+      "id": "node-send-summary",
+      "name": "Send Summary via WAHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1560, 380]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "logged_message",
+              "value": "=📩 From: {{ $json.senderName }} ({{ $json.sender }})\n🕐 Time: {{ new Date($json.timestamp * 1000).toLocaleString() }}\n💬 Message: {{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-log",
+      "name": "Log Message (no reply needed)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [1120, 560]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [[{ "node": "Only Incoming Messages", "type": "main", "index": 0 }]]
+    },
+    "Only Incoming Messages": {
+      "main": [[{ "node": "Extract Message Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Message Data": {
+      "main": [[{ "node": "Route by Intent", "type": "main", "index": 0 }]]
+    },
+    "Route by Intent": {
+      "ai_reply":  [[ { "node": "Groq AI Reply",      "type": "main", "index": 0 } ]],
+      "summarize": [[ { "node": "Groq AI Summarize",  "type": "main", "index": 0 } ]],
+      "log_only":  [[ { "node": "Log Message (no reply needed)", "type": "main", "index": 0 } ]]
+    },
+    "Groq AI Reply":     { "main": [[{ "node": "Extract AI Reply",   "type": "main", "index": 0 }]] },
+    "Groq AI Summarize": { "main": [[{ "node": "Extract AI Summary", "type": "main", "index": 0 }]] },
+    "Extract AI Reply":   { "main": [[{ "node": "Send Reply via WAHA",   "type": "main", "index": 0 }]] },
+    "Extract AI Summary": { "main": [[{ "node": "Send Summary via WAHA", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

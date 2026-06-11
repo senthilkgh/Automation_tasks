@@ -1,0 +1,632 @@
+{
+  "name": "Daily Job Hunter — Search, Track & Recruiter Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "n-trigger",
+      "name": "Daily 8AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [160, 300],
+      "notes": "Runs once every day at 8:00 AM. Change cron expression to adjust timing."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "cfg-title",    "name": "JOB_TITLE",      "value": "Software Engineer",       "type": "string" },
+            { "id": "cfg-loc",      "name": "LOCATION",        "value": "Remote",                  "type": "string" },
+            { "id": "cfg-exp",      "name": "EXPERIENCE",      "value": "mid level",               "type": "string" },
+            { "id": "cfg-emp",      "name": "EMPLOYMENT_TYPE", "value": "FULLTIME",                "type": "string" },
+            { "id": "cfg-remote",   "name": "REMOTE_ONLY",     "value": "true",                    "type": "string" },
+            { "id": "cfg-email",    "name": "USER_EMAIL",      "value": "yourname@gmail.com",      "type": "string" },
+            { "id": "cfg-name",     "name": "USER_NAME",       "value": "Your Full Name",          "type": "string" },
+            { "id": "cfg-phone",    "name": "USER_PHONE",      "value": "+1-555-000-0000",         "type": "string" },
+            { "id": "cfg-linkedin", "name": "USER_LINKEDIN",   "value": "https://linkedin.com/in/yourprofile", "type": "string" },
+            { "id": "cfg-github",   "name": "USER_GITHUB",     "value": "https://github.com/yourusername",     "type": "string" },
+            { "id": "cfg-daily",    "name": "DAILY_APPLY_LIMIT","value": "5",                     "type": "string" },
+            { "id": "cfg-sheet",    "name": "SHEET_ID",        "value": "YOUR_GOOGLE_SHEET_ID_HERE", "type": "string" },
+            { "id": "cfg-label",    "name": "RECRUITER_LABEL", "value": "recruiter-reply",         "type": "string" },
+            { "id": "cfg-resume",   "name": "RESUME_TEXT",     "value": "PASTE YOUR FULL RESUME TEXT HERE — Name, skills, experience, education, achievements. The AI uses this to score job matches and generate cover letters.", "type": "string" }
+          ]
+        }
+      },
+      "id": "n-config",
+      "name": "⚙️ CONFIG — Edit Your Details Here",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [380, 300],
+      "notes": "EDIT THIS NODE: Set your job title, location, email, name, resume text, and Google Sheet ID. This is your main configuration panel."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://jsearch.p.rapidapi.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key",  "value": "YOUR_RAPIDAPI_KEY_HERE" },
+            { "name": "X-RapidAPI-Host", "value": "jsearch.p.rapidapi.com" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query",           "value": "={{ $json.JOB_TITLE }} {{ $json.LOCATION }}" },
+            { "name": "page",            "value": "1" },
+            { "name": "num_pages",       "value": "2" },
+            { "name": "date_posted",     "value": "today" },
+            { "name": "remote_jobs_only","value": "={{ $json.REMOTE_ONLY }}" },
+            { "name": "employment_types","value": "={{ $json.EMPLOYMENT_TYPE }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "n-search",
+      "name": "🔍 JSearch API — Fetch Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 300],
+      "notes": "JSearch free tier: 200 requests/month on RapidAPI. Searches LinkedIn, Indeed, Glassdoor, ZipRecruiter simultaneously. Replace YOUR_RAPIDAPI_KEY_HERE with your key from rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "check-data",
+              "leftValue":  "={{ $json.data?.length ?? 0 }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "n-check-results",
+      "name": "Jobs Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.first().json.data || [];\nconst config = $('⚙️ CONFIG — Edit Your Details Here').first().json;\nconst limit = parseInt(config.DAILY_APPLY_LIMIT) || 5;\n\n// Deduplicate and take top N\nconst seen = new Set();\nconst unique = jobs.filter(j => {\n  const key = (j.employer_name + j.job_title).toLowerCase().replace(/[^a-z0-9]/g,'');\n  if (seen.has(key)) return false;\n  seen.add(key);\n  return true;\n});\n\nreturn unique.slice(0, limit * 3).map(j => ({\n  json: {\n    job_id:          j.job_id || '',\n    job_title:       j.job_title || '',\n    company:         j.employer_name || '',\n    location:        j.job_city ? `${j.job_city}, ${j.job_country || ''}` : (j.job_country || 'Remote'),\n    is_remote:       j.job_is_remote || false,\n    apply_link:      j.job_apply_link || j.job_google_link || '',\n    description:     (j.job_description || '').substring(0, 2000),\n    required_skills: (j.job_required_skills || []).join(', '),\n    min_salary:      j.job_min_salary || '',\n    max_salary:      j.job_max_salary || '',\n    posted_date:     j.job_posted_at_datetime_utc || new Date().toISOString(),\n    employer_website:j.employer_website || '',\n    source:          j.job_publisher || 'JSearch',\n    employment_type: j.job_employment_type || '',\n    qualifications:  (j.job_highlights?.Qualifications || []).join(' | '),\n    benefits:        (j.job_highlights?.Benefits || []).join(' | ')\n  }\n}));"
+      },
+      "id": "n-parse",
+      "name": "Parse & Flatten Job Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "documentId": { "value": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}" },
+        "sheetName": { "value": "Applied Jobs" },
+        "filtersUI": {
+          "values": [
+            { "lookupColumn": "job_id", "lookupValue": "={{ $json.job_id }}" }
+          ]
+        },
+        "options": { "returnAllMatches": false }
+      },
+      "id": "n-check-dup",
+      "name": "Already Applied? (Check Sheet)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1340, 200],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "gs-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "no-dup",
+              "leftValue":  "={{ $json.length ?? 0 }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "n-dup-filter",
+      "name": "Skip If Already Applied",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1580, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer YOUR_GROQ_API_KEY_HERE" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "llama-3.3-70b-versatile",
+          "temperature": 0.2,
+          "max_tokens": 600,
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an expert career coach and ATS resume scorer. Respond ONLY with valid JSON, no markdown, no explanation. Return exactly this structure: {\"score\": <0-100 integer>, \"reason\": \"<one sentence>\", \"missing_skills\": [\"skill1\",\"skill2\"], \"apply\": <true|false>}"
+            },
+            {
+              "role": "user",
+              "content": "=Job Title: {{ $json.job_title }}\nCompany: {{ $json.company }}\nRequired Skills: {{ $json.required_skills }}\nQualifications: {{ $json.qualifications }}\nJob Description (first 1500 chars): {{ $json.description.substring(0,1500) }}\n\nMY RESUME:\n{{ $('⚙️ CONFIG — Edit Your Details Here').first().json.RESUME_TEXT }}\n\nScore match 0-100. Set apply=true only if score>=65."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n-ai-score",
+      "name": "🤖 AI Match Score (Groq Free)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 200],
+      "notes": "Uses Groq free tier (llama-3.3-70b). Get key at console.groq.com. Scores each job 0-100 against your resume. Only applies if score >= 65."
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst jobData = $('Skip If Already Applied').first().json;\n\nlet scoreData = { score: 50, reason: 'AI parse error', missing_skills: [], apply: false };\ntry {\n  const rawContent = item.choices?.[0]?.message?.content || '{}';\n  const cleaned = rawContent.replace(/```json|```/g, '').trim();\n  scoreData = JSON.parse(cleaned);\n} catch(e) {\n  scoreData.reason = 'Could not parse AI response';\n}\n\nreturn [{\n  json: {\n    ...jobData,\n    ai_score:         scoreData.score || 0,\n    ai_reason:        scoreData.reason || '',\n    ai_missing:       (scoreData.missing_skills || []).join(', '),\n    should_apply:     scoreData.apply === true && (scoreData.score || 0) >= 65\n  }\n}];"
+      },
+      "id": "n-parse-score",
+      "name": "Parse AI Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2060, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "score-ok",
+              "leftValue":  "={{ $json.should_apply }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "n-score-gate",
+      "name": "Score >= 65?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2300, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer YOUR_GROQ_API_KEY_HERE" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "llama-3.3-70b-versatile",
+          "temperature": 0.7,
+          "max_tokens": 700,
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an expert cover letter writer. Write a concise, professional cover letter (200-250 words max). Address it 'Dear Hiring Team' unless company is known. No placeholder text. No brackets. Start directly. End with contact info on separate lines."
+            },
+            {
+              "role": "user",
+              "content": "=Write a cover letter for:\nJob: {{ $json.job_title }} at {{ $json.company }}\nLocation: {{ $json.location }}\nKey skills needed: {{ $json.required_skills }}\nWhy I'm a match: {{ $json.ai_reason }}\n\nMY RESUME:\n{{ $('⚙️ CONFIG — Edit Your Details Here').first().json.RESUME_TEXT }}\n\nEnd cover letter with:\nName: {{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_NAME }}\nEmail: {{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_EMAIL }}\nPhone: {{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_PHONE }}\nLinkedIn: {{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_LINKEDIN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n-cover-letter",
+      "name": "🤖 Generate Cover Letter (Groq)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2540, 140]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst jobData = $('Score >= 65?').first().json;\nconst config = $('⚙️ CONFIG — Edit Your Details Here').first().json;\n\nlet coverLetter = 'Cover letter generation failed.';\ntry {\n  coverLetter = item.choices?.[0]?.message?.content?.trim() || coverLetter;\n} catch(e) {}\n\nconst today = new Date().toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    ...jobData,\n    cover_letter:   coverLetter,\n    apply_date:     today,\n    status:         'Applied',\n    applied_via:    jobData.apply_link || 'Manual',\n    followup_date:  new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0],\n    user_name:      config.USER_NAME,\n    user_email:     config.USER_EMAIL\n  }\n}];"
+      },
+      "id": "n-merge-cover",
+      "name": "Merge Cover Letter + Job Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2780, 140]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": { "value": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}" },
+        "sheetName": { "value": "Applied Jobs" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_id":         "={{ $json.job_id }}",
+            "job_title":      "={{ $json.job_title }}",
+            "company":        "={{ $json.company }}",
+            "location":       "={{ $json.location }}",
+            "apply_link":     "={{ $json.apply_link }}",
+            "apply_date":     "={{ $json.apply_date }}",
+            "status":         "={{ $json.status }}",
+            "ai_score":       "={{ $json.ai_score }}",
+            "ai_reason":      "={{ $json.ai_reason }}",
+            "ai_missing":     "={{ $json.ai_missing }}",
+            "source":         "={{ $json.source }}",
+            "cover_letter":   "={{ $json.cover_letter }}",
+            "followup_date":  "={{ $json.followup_date }}",
+            "recruiter_reply":"",
+            "notes":          ""
+          }
+        },
+        "options": {}
+      },
+      "id": "n-log-sheet",
+      "name": "📊 Log to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [3020, 140],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "gs-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.user_email }}",
+        "toEmail":   "={{ $json.user_email }}",
+        "subject":   "=🚀 Application Ready: {{ $json.job_title }} @ {{ $json.company }} (Score: {{ $json.ai_score }}/100)",
+        "emailType": "html",
+        "message":   "=<html><body style='font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px'><div style='background:#1a1a2e;color:white;padding:20px;border-radius:8px 8px 0 0'><h2 style='margin:0'>🎯 Job Application Ready</h2><p style='margin:5px 0;opacity:.8'>{{ $json.apply_date }}</p></div><div style='border:1px solid #ddd;border-top:none;padding:20px;border-radius:0 0 8px 8px'><table style='width:100%;border-collapse:collapse;margin-bottom:20px'><tr><td style='padding:8px;background:#f8f9fa;font-weight:bold;width:140px'>Position</td><td style='padding:8px'>{{ $json.job_title }}</td></tr><tr><td style='padding:8px;font-weight:bold'>Company</td><td style='padding:8px'>{{ $json.company }}</td></tr><tr><td style='padding:8px;background:#f8f9fa;font-weight:bold'>Location</td><td style='padding:8px'>{{ $json.location }}</td></tr><tr><td style='padding:8px;font-weight:bold'>AI Score</td><td style='padding:8px'><span style='background:#22c55e;color:white;padding:3px 10px;border-radius:20px;font-weight:bold'>{{ $json.ai_score }}/100</span></td></tr><tr><td style='padding:8px;background:#f8f9fa;font-weight:bold'>Why Match</td><td style='padding:8px'>{{ $json.ai_reason }}</td></tr>{{ $json.ai_missing ? '<tr><td style=\"padding:8px;font-weight:bold\">Skill Gaps</td><td style=\"padding:8px;color:#e53e3e\">' + $json.ai_missing + '</td></tr>' : '' }}<tr><td style='padding:8px;background:#f8f9fa;font-weight:bold'>Apply Here</td><td style='padding:8px'><a href=\"{{ $json.apply_link }}\" style='color:#3182ce;font-weight:bold'>👉 Click to Apply</a></td></tr></table><div style='background:#f0f4ff;border-left:4px solid #3182ce;padding:15px;border-radius:0 8px 8px 0;margin-bottom:20px'><h3 style='margin:0 0 10px'>📝 Generated Cover Letter</h3><p style='white-space:pre-wrap;margin:0;line-height:1.6'>{{ $json.cover_letter }}</p></div><p style='color:#666;font-size:12px'>This application was auto-identified by your n8n Job Hunter. Review the cover letter, apply via the link above, and reply to this email to add notes.</p></div></body></html>"
+      },
+      "id": "n-email-apply",
+      "name": "📧 Email: Application Package",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [3260, 140],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "documentId": { "value": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}" },
+        "sheetName": { "value": "Applied Jobs" },
+        "filtersUI": {
+          "values": [
+            { "lookupColumn": "status", "lookupValue": "Applied" }
+          ]
+        },
+        "options": { "returnAllMatches": true }
+      },
+      "id": "n-get-applied",
+      "name": "Get All Applied Jobs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1100, 500],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "gs-cred", "name": "Google Sheets" } },
+      "notes": "Runs in parallel with job search. Fetches all jobs marked 'Applied' to check for recruiter replies."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "messageId": "",
+        "filters": {
+          "q": "=is:unread from:recruiter OR from:hiring OR subject:interview OR subject:application OR subject:opportunity OR subject:position newer_than:7d"
+        },
+        "returnAll": false,
+        "limit": 20,
+        "options": { "format": "full" }
+      },
+      "id": "n-read-inbox",
+      "name": "📬 Read Gmail (Recruiter Emails)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1340, 500],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } },
+      "notes": "Reads unread emails matching recruiter/interview/application keywords from last 7 days."
+    },
+    {
+      "parameters": {
+        "jsCode": "const emails = $input.all();\nconst appliedJobs = $('Get All Applied Jobs').all().map(i => i.json);\n\nif (!emails || emails.length === 0) {\n  return [{ json: { has_replies: false, replies: [], applied_count: appliedJobs.length } }];\n}\n\nconst recruiterEmails = emails.map(item => {\n  const msg = item.json;\n  const headers = msg.payload?.headers || [];\n  const getHeader = (name) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';\n\n  const from    = getHeader('From');\n  const subject = getHeader('Subject');\n  const date    = getHeader('Date');\n  const bodyPart = msg.payload?.parts?.[0]?.body?.data ||\n                   msg.payload?.body?.data || '';\n  let body = '';\n  try {\n    body = Buffer.from(bodyPart, 'base64').toString('utf8').substring(0, 1500);\n  } catch(e) { body = 'Could not decode body'; }\n\n  // Try to match to an applied job\n  const matched = appliedJobs.find(j =>\n    subject.toLowerCase().includes(j.company?.toLowerCase()) ||\n    subject.toLowerCase().includes(j.job_title?.toLowerCase()) ||\n    from.toLowerCase().includes(j.company?.toLowerCase().replace(/[^a-z0-9]/g,''))\n  );\n\n  return {\n    message_id:   msg.id,\n    from,\n    subject,\n    date,\n    body_snippet: body,\n    matched_job:  matched ? `${matched.job_title} @ ${matched.company}` : 'Unknown',\n    matched_company: matched?.company || '',\n    job_id:       matched?.job_id || ''\n  };\n}).filter(e => e.from && e.subject);\n\nreturn [{ json: {\n  has_replies:   recruiterEmails.length > 0,\n  replies:       recruiterEmails,\n  applied_count: appliedJobs.length\n}}];"
+      },
+      "id": "n-parse-inbox",
+      "name": "Parse Recruiter Replies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1580, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer YOUR_GROQ_API_KEY_HERE" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "llama-3.3-70b-versatile",
+          "temperature": 0.3,
+          "max_tokens": 1200,
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a career advisor. Analyze recruiter emails and provide actionable summaries. Be direct and helpful. Format using HTML with <h3>, <ul>, <li>, <strong>, <span style='color:#...'>. Use green for positive signals, orange for neutral, red for rejections."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze these recruiter emails and summarize:\n\nAPPLIED JOBS COUNT: {{ $json.applied_count }}\n\nRECRUITER EMAILS ({{ $json.replies.length }} found):\n{{ $json.replies.map((r,i) => `\n[${i+1}] FROM: ${r.from}\\nSUBJECT: ${r.subject}\\nDATE: ${r.date}\\nMATCHED JOB: ${r.matched_job}\\nSNIPPET: ${r.body_snippet.substring(0,400)}`).join('\\n---\\n') }}\n\nProvide:\n1. Overall job search status summary\n2. For each email: type (interview invite/rejection/follow-up/spam), urgency, recommended action\n3. Priority actions to take TODAY\n4. Encouragement and next steps"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "n-ai-inbox-summary",
+      "name": "🤖 AI Inbox Summary (Groq)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResult = $input.first().json;\nconst inboxData = $('Parse Recruiter Replies').first().json;\n\nlet aiSummary = 'No AI summary available';\ntry {\n  aiSummary = aiResult.choices?.[0]?.message?.content?.trim() || aiSummary;\n} catch(e) {}\n\nconst today = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });\n\nreturn [{\n  json: {\n    ai_summary:     aiSummary,\n    reply_count:    inboxData.replies?.length || 0,\n    applied_count:  inboxData.applied_count || 0,\n    raw_replies:    inboxData.replies || [],\n    today:          today,\n    has_replies:    inboxData.has_replies || false\n  }\n}];"
+      },
+      "id": "n-build-report",
+      "name": "Build Daily Report Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2060, 500]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": { "value": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}" },
+        "sheetName": { "value": "Daily Reports" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date":          "={{ $json.today }}",
+            "applied_today": "={{ $('n-log-sheet') ? 'check Applied Jobs sheet' : '0' }}",
+            "emails_checked":"={{ $json.reply_count }}",
+            "total_applied": "={{ $json.applied_count }}",
+            "ai_summary":    "={{ $json.ai_summary }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "n-log-report",
+      "name": "📊 Log Daily Report to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2300, 500],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "gs-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_EMAIL }}",
+        "toEmail":   "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_EMAIL }}",
+        "subject":   "=📊 Daily Job Hunt Report — {{ $json.today }} | {{ $json.reply_count }} Recruiter Email(s)",
+        "emailType": "html",
+        "message":   "=<html><body style='font-family:Arial,sans-serif;max-width:750px;margin:0 auto;background:#f5f7fa'><div style='background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;padding:30px;text-align:center'><h1 style='margin:0;font-size:28px'>📊 Daily Job Hunt Report</h1><p style='margin:8px 0 0;opacity:.8;font-size:16px'>{{ $json.today }}</p></div><div style='padding:25px;background:white;margin:0'><div style='display:flex;gap:15px;margin-bottom:25px'><div style='flex:1;background:#e8f5e9;border-radius:10px;padding:20px;text-align:center'><div style='font-size:32px;font-weight:bold;color:#2e7d32'>{{ $json.applied_count }}</div><div style='color:#555;font-size:14px'>Total Applied</div></div><div style='flex:1;background:#e3f2fd;border-radius:10px;padding:20px;text-align:center'><div style='font-size:32px;font-weight:bold;color:#1565c0'>{{ $json.reply_count }}</div><div style='color:#555;font-size:14px'>Recruiter Emails</div></div></div><div style='background:#f8f9fa;border-radius:10px;padding:20px;margin-bottom:25px'><h2 style='margin:0 0 15px;color:#1a1a2e;border-bottom:2px solid #e0e0e0;padding-bottom:10px'>🤖 AI Analysis & Action Items</h2><div style='line-height:1.7;color:#333'>{{ $json.ai_summary }}</div></div>{{ $json.raw_replies.length > 0 ? '<div style=\"background:#fff3e0;border-radius:10px;padding:20px;margin-bottom:25px\"><h2 style=\"margin:0 0 15px;color:#e65100\">📬 Recruiter Emails Detected (' + $json.raw_replies.length + ')</h2>' + $json.raw_replies.map((r,i) => '<div style=\"border:1px solid #ffe0b2;border-radius:8px;padding:12px;margin-bottom:10px;background:white\"><strong>' + r.from + '</strong><br><span style=\"color:#1565c0\">' + r.subject + '</span><br><small style=\"color:#666\">' + r.date + ' | Matched: ' + r.matched_job + '</small></div>').join('') + '</div>' : '<div style=\"background:#f3e5f5;border-radius:10px;padding:15px;margin-bottom:25px;text-align:center;color:#6a1b9a\">📭 No recruiter emails today — keep applying!</div>' }}<div style='background:#e8eaf6;border-radius:10px;padding:15px;text-align:center'><p style='margin:0;color:#3949ab'>View full application tracker: <a href=\"https://docs.google.com/spreadsheets/d/{{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}\" style='color:#1a237e;font-weight:bold'>Open Google Sheet</a></p></div></div></body></html>"
+      },
+      "id": "n-email-report",
+      "name": "📧 Send Daily Summary Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2540, 500],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "has-replies",
+              "leftValue":  "={{ $json.has_replies }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "n-has-replies",
+      "name": "Any Recruiter Replies?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2780, 500]
+    },
+    {
+      "parameters": {
+        "operation": "addLabel",
+        "messageId": "={{ $json.raw_replies[0]?.message_id }}",
+        "labelIds": ["STARRED"]
+      },
+      "id": "n-star-reply",
+      "name": "⭐ Star Recruiter Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [3020, 440],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } },
+      "notes": "Stars recruiter reply emails in Gmail for easy visibility."
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": { "value": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.SHEET_ID }}" },
+        "sheetName": { "value": "Applied Jobs" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_id":          "={{ $json.raw_replies[0]?.job_id || '' }}",
+            "recruiter_reply": "={{ $json.raw_replies[0]?.subject || '' }}",
+            "status":          "Recruiter Contacted",
+            "notes":           "={{ $json.raw_replies[0]?.body_snippet?.substring(0,200) || '' }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "n-update-reply",
+      "name": "Update Sheet: Recruiter Replied",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [3020, 560],
+      "credentials": { "googleSheetsOAuth2Api": { "id": "gs-cred", "name": "Google Sheets" } }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_EMAIL }}",
+        "toEmail":   "={{ $('⚙️ CONFIG — Edit Your Details Here').first().json.USER_EMAIL }}",
+        "subject":   "=⚠️ Job Hunter Error — {{ $now.format('yyyy-MM-dd') }}",
+        "message":   "=The daily job hunt workflow encountered an issue:\n\nWorkflow: Daily Job Hunter\nTime: {{ $now }}\nError: No job results returned from JSearch API.\n\nPossible causes:\n- JSearch API key is invalid or quota exceeded\n- Network timeout\n- Search terms too restrictive\n\nPlease check your n8n execution log for details.\nDirect link: http://localhost:5678/executions"
+      },
+      "id": "n-error-email",
+      "name": "📧 Error Notification Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [860, 500],
+      "credentials": { "gmailOAuth2": { "id": "gmail-cred", "name": "Gmail" } }
+    }
+  ],
+  "connections": {
+    "Daily 8AM Trigger": {
+      "main": [[
+        { "node": "⚙️ CONFIG — Edit Your Details Here", "type": "main", "index": 0 }
+      ]]
+    },
+    "⚙️ CONFIG — Edit Your Details Here": {
+      "main": [[
+        { "node": "🔍 JSearch API — Fetch Jobs",  "type": "main", "index": 0 },
+        { "node": "Get All Applied Jobs",          "type": "main", "index": 0 }
+      ]]
+    },
+    "🔍 JSearch API — Fetch Jobs": {
+      "main": [[
+        { "node": "Jobs Found?", "type": "main", "index": 0 }
+      ]]
+    },
+    "Jobs Found?": {
+      "main": [
+        [{ "node": "Parse & Flatten Job Data",  "type": "main", "index": 0 }],
+        [{ "node": "📧 Error Notification Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse & Flatten Job Data": {
+      "main": [[
+        { "node": "Already Applied? (Check Sheet)", "type": "main", "index": 0 }
+      ]]
+    },
+    "Already Applied? (Check Sheet)": {
+      "main": [[
+        { "node": "Skip If Already Applied", "type": "main", "index": 0 }
+      ]]
+    },
+    "Skip If Already Applied": {
+      "main": [
+        [{ "node": "🤖 AI Match Score (Groq Free)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "🤖 AI Match Score (Groq Free)": {
+      "main": [[
+        { "node": "Parse AI Score", "type": "main", "index": 0 }
+      ]]
+    },
+    "Parse AI Score": {
+      "main": [[
+        { "node": "Score >= 65?", "type": "main", "index": 0 }
+      ]]
+    },
+    "Score >= 65?": {
+      "main": [
+        [{ "node": "🤖 Generate Cover Letter (Groq)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "🤖 Generate Cover Letter (Groq)": {
+      "main": [[
+        { "node": "Merge Cover Letter + Job Data", "type": "main", "index": 0 }
+      ]]
+    },
+    "Merge Cover Letter + Job Data": {
+      "main": [[
+        { "node": "📊 Log to Google Sheet", "type": "main", "index": 0 }
+      ]]
+    },
+    "📊 Log to Google Sheet": {
+      "main": [[
+        { "node": "📧 Email: Application Package", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get All Applied Jobs": {
+      "main": [[
+        { "node": "📬 Read Gmail (Recruiter Emails)", "type": "main", "index": 0 }
+      ]]
+    },
+    "📬 Read Gmail (Recruiter Emails)": {
+      "main": [[
+        { "node": "Parse Recruiter Replies", "type": "main", "index": 0 }
+      ]]
+    },
+    "Parse Recruiter Replies": {
+      "main": [[
+        { "node": "🤖 AI Inbox Summary (Groq)", "type": "main", "index": 0 }
+      ]]
+    },
+    "🤖 AI Inbox Summary (Groq)": {
+      "main": [[
+        { "node": "Build Daily Report Data", "type": "main", "index": 0 }
+      ]]
+    },
+    "Build Daily Report Data": {
+      "main": [[
+        { "node": "📊 Log Daily Report to Sheet",  "type": "main", "index": 0 },
+        { "node": "📧 Send Daily Summary Email",   "type": "main", "index": 0 },
+        { "node": "Any Recruiter Replies?",         "type": "main", "index": 0 }
+      ]]
+    },
+    "📊 Log Daily Report to Sheet": { "main": [[]] },
+    "📧 Send Daily Summary Email":  { "main": [[]] },
+    "Any Recruiter Replies?": {
+      "main": [
+        [
+          { "node": "⭐ Star Recruiter Emails",           "type": "main", "index": 0 },
+          { "node": "Update Sheet: Recruiter Replied",    "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

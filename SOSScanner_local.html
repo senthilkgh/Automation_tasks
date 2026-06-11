@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SOSScan - Red Hat SOS Report Analyzer</title>
+<style>
+/* ================================================================
+   SOSScan v4  --  VIVID BLUE-INDIGO PALETTE
+   Background: rich cobalt-blue to deep indigo gradient (NOT black)
+   Surfaces: mid-blue panels with clear contrast
+   Accents: electric cyan, neon mint, hot amber, coral
+   Text: bright near-white, clearly readable on all backgrounds
+================================================================ */
+:root{
+  --bg:#0a1628;
+  --sf:#132040;
+  --sf2:#192b55;
+  --sf3:#1f3468;
+  --bd:#2e4f9a;
+  --bd2:#4a6fc8;
+
+  --ac:#00d9ff;
+  --ac2:#7c3aed;
+  --ac3:#00ffc3;
+  --ac4:#ff6b2b;
+  --pink:#f43f7e;
+
+  --cr:#f43f5e;
+  --wa:#f59e0b;
+  --ok:#10d98a;
+  --info:#38bdf8;
+
+  --tx:#f0f7ff;
+  --tx2:#b8d4f0;
+  --mu:#6b9fd4;
+
+  --fn:'Segoe UI',system-ui,sans-serif;
+  --mo:'Cascadia Code','Fira Code',Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 0%,   #1a3a8f 0%,  transparent 55%),
+    radial-gradient(ellipse 80%  70% at 80% 10%,  #3b1fa8 0%,  transparent 50%),
+    radial-gradient(ellipse 60%  50% at 50% 100%, #0e2d6b 0%,  transparent 60%),
+    linear-gradient(160deg, #07122b 0%, #0d1e4a 35%, #111560 65%, #0c1535 100%);
+  background-attachment:fixed;
+  color:var(--tx);
+  font-family:var(--fn);
+  font-size:14px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* Animated particle canvas */
+#bg-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;opacity:.7;
+}
+
+/* Screens */
+#scr-upload,#scr-progress{
+  display:none;min-height:100vh;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;gap:28px;position:relative;z-index:1;
+}
+#scr-upload.on,#scr-progress.on{display:flex}
+#scr-report{display:none;position:relative;z-index:1}
+#scr-report.on{display:block}
+
+/* ── Upload screen ── */
+.brand-wrap{text-align:center}
+.brand-name{
+  font-size:56px;font-weight:900;letter-spacing:-3px;
+  background:linear-gradient(135deg,#00d9ff 0%,#a78bfa 45%,#00ffc3 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 24px rgba(0,217,255,.5));
+}
+.brand-rh{
+  font-size:11px;font-weight:700;letter-spacing:3.5px;color:#fb923c;
+  text-transform:uppercase;margin-top:6px;
+  text-shadow:0 0 14px rgba(251,146,60,.7);
+}
+.brand-sub{font-size:13px;color:var(--mu);margin-top:8px;max-width:480px;text-align:center}
+
+.drop-zone{
+  width:100%;max-width:540px;
+  border:2px dashed rgba(0,217,255,.45);border-radius:20px;
+  padding:50px 34px;text-align:center;cursor:pointer;
+  transition:all .35s;
+  background:rgba(19,32,64,.75);
+  backdrop-filter:blur(20px);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 0 0 1px rgba(0,217,255,.06);
+  position:relative;overflow:hidden;
+}
+.drop-zone::before{
+  content:'';position:absolute;inset:0;border-radius:18px;
+  background:radial-gradient(ellipse at 50% -20%,rgba(0,217,255,.18) 0%,transparent 65%);
+  opacity:0;transition:opacity .4s;
+}
+.drop-zone:hover::before,.drop-zone.drag::before{opacity:1}
+.drop-zone:hover,.drop-zone.drag{
+  border-color:#00d9ff;
+  box-shadow:0 16px 56px rgba(0,217,255,.3),inset 0 1px 0 rgba(255,255,255,.12);
+  transform:translateY(-4px);
+}
+#file-input{display:none}
+.drop-icon{margin-bottom:20px}
+.drop-icon svg{animation:float 3.5s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(0,217,255,.8))}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-12px) rotate(2deg)}
+}
+.drop-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--tx)}
+.drop-sub{font-size:13px;color:var(--mu)}
+.btn-browse{
+  display:inline-block;padding:13px 38px;
+  background:linear-gradient(135deg,#00d9ff,#7c3aed);
+  color:#fff;border-radius:12px;font-size:15px;font-weight:800;
+  cursor:pointer;border:none;transition:all .25s;margin-top:22px;
+  letter-spacing:.5px;
+  box-shadow:0 4px 24px rgba(0,217,255,.4),0 0 0 0 rgba(0,217,255,.3);
+}
+.btn-browse:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 44px rgba(0,217,255,.5);
+  background:linear-gradient(135deg,#2de8ff,#9d5cf6);
+}
+.btn-browse:disabled{opacity:.2;cursor:not-allowed;transform:none;box-shadow:none}
+
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;width:100%;max-width:660px}
+.feat{
+  background:rgba(19,32,64,.85);
+  border:1px solid rgba(46,79,154,.8);border-radius:14px;padding:16px;
+  font-size:12px;transition:all .25s;cursor:default;
+  box-shadow:0 2px 12px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  position:relative;overflow:hidden;
+}
+.feat::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#00d9ff,transparent);
+  opacity:0;transition:opacity .3s;
+}
+.feat:hover{
+  border-color:rgba(0,217,255,.55);transform:translateY(-3px);
+  box-shadow:0 10px 32px rgba(0,217,255,.2);background:rgba(25,43,85,.9);
+}
+.feat:hover::after{opacity:1}
+.feat-ico{font-size:22px;margin-bottom:7px}
+.feat-t{font-weight:700;margin-bottom:2px;color:var(--tx)}
+.feat-s{color:var(--mu);font-size:11px}
+
+#status-row{font-size:12px;color:var(--mu);display:flex;align-items:center;gap:8px}
+.spin{
+  width:14px;height:14px;
+  border:2px solid rgba(46,79,154,.5);border-top-color:#00d9ff;
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Progress ── */
+.prog-hero{text-align:center}
+.prog-title{
+  font-size:24px;font-weight:800;margin-bottom:8px;
+  background:linear-gradient(135deg,#00d9ff,#00ffc3);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.prog-step{font-size:13px;color:var(--mu);min-height:22px}
+.prog-wrap{
+  width:100%;max-width:460px;
+  background:rgba(19,32,64,.8);border-radius:99px;height:7px;
+  border:1px solid rgba(46,79,154,.5);overflow:hidden;
+}
+.prog-bar{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,#00d9ff,#00ffc3);
+  transition:width .5s ease;width:0%;
+  box-shadow:0 0 18px rgba(0,217,255,.7);
+}
+.log-con{
+  width:100%;max-width:560px;
+  background:rgba(7,18,43,.92);border:1px solid rgba(46,79,154,.6);
+  border-radius:12px;padding:16px;font-family:var(--mo);font-size:11px;
+  max-height:200px;overflow-y:auto;color:var(--mu);
+  backdrop-filter:blur(12px);
+}
+.err-box{
+  background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.45);
+  border-radius:12px;padding:14px 18px;width:100%;max-width:560px;
+  color:#fb7185;font-size:13px;display:none;
+}
+
+/* ── Report shell ── */
+.shell{display:grid;grid-template-columns:226px 1fr;min-height:100vh}
+
+.sidebar{
+  background:rgba(9,18,46,.97);
+  border-right:1px solid rgba(46,79,154,.7);
+  padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;
+  backdrop-filter:blur(20px);
+  box-shadow:4px 0 28px rgba(0,0,0,.45);
+}
+.main{
+  padding:32px 38px;max-width:1120px;
+  background:transparent;
+}
+.logo{
+  font-size:18px;font-weight:900;margin-bottom:3px;
+  background:linear-gradient(135deg,#00d9ff,#00ffc3);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.logo-rh{
+  font-size:9px;letter-spacing:2px;color:#fb923c;
+  text-transform:uppercase;font-weight:700;margin-bottom:22px;
+  text-shadow:0 0 12px rgba(251,146,60,.6);
+}
+.nav-g{margin-bottom:20px}
+.nav-l{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(107,159,212,.5);margin-bottom:8px}
+.nav-a{
+  display:flex;align-items:center;gap:8px;padding:8px 11px;
+  border-radius:9px;color:var(--mu);font-size:12px;cursor:pointer;
+  transition:all .18s;text-decoration:none;border:1px solid transparent;
+}
+.nav-a:hover,.nav-a.on{
+  background:rgba(0,217,255,.1);color:#00d9ff;
+  border-color:rgba(0,217,255,.28);
+  box-shadow:0 2px 14px rgba(0,217,255,.12);
+}
+.nav-ico{width:15px;text-align:center;font-size:13px}
+.btn-new{
+  width:100%;margin-top:20px;padding:9px;
+  background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.35);
+  border-radius:9px;color:#fb923c;font-size:12px;cursor:pointer;
+  transition:all .18s;font-weight:600;
+}
+.btn-new:hover{background:rgba(251,146,60,.22);border-color:#fb923c}
+
+/* ── Sections ── */
+section{margin-bottom:48px;scroll-margin-top:30px;animation:fadeUp .45s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.sec-header{
+  display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  padding-bottom:12px;border-bottom:1px solid rgba(46,79,154,.5);
+  position:relative;
+}
+.sec-header::after{
+  content:'';position:absolute;bottom:-1px;left:0;width:72px;height:2px;
+  background:linear-gradient(90deg,#00d9ff,transparent);border-radius:99px;
+}
+.sec-icon{
+  width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
+}
+.si-cyan  {background:rgba(0,217,255,.18);border:1px solid rgba(0,217,255,.4)}
+.si-violet{background:rgba(124,58,237,.18);border:1px solid rgba(124,58,237,.4)}
+.si-orange{background:rgba(255,107,43,.18);border:1px solid rgba(255,107,43,.4)}
+.si-green {background:rgba(16,217,138,.18);border:1px solid rgba(16,217,138,.4)}
+.si-pink  {background:rgba(244,63,126,.18);border:1px solid rgba(244,63,126,.4)}
+.si-red   {background:rgba(244,63,94,.18); border:1px solid rgba(244,63,94,.4)}
+
+h1{font-size:26px;font-weight:800;margin-bottom:5px;color:var(--tx)}
+h1 span{
+  background:linear-gradient(135deg,#00d9ff,#00ffc3);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+h2{font-size:16px;font-weight:700;color:var(--tx)}
+h3{font-size:11px;font-weight:700;margin-bottom:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px}
+
+.meta{
+  color:var(--tx2);font-size:13px;margin-bottom:26px;line-height:2.1;
+  background:rgba(0,217,255,.06);
+  border:1px solid rgba(46,79,154,.65);border-radius:12px;padding:14px 18px;
+  box-shadow:0 2px 16px rgba(0,0,0,.25);
+}
+.meta strong{color:#00d9ff;font-weight:600}
+
+/* ── Summary bar ── */
+.sumbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:13px;margin-bottom:28px}
+.sumc{
+  border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:11px;
+  border:1px solid;transition:all .2s;cursor:default;
+  position:relative;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+}
+.sumc::before{
+  content:'';position:absolute;top:-15px;right:-15px;width:70px;height:70px;
+  border-radius:50%;opacity:.2;filter:blur(20px);
+}
+.sumc-cr{background:rgba(244,63,94,.14);border-color:rgba(244,63,94,.45)}.sumc-cr::before{background:#f43f5e}
+.sumc-wa{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.45)}.sumc-wa::before{background:#f59e0b}
+.sumc-ok{background:rgba(16,217,138,.12);border-color:rgba(16,217,138,.45)}.sumc-ok::before{background:#10d98a}
+.sumc-ac{background:rgba(0,217,255,.12);border-color:rgba(0,217,255,.45)}.sumc-ac::before{background:#00d9ff}
+.sumc-vi{background:rgba(124,58,237,.14);border-color:rgba(124,58,237,.45)}.sumc-vi::before{background:#7c3aed}
+.sumn{font-size:30px;font-weight:900;line-height:1}
+.suml{font-size:11px;color:var(--tx2);opacity:.8}
+
+/* ── Cards ── */
+.cardg{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:13px;margin-bottom:18px}
+.card{
+  background:rgba(19,32,64,.85);
+  border:1px solid rgba(46,79,154,.7);border-radius:13px;padding:16px;
+  transition:all .22s;position:relative;overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,217,255,.6),transparent);
+}
+.card:hover{
+  border-color:rgba(0,217,255,.5);transform:translateY(-3px);
+  box-shadow:0 10px 32px rgba(0,217,255,.18);
+  background:rgba(25,43,85,.9);
+}
+.cl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.cv{font-size:21px;font-weight:800;line-height:1.2;color:var(--tx)}
+.cs{font-size:11px;color:var(--mu);margin-top:3px}
+
+/* ── Gauges ── */
+.gauge{margin-bottom:16px}
+.gl{display:flex;justify-content:space-between;font-size:12px;color:var(--tx2);margin-bottom:6px}
+.gl span:last-child{font-weight:700}
+.gt{
+  background:rgba(19,32,64,.9);border-radius:99px;height:9px;overflow:hidden;
+  border:1px solid rgba(46,79,154,.4);
+}
+.gf{
+  height:100%;border-radius:99px;
+  transition:width .9s cubic-bezier(.4,0,.2,1);position:relative;
+}
+.gf::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:28px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4));
+}
+.g-ok {background:linear-gradient(90deg,#00a86b,#10d98a);box-shadow:0 0 12px rgba(16,217,138,.55)}
+.g-wa {background:linear-gradient(90deg,#b45309,#f59e0b);box-shadow:0 0 12px rgba(245,158,11,.55)}
+.g-cr {background:linear-gradient(90deg,#be123c,#f43f5e);box-shadow:0 0 12px rgba(244,63,94,.55);animation:pulse-bar 2s ease infinite}
+@keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── Findings ── */
+.finding{
+  background:rgba(19,32,64,.8);
+  border:1px solid rgba(46,79,154,.6);border-radius:13px;
+  padding:17px 20px;margin-bottom:13px;
+  border-left:4px solid transparent;transition:all .22s;
+  position:relative;overflow:hidden;
+  box-shadow:0 3px 16px rgba(0,0,0,.3);
+}
+.finding::before{content:'';position:absolute;top:0;right:0;width:120px;height:100%;opacity:.05}
+.f-cr{border-left-color:#f43f5e;box-shadow:0 3px 16px rgba(244,63,94,.12)}.f-cr::before{background:linear-gradient(270deg,#f43f5e,transparent)}
+.f-wa{border-left-color:#f59e0b;box-shadow:0 3px 16px rgba(245,158,11,.1)}.f-wa::before{background:linear-gradient(270deg,#f59e0b,transparent)}
+.f-ok{border-left-color:#10d98a}.f-ok::before{background:linear-gradient(270deg,#10d98a,transparent)}
+.finding:hover{transform:translateX(5px);border-color:rgba(74,111,200,.8)}
+.f-hd{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.pill{font-size:9px;font-weight:800;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.7px}
+.p-CRITICAL{
+  background:rgba(244,63,94,.22);color:#fb7185;
+  border:1px solid rgba(244,63,94,.5);
+  animation:pulse-pill 2s infinite;
+}
+@keyframes pulse-pill{
+  0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.5)}
+  60%{box-shadow:0 0 0 5px rgba(244,63,94,0)}
+}
+.p-WARNING{background:rgba(245,158,11,.18);color:#fcd34d;border:1px solid rgba(245,158,11,.4)}
+.p-INFO   {background:rgba(16,217,138,.12);color:#6ee7b7;border:1px solid rgba(16,217,138,.35)}
+.ctag{font-size:10px;color:var(--tx2);background:rgba(46,79,154,.35);padding:2px 9px;border-radius:99px;border:1px solid rgba(46,79,154,.6)}
+.f-ti{font-size:13px;font-weight:700;color:var(--tx);line-height:1.4}
+.f-de{font-size:12px;color:var(--tx2);margin:7px 0 11px;line-height:1.65}
+.f-re{
+  background:rgba(7,18,43,.8);border-radius:9px;padding:13px 16px;
+  border:1px solid rgba(0,217,255,.2);
+}
+.rl{font-size:9px;font-weight:700;color:#00d9ff;text-transform:uppercase;letter-spacing:1.1px;margin-bottom:7px}
+.rb{font-family:var(--mo);font-size:11px;white-space:pre-wrap;line-height:1.85;color:#93c5fd}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;margin-bottom:20px;border-radius:11px;border:1px solid rgba(46,79,154,.55)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{
+  background:rgba(0,217,255,.1);
+  color:#00d9ff;text-transform:uppercase;font-size:9px;letter-spacing:1px;
+  padding:10px 13px;text-align:left;border-bottom:1px solid rgba(46,79,154,.6);font-weight:700;
+}
+td{padding:9px 13px;border-bottom:1px solid rgba(46,79,154,.3);font-family:var(--mo);color:var(--tx2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,217,255,.06)}
+.tw2{color:#fcd34d;font-weight:700}.tc2{color:#fb7185;font-weight:700}.tok{color:#6ee7b7}
+
+/* ── Log terminal ── */
+.logb{
+  background:rgba(5,12,30,.95);
+  border:1px solid rgba(46,79,154,.6);border-radius:12px;overflow:hidden;
+  box-shadow:0 6px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(0,217,255,.06);
+}
+.log-topbar{
+  background:linear-gradient(90deg,rgba(0,217,255,.12),rgba(124,58,237,.08));
+  padding:9px 16px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid rgba(46,79,154,.5);
+}
+.log-dot{width:11px;height:11px;border-radius:50%}
+.log-content{
+  padding:14px 16px;max-height:300px;overflow-y:auto;
+  font-family:var(--mo);font-size:11px;line-height:1.75;
+}
+.ll{word-break:break-all;padding:2px 0;animation:logIn .18s ease both}
+@keyframes logIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.le{color:#f87171}
+.lw{color:#fbbf24}
+.lo{color:#f43f5e;font-weight:700;text-shadow:0 0 10px rgba(244,63,94,.6)}
+.ln{color:#475d8a}
+.okmsg{color:#34d399;font-style:italic}
+
+/* ── Donut charts ── */
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px}
+.donut-wrap{
+  background:rgba(19,32,64,.85);
+  border:1px solid rgba(46,79,154,.65);border-radius:14px;padding:18px;text-align:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  transition:all .22s;
+}
+.donut-wrap:hover{border-color:rgba(0,217,255,.4);box-shadow:0 8px 32px rgba(0,217,255,.14)}
+.donut-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;font-weight:700}
+.donut-sub{font-size:10px;color:var(--mu);margin-top:4px}
+
+/* ── Network cards ── */
+.iface-card{
+  background:rgba(19,32,64,.85);
+  border:1px solid rgba(46,79,154,.65);border-radius:13px;
+  padding:14px 18px;margin-bottom:11px;display:flex;align-items:center;gap:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);transition:all .2s;
+}
+.iface-card:hover{border-color:rgba(0,217,255,.4);box-shadow:0 6px 24px rgba(0,217,255,.12)}
+.iface-led{
+  width:11px;height:11px;border-radius:50%;background:#10d98a;
+  box-shadow:0 0 12px #10d98a,0 0 22px rgba(16,217,138,.35);
+  flex-shrink:0;animation:led-pulse 2.5s ease infinite;
+}
+@keyframes led-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.iface-name{font-weight:700;font-size:13px;color:#00d9ff;min-width:72px;font-family:var(--mo)}
+.iface-info{font-size:12px;color:var(--mu)}
+.iface-addr{font-family:var(--mo);color:var(--tx);font-size:12px}
+.iface-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;letter-spacing:.5px}
+.itag-lo{background:rgba(107,159,212,.14);color:var(--mu)}
+.itag-up{background:rgba(16,217,138,.18);color:#34d399}
+
+/* ── Disk cards ── */
+.disk-card{
+  background:rgba(19,32,64,.85);
+  border:1px solid rgba(46,79,154,.65);border-radius:13px;
+  padding:16px 18px;margin-bottom:11px;transition:all .22s;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+}
+.disk-card:hover{border-color:rgba(0,217,255,.45);box-shadow:0 8px 28px rgba(0,217,255,.15)}
+.disk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.disk-mount{font-weight:700;font-size:14px;color:#00d9ff;font-family:var(--mo)}
+.disk-fs{font-size:11px;color:var(--mu);margin-top:2px}
+.disk-pct{font-size:22px;font-weight:900}
+.disk-info{display:flex;gap:18px;font-size:11px;color:var(--mu);margin-top:10px}
+.disk-info span strong{color:var(--tx)}
+
+/* ── Process bars ── */
+.proc-row{
+  display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid rgba(46,79,154,.28);
+}
+.proc-row:last-child{border-bottom:none}
+.proc-cmd{font-family:var(--mo);font-size:11px;color:var(--tx2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proc-user{font-size:10px;color:var(--mu);min-width:62px}
+.proc-pct{font-size:12px;font-weight:700;min-width:44px;text-align:right}
+.proc-bar-wrap{width:82px;background:rgba(19,32,64,.9);border-radius:99px;height:5px;flex-shrink:0;border:1px solid rgba(46,79,154,.3)}
+.proc-bar{height:5px;border-radius:99px}
+
+/* ── Badge ── */
+.rh-badge{
+  display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:7px;
+  font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:18px;
+}
+.rh-badge-info{
+  background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.35);color:#00d9ff;
+  box-shadow:0 0 16px rgba(0,217,255,.15);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:rgba(7,18,43,.5)}
+::-webkit-scrollbar-thumb{background:rgba(46,79,154,.7);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#00d9ff}
+
+/* ── Footer ── */
+.footer{
+  margin-top:52px;padding-top:18px;border-top:1px solid rgba(46,79,154,.45);
+  font-size:11px;color:var(--mu);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+}
+.footer-badge{
+  background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.4);
+  color:#fb923c;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700;
+}
+
+@media(max-width:720px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:18px}
+}
+</style>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- UPLOAD SCREEN -->
+<div id="scr-upload" class="on">
+  <div class="brand-wrap">
+    <div class="brand-name">SOSScan</div>
+    <div class="brand-rh">Red Hat SOS Report Analyzer</div>
+    <div class="brand-sub">Deep system analysis &mdash; runs entirely in your browser, no data leaves your machine</div>
+  </div>
+  <div class="drop-zone" id="drop-zone">
+    <div class="drop-icon">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="64" height="64" rx="16" fill="rgba(0,212,255,0.1)"/>
+        <path d="M32 12L44 24H36V40H28V24H20L32 12Z" fill="#00d4ff"/>
+        <rect x="16" y="44" width="32" height="6" rx="3" fill="#00d4ff" opacity=".5"/>
+      </svg>
+    </div>
+    <div class="drop-title">Drop your sosreport archive</div>
+    <div class="drop-sub">Accepts <strong>.tar.xz</strong> &mdash; RHEL, CentOS, Fedora sosreports</div>
+    <label for="file-input" class="btn-browse" id="browse-lbl" style="opacity:.25;pointer-events:none;display:inline-block">Browse File</label>
+  <input type="file" id="file-input" accept=".xz,.bz2,.gz" style="display:none">
+  </div>
+  <div class="feats">
+    <div class="feat"><div class="feat-ico">&#9881;</div><div class="feat-t">CPU &amp; Load</div><div class="feat-s">Saturation, IRQ, schedstat</div></div>
+    <div class="feat"><div class="feat-ico">&#129504;</div><div class="feat-t">Memory</div><div class="feat-s">RAM, Huge Pages, Numa, OOM</div></div>
+    <div class="feat"><div class="feat-ico">&#128190;</div><div class="feat-t">Disk &amp; I/O</div><div class="feat-s">LVM, SMART, I/O wait, blkdev</div></div>
+    <div class="feat"><div class="feat-ico">&#127760;</div><div class="feat-t">Network</div><div class="feat-s">Interfaces, bonds, routes, drops</div></div>
+    <div class="feat"><div class="feat-ico">&#128196;</div><div class="feat-t">Logs</div><div class="feat-s">Messages, dmesg, journal, audit</div></div>
+    <div class="feat"><div class="feat-ico">&#128272;</div><div class="feat-t">SELinux</div><div class="feat-s">AVC denials, policy state</div></div>
+    <div class="feat"><div class="feat-ico">&#128295;</div><div class="feat-t">Services</div><div class="feat-s">systemd, cron, tuned, rpm</div></div>
+    <div class="feat"><div class="feat-ico">&#128200;</div><div class="feat-t">Red Hat</div><div class="feat-s">Subscription, insights, sosreport version</div></div>
+  </div>
+  <div id="status-row"><div class="spin" id="spin"></div><span id="st">Loading XZ engine&#8230;</span></div>
+</div>
+
+<!-- PROGRESS SCREEN -->
+<div id="scr-progress">
+  <div class="prog-hero">
+    <div class="prog-title">Analyzing SOS Report</div>
+    <div class="prog-step" id="prog-step">Starting&#8230;</div>
+  </div>
+  <div class="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+  <div class="log-con" id="log-con"></div>
+  <div class="err-box" id="err-box"></div>
+</div>
+
+<!-- REPORT SCREEN -->
+<div id="scr-report">
+  <div class="shell">
+    <nav class="sidebar">
+      <div class="logo">SOSScan</div>
+      <div class="logo-rh">Red Hat Analyzer</div>
+      <div class="nav-g">
+        <div class="nav-l">Report</div>
+        <a class="nav-a on" onclick="go('s-ov',this)"><span class="nav-ico">&#128203;</span>Overview</a>
+        <a class="nav-a" onclick="go('s-fi',this)"><span class="nav-ico">&#128270;</span>Findings</a>
+      </div>
+      <div class="nav-g">
+        <div class="nav-l">Resources</div>
+        <a class="nav-a" onclick="go('s-cpu',this)"><span class="nav-ico">&#9881;</span>CPU &amp; Load</a>
+        <a class="nav-a" onclick="go('s-mem',this)"><span class="nav-ico">&#129504;</span>Memory</a>
+        <a class="nav-a" onclick="go('s-dsk',this)"><span class="nav-ico">&#128190;</span>Disk &amp; I/O</a>
+        <a class="nav-a" onclick="go('s-net',this)"><span class="nav-ico">&#127760;</span>Network</a>
+        <a class="nav-a" onclick="go('s-ps',this)"><span class="nav-ico">&#128202;</span>Processes</a>
+        <a class="nav-a" onclick="go('s-rh',this)"><span class="nav-ico">&#128200;</span>Red Hat Info</a>
+      </div>
+      <div class="nav-g">
+        <div class="nav-l">Logs</div>
+        <a class="nav-a" onclick="go('s-sl',this)"><span class="nav-ico">&#128196;</span>Syslog</a>
+        <a class="nav-a" onclick="go('s-dm',this)"><span class="nav-ico">&#128039;</span>Kernel/dmesg</a>
+        <a class="nav-a" onclick="go('s-sv',this)"><span class="nav-ico">&#128295;</span>Services</a>
+        <a class="nav-a" onclick="go('s-se',this)"><span class="nav-ico">&#128272;</span>SELinux</a>
+        <a class="nav-a" onclick="go('s-oo',this)"><span class="nav-ico">&#128165;</span>OOM &amp; Segfaults</a>
+      </div>
+      <button class="btn-new" onclick="resetApp()">&#8617; New Analysis</button>
+    </nav>
+    <div class="main" id="report-body"></div>
+  </div>
+</div>
+
+<script>
+
+/*!
+ * Based on xzwasm (c) Steve Sanderson. License: MIT - https://github.com/SteveSanderson/xzwasm
+ * Contains xz-embedded by Lasse Collin and Igor Pavlov. License: Public domain - https://tukaani.org/xz/embedded.html
+ * and walloc (c) 2020 Igalia, S.L. License: MIT - https://github.com/wingo/walloc
+ */
+window.__XZ_LIB=(A=>(()=>{"use strict";var I=[,A=>{A.exports="data:application/wasm;base64,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IgENAAsLIAJCf4UL1RACDH8CfgJAAkAgACgCJEUNACAAKAIAIQIMAQtBACECIABBADoAKCAAQgA3AwAgAEIANwMYIABByABqQQBB5AAQhoCAgAAaIABBrAFqQQw2AgALIAAgASgCBCIDNgIQIABBsAFqIQQgAEHgAGohBSAAQcgAaiEGIABBtgFqIQcgAEGoAWohCCABKAIQIQkCQAJAAkACQANAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAIAIOCgECAAQFBgcICQoPCyABKAIAIQogACgCqAEhAiAAKAKsASELIAEoAgQhDCABKAIIIQ0MAgsgCCAAKAKoASIMakEIaiABKAIAIAEoAgQiAmogASgCCCACayICIAAoAqwBIAxrIgwgAiAMSRsiAhCHgICAABogASABKAIEIAJqNgIEQQAhDCAAQQAgACgCqAEgAmoiAiACIAAoAqwBIgtGGzYCqAEgAiALRw0RIABBATYCAAJAIARBqIiAgABBBhCEgICAAEUNAEEFIQwMEgsgB0ECQQAQjYCAgAAgACgAuAFHDRBBBiEMIActAAANESAAIAAtALcBIgI2AiAgAkEESw0RQQEgAnRBE3FFDRELIAEoAgQiDCABKAIIIg1GDQ4CQCABKAIAIgogDGotAAAiCw0AIAAgDDYCECABIAxBAWo2AgRBBiECDAwLQQAhAiAAQQA2AqgBIABBAjYCACAAIAtBAnRBBGoiCzYCrAEgACALNgJACyAIIAJqQQhqIAogDGogDSAMayIMIAsgAmsiAiAMIAJJGyICEIeAgIAAGiABIAIgASgCBGo2AgRBACEMIABBACAAKAKoASACaiICIAIgACgCrAEiC0YbNgKoASACIAtHDQ8gACACQXxqIgI2AqwBQQchDCAEIAJBABCNgICAACAAIAAoAqwBIgtqQbABaigAAEcNDyAAQQI2AqgBIAAtALEBIgJBP3ENDAJAAkAgAkHAAHFFDQAgACAEIAggCxCRgICAAEEBRw0RIAAgACkDCDcDMCAALQCxASECDAELIABCfzcDMAtCfyEOAkAgAkEYdEEYdUF/Sg0AIAAgBCAIIAAoAqwBEJGAgIAAQQFHDRAgACkDCCEOCyAAIA43AzggACgCrAEiDSAAKAKoASICa0ECSQ0PIAAgAkEBaiIKNgKoASAIIAJqQQhq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IgM2AhAgACAOQQh0IAAoAgwgCWotAAByIg42AgQgAyEJCwJAAkAgDiALQQt2IA8vAQAiCmwiA08iEg0AIAAgAzYCACAKQYAQIAprQQV2aiEKDAELIAAgDiADayIONgIEIAAgCyADayIDNgIAIAogCkEFdmshCkEAIQ0LIA8gCjsBACANIBFzIQ0gBEEBdCASciIEQYACSQ0ACwsgACACQQFqNgIgIAAoAhggAmogBDoAAAJAIAAoAiQgACgCICICTw0AIAAgAjYCJAtBACEDAkAgACgCZCIEQQRJDQACQCAEQQlLDQAgBEF9aiEDDAELIARBemohAwsgACADNgJkDAELIAAgDiADayIONgIEIAAgBCADayIDNgIAIA0gDyAPQQV2azsBACAAIApBAXRqIg9B+ANqIQQCQAJAIANB////B00NACAJIQoMAQsgACADQQh0IgM2AgAgACAJQQFqIgo2AhAgACAOQQh0IAAoAgwgCWotAAByIg42AgQLAkACQCAOIANBC3YgBC8BACINbCIJSQ0AIAAgDiAJayIONgIEIAAgAyAJayIDNgIAIAQgDSANQQV2azsBACAPQZAEaiENAkACQCADQf///wdNDQAgCiEQDAELIAAgA0EIdCIDNgIAIAAgCkEBaiIQNgIQIAAgDkEIdCAAKAIMIApqLQAAciIONgIECwJAAkAgDiADQQt2IA0vAQAiCWwiBE8NACANIAlBgBAgCWtBBXZqOwEAIAxB2ARqIQMCQCAEQf///wdLDQAgACAEQQh0IgQ2AgAgACAQQQFqNgIQIAAgDkEIdCAAKAIMIBBqLQAAciIONgIECwJAIA4gBEELdiADLwEAIg1sIglJDQAgACAOIAlrNgIEIAAgBCAJazYCACADIA0gDUEFdms7AQAMAgsgAyANQYAQIA1rQQV2ajsBACAAIAk2AgAgAEEBNgJoIABBCUELIAAoAmRBB0kbNgJkDAMLIAAgDiAEayIONgIEIA0gCSAJQQV2azsBACAPQagEaiENAkACQCADIARrIgNB////B00NACAQIQoMAQsgACADQQh0IgM2AgAgACAQQQFqIgo2AhAgACAOQQh0IAAoAgwgEGotAAByIg42AgQLAkACQCAOIANBC3YgDS8BACIEbCIJTw0AIAAgCTYCACANIARBgBAgBGtBBXZqOwEAIAAoAlghAwwBCyAAIA4gCWsiDjYCBCANIAQgBEEFdms7AQAgD0HABGohBAJAIAMgCWsiA0H///8HSw0AIAAgA0EIdCIDNgIAIAAgCkEBajYCECAAIA5BCHQgACgCDCAKai0AAHIiDjYCBAsCQAJAIA4gA0ELdiAELwEAIg1sIglPDQAgACAJNgIAIAQgDUGAECANa0EFdmo7AQAgACgCXCEDDAELIAAgDiAJazYCBCAAIAMgCWs2AgAgACgCYCEDIAAgACgCXDYCYCAEIA0gDUEFdms7AQALIAAgACgCWDYCXAsgACAAKAJUNgJYIAAgAzYCVAsgAEEIQQsgACgCZEEHSRs2AmQgACAHIAsQn4CAgAAMAQsgBCANQYAQIA1rQQV2ajsBACAAIAk2AgAgACAAKAJcNgJgIAAgACkCVDcCWCAAQQdBCiAAKAJkQQdJGzYCZCAAIAUgCxCfgICAACAAKAJoIgNBfmpBAyADQQZJGyEKIAAoAgAhA0EBIQ4DQCAAIApBB3RqIA5BAXQiDmpB2AdqIQ0CQAJAIANBgICACEkNACAAKAIEIQQMAQsgACADQQh0IgM2AgAgACAAKAIQIgRBAWo2AhAgACAAKAIEQQh0IAQgACgCDGotAAByIgQ2AgQLAkACQCAEIANBC3YgDS8BACIJbCIPSQ0AIAAgBCAPayIENgIEIAAgAyAPayIDNgIAIA0gCSAJQQV2azsBACAOQQFyIQ4MAQsgACAPNgIAIA0gCUGAECAJa0EFdmo7AQAgDyEDCyAOQcAASQ0ACwJAIA5BQGoiCUEDSw0AIAAgCTYCVAwBCyAAIA5BAXFBAnIiDTYCVCAJQQF2IQ8CQCAJQQ1LDQAgACANIA9Bf2oiDHQiCzYCVEEBIQ0gCCALQQF0akGEC2ohEEE/IA5rIRFBACEPA0AgECARIA1qQQF0aiEOAkACQCADQf///wdNDQAgAyEKDAELIAAgA0EIdCIKNgIAIAAgACgCECIDQQFqNgIQIAAgBEEIdCADIAAoAgxqLQAAciIENgIECwJAAkAgBCAKQQt2IA4vAQAiCWwiA0kNACAAIAQgA2siBDYCBCAAIAogA2siAzYCACAOIAkgCUEFdms7AQAgAEEBIA90IAtqIgs2AlQgDUEBdEEBciENDAELIAAgAzYCACAOIAlBgBAgCWtBBXZqOwEAIA1BAXQhDQsgDCAPQQFqIg9HDQAMAgsLIA9Be2ohDgNAAkAgA0H///8HSw0AIAAgA0EIdCIDNgIAIAAgACgCECIJQQFqNgIQIARBCHQgCSAAKAIMai0AAHIhBAsgACADQQF2IgM2AgAgACAEIANrIgRBH3UiCSANQQF0akEBaiINNgJUIAAgCSADcSAEaiIENgIEIA5Bf2oiDg0ACyAAIA1BBHQiCzYCVEEAIQ9BASEOA0AgACAOQQF0Ig5qQbwNaiENAkACQCADQf///wdNDQAgAyEKDAELIAAgA0EIdCIKNgIAIAAgACgCECIDQQFqNgIQIAAgBEEIdCADIAAoAgxqLQAAciIENgIECwJAAkAgBCAKQQt2IA0vAQAiCWwiA0kNACAAIAQgA2siBDYCBCAAIAogA2siAzYCACANIAkgCUEFdms7AQAgAEEBIA90IAtqIgs2AlQgDkEBciEODAELIAAgAzYCACANIAlBgBAgCWtBBXZqOwEACyAPQQFqIg9BBEcNAAsLAkAgASAGIAAoAlQQnoCAgAANAEEADwsgACgCICECCyACIAAoAihJDQALC0EBIQMCQCAAKAIAIgRB////B0sNACAAIARBCHQ2AgBBASEDIAAgACgCECIEQQFqNgIQIAAgACgCBEEIdCAEIAAoAgxqLQAAcjYCBAsgAwtwAQF/AkBBqN4BEICAgIAAIgJFDQAgAkE0aiABNgIAIAJBPGogADYCAAJAAkACQCAAQX9qDgIAAQILIAIgARCAgICAACIANgIYIAANASACEIKAgIAADAILIAJBADYCGCACQThqQQA2AgALIAIPC0EAC9IBAQJ/QQYhAgJAIAFBJ0sNACAAQTBqIAFBAXFBAnIgAUEBdkELanQiATYCAAJAAkAgAEE8aigCACIDRQ0AQQQhAiABIABBNGooAgBLDQIgAEEsaiABNgIAIANBAkcNACAAQThqIgMoAgAgAU8NACAAIAE2AjggACgCGBCCgICAACAAIAAoAjAQgICAgAAiATYCGCABDQBBAyECDAELQQAhAiAAQQA2AkAgAEHQAGpBAToAACAAQegAakEANgIAIABB5N0BaiEDCyADQQA2AgALIAILIwACQCAAQTxqKAIARQ0AIAAoAhgQgoCAgAALIAAQgoCAgAAL9QEBBH9BACEDAkAgACgCDCACTQ0AIAAoAhggAk0NACABIAEoAgAiBCAAKAIQIAAoAggiBWsiBiAEIAYgBEkbIgRrNgIAIAUgAkF/c2ohAQJAIAUgAksNACAAKAIUIAFqIQELIAAoAgAiAiABai0AACEGQQEhAyAAIAVBAWo2AgggAiAFaiAGOgAAAkAgBEF/aiICRQ0AA0AgACgCACIFQQAgAUEBaiIBIAEgACgCFEYbIgFqLQAAIQQgACAAKAIIIgZBAWo2AgggBSAGaiAEOgAAIAJBf2oiAg0ACwsgACgCDCAAKAIIIgFPDQAgACABNgIMCyADC8gEAQd/AkACQCAAKAIAIgNBgICACEkNACAAKAIEIQQMAQsgACADQQh0IgM2AgAgACAAKAIQIgVBAWo2AhAgACAAKAIEQQh0IAUgACgCDGotAAByIgQ2AgQLAkACQCAEIANBC3YgAS8BACIGbCIFTw0AIAEgBkGAECAGa0EFdmo7AQAgASACQQR0akEEaiEHQQghCEECIQkMAQsgACAEIAVrIgQ2AgQgASAGIAZBBXZrOwEAAkAgAyAFayIDQf///wdLDQAgACADQQh0IgM2AgAgACAAKAIQIgVBAWo2AhAgACAEQQh0IAUgACgCDGotAAByIgQ2AgQLAkAgBCADQQt2IAEvAQIiBmwiBU8NACABIAZBgBAgBmtBBXZqOwECIAEgAkEEdGpBhAJqIQdBCCEIQQohCQwBCyAAIAQgBWsiBDYCBCABIAYgBkEFdms7AQIgAUGEBGohByADIAVrIQVBgAIhCEESIQkLIABB6ABqIAk2AgBBASEBA0AgByABQQF0IgFqIQMCQAJAIAVB////B00NACAFIQIMAQsgACAFQQh0IgI2AgAgACAAKAIQIgVBAWo2AhAgACAEQQh0IAUgACgCDGotAAByIgQ2AgQLAkACQCAEIAJBC3YgAy8BACIGbCIFSQ0AIAAgBCAFayIENgIEIAAgAiAFayIFNgIAIAMgBiAGQQV2azsBACABQQFyIQEMAQsgACAFNgIAIAMgBkGAECAGa0EFdmo7AQALIAEgCEkNAAsgAEHoAGogASAIayAJajYCAAsLNQEAQYAICy4IAAAAEAAAABgAAAAgAAAAKAAAADAAAABAAAAAUAAAAIAAAAAAAQAA/Td6WFoA"},I=>{I.exports=A}],g={};function C(A){var Q=g[A];if(void 0!==Q)return Q.exports;var B=g[A]={exports:{}};return I[A](B,B.exports,C),B.exports}C.d=(A,I)=>{for(var g in I)C.o(I,g)&&!C.o(A,g)&&Object.defineProperty(A,g,{enumerable:!0,get:I[g]})},C.o=(A,I)=>Object.prototype.hasOwnProperty.call(A,I),C.r=A=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(A,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(A,"__esModule",{value:!0})};var Q={};return(()=>{C.r(Q),C.d(Q,{XzReadableStream:()=>B});var A=C(1);const I=globalThis.ReadableStream||C(2).ReadableStream;class g{constructor(A){this.exports=A.exports,this.memory=this.exports.memory,this.ptr=this.exports.create_context(),this._refresh(),this.bufSize=this.mem32[0],this.inStart=this.mem32[1]-this.ptr,this.inEnd=this.inStart+this.bufSize,this.outStart=this.mem32[4]-this.ptr}supplyInput(A){this._refresh();this.mem8.subarray(this.inStart,this.inEnd).set(A,0),this.exports.supply_input(this.ptr,A.byteLength),this._refresh()}getNextOutput(){const A=this.exports.get_next_output(this.ptr);if(this._refresh(),0!==A&&1!==A)throw new Error(`get_next_output failed with error code ${A}`);return{outChunk:this.mem8.slice(this.outStart,this.outStart+this.mem32[5]),finished:1===A}}needsMoreInput(){return this.mem32[2]===this.mem32[3]}outputBufferIsFull(){return this.mem32[5]===this.bufSize}resetOutputBuffer(){this.outPos=this.mem32[5]=0}dispose(){this.exports.destroy_context(this.ptr),this.exports=null}_refresh(){this.memory.buffer!==this.mem8?.buffer&&(this.mem8=new Uint8Array(this.memory.buffer,this.ptr),this.mem32=new Uint32Array(this.memory.buffer,this.ptr))}}class B extends I{static _moduleInstancePromise;static _moduleInstance;static async _getModuleInstance(){const I=A.replace("data:application/wasm;base64,",""),g=Uint8Array.from(atob(I),(A=>A.charCodeAt(0))).buffer,C=await WebAssembly.instantiate(g,{});B._moduleInstance=C.instance}constructor(A){let I,C=null;const Q=A.getReader();super({async start(A){B._moduleInstance||await(B._moduleInstancePromise||(B._moduleInstancePromise=B._getModuleInstance())),I=new g(B._moduleInstance)},async pull(A){if(I.needsMoreInput()){if(null===C||0===C.byteLength){const{done:A,value:I}=await Q.read();A||(C=I)}const A=Math.min(I.bufSize,C.byteLength);I.supplyInput(C.subarray(0,A)),C=C.subarray(A)}const g=I.getNextOutput();A.enqueue(g.outChunk),I.resetOutputBuffer(),g.finished&&(I.dispose(),A.close())},cancel:()=>(I.dispose(),Q.cancel())})}}})(),Q})());
+(function(){
+  var lib=window.__XZ_LIB({ReadableStream:ReadableStream,WritableStream:WritableStream,TransformStream:TransformStream});
+  window.XzReadableStream=lib&&lib.XzReadableStream||null;
+})();
+
+/* ---- animated background ---- */
+(function() {
+  var c = document.getElementById('bg-canvas');
+  var ctx = c.getContext('2d');
+  var W, H, particles = [];
+  function resize() { W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  for (var i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random()*2000, y: Math.random()*1000,
+      vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3,
+      r: Math.random()*2+.5,
+      c: ['rgba(0,217,255,','rgba(0,255,195,','rgba(124,58,237,','rgba(56,189,248,','rgba(244,63,126,'][Math.floor(Math.random()*5)]
+    });
+  }
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(function(p) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x<0) p.x=W; if (p.x>W) p.x=0;
+      if (p.y<0) p.y=H; if (p.y>H) p.y=0;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle = p.c+'0.85)';
+      ctx.fill();
+    });
+    /* draw connecting lines */
+    for (var i=0;i<particles.length;i++) {
+      for (var j=i+1;j<particles.length;j++) {
+        var dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        var dist=Math.sqrt(dx*dx+dy*dy);
+        if (dist<120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle='rgba(0,217,255,'+(1-dist/120)*.18+')';
+          ctx.lineWidth=.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ---- screen manager ---- */
+function showScr(id) {
+  var ids = ['scr-upload','scr-progress','scr-report'];
+  for (var i=0;i<ids.length;i++) {
+    var el = document.getElementById(ids[i]);
+    el.className = '';
+    el.style.display = 'none';
+  }
+  var t = document.getElementById(id);
+  t.className = 'on';
+  t.style.display = (id==='scr-report') ? 'block' : 'flex';
+}
+function go(id, el) {
+  var sec = document.getElementById(id);
+  if (sec) sec.scrollIntoView({behavior:'smooth'});
+  var all = document.querySelectorAll('.nav-a');
+  for (var i=0;i<all.length;i++) all[i].classList.remove('on');
+  if (el) el.classList.add('on');
+}
+function resetApp() {
+  document.getElementById('file-input').value = '';
+  document.getElementById('report-body').innerHTML = '';
+  document.getElementById('log-con').innerHTML = '';
+  document.getElementById('err-box').style.display = 'none';
+  setP(0,'');
+  showScr('scr-upload');
+}
+function setP(pct, msg) {
+  document.getElementById('prog-bar').style.width = pct+'%';
+  if (msg !== undefined) document.getElementById('prog-step').textContent = msg;
+}
+function addLog(msg, isErr) {
+  var c = document.getElementById('log-con');
+  var d = document.createElement('div');
+  d.style.cssText = 'color:'+(isErr?'#ff2d55':'#00ff88')+';padding:1px 0;animation:logIn .2s ease';
+  d.textContent = (isErr?'[ERR] ':'[OK]  ') + msg;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+function showErr(msg) {
+  var b = document.getElementById('err-box');
+  b.textContent = 'Error: ' + msg;
+  b.style.display = 'block';
+  addLog(msg, true);
+}
+
+/* ---- init ---- */
+window.addEventListener('load', function() {
+  if (typeof window.XzReadableStream === 'function') {
+    document.getElementById('spin').style.display = 'none';
+    document.getElementById('st').textContent = 'Ready - drop your sosreport to start analysis';
+    var lbl=document.getElementById('browse-lbl'); if(lbl){lbl.style.opacity='1';lbl.style.pointerEvents='auto';}
+  } else {
+    document.getElementById('spin').style.display = 'none';
+    document.getElementById('st').textContent = 'XZ engine unavailable - use Chrome 80+ or Firefox 113+';
+  }
+});
+
+/* ---- drag/drop ---- */
+var dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', function() { dz.classList.remove('drag'); });
+dz.addEventListener('drop', function(e) {
+  e.preventDefault(); dz.classList.remove('drag');
+  var f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+document.getElementById('file-input').addEventListener('change', function(e) {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+/* ---- file handler ---- */
+async function handleFile(file) {
+  if (!file) return;
+  if (typeof window.XzReadableStream !== 'function') { alert('XZ engine not ready.'); return; }
+  showScr('scr-progress');
+  setP(5,'Reading file...');
+  addLog('File: '+file.name+' ('+( file.size/1024/1024).toFixed(1)+' MB)');
+
+  var uint8;
+  try { var buf = await file.arrayBuffer(); uint8 = new Uint8Array(buf); }
+  catch(err) { showErr('Cannot read file: '+err.message); return; }
+
+  setP(15,'Decompressing XZ...');
+  addLog('XZ decompression starting...');
+  var tarData;
+  try { tarData = await decompressXZ(uint8); addLog('Decompressed: '+(tarData.length/1024).toFixed(0)+' KB'); }
+  catch(err) { showErr('XZ decompression failed: '+err.message); return; }
+
+  setP(38,'Parsing TAR...');
+  var files;
+  try { files = parseTar(tarData); addLog('TAR entries: '+Object.keys(files).length); }
+  catch(err) { showErr('TAR parse failed: '+err.message); return; }
+
+  setP(52,'Analyzing resources...');
+  var res = analyzeResources(files);
+  addLog('Host: '+res.hostname+' | CPUs: '+res.cpu_count+' | Load: '+res.load_avg);
+
+  setP(66,'Analyzing logs...');
+  var logs = analyzeLogs(files);
+  addLog('Syslog errors: '+logs.syslog_errors.length+' | OOM: '+logs.oom_events.length);
+
+  setP(80,'Generating findings...');
+  var findings = generateFindings(res,logs);
+  addLog('Findings: '+findings.length+' ('+findings.filter(function(f){return f.sev==='CRITICAL';}).length+' critical)');
+
+  setP(93,'Rendering report...');
+  renderReport(res,logs,findings,file.name);
+  setP(100,'Analysis complete!');
+  setTimeout(function(){ showScr('scr-report'); }, 500);
+}
+
+/* ---- xz decompress ---- */
+async function decompressXZ(bytes) {
+  var inputStream = new ReadableStream({ start: function(c) { c.enqueue(bytes); c.close(); } });
+  var reader = new XzReadableStream(inputStream).getReader();
+  var chunks = [];
+  while (true) { var r = await reader.read(); if (r.done) break; chunks.push(r.value); }
+  var total = 0;
+  for (var i=0;i<chunks.length;i++) total += chunks[i].length;
+  var out = new Uint8Array(total); var off = 0;
+  for (var i=0;i<chunks.length;i++) { out.set(chunks[i],off); off+=chunks[i].length; }
+  return out;
+}
+
+/* ---- TAR parser (POSIX + PAX + GNU) ---- */
+function parseTar(buf) {
+  var dec = new TextDecoder('utf-8',{fatal:false});
+  var files = {}; var off = 0; var paxName = null;
+  while (off+512 <= buf.length) {
+    var hdr = buf.slice(off,off+512);
+    var nameRaw = dec.decode(hdr.slice(0,100)).replace(/\0/g,'').trim();
+    if (!nameRaw) { off+=512; continue; }
+    var sizeOct = dec.decode(hdr.slice(124,136)).replace(/\0/g,'').trim();
+    var size = parseInt(sizeOct,8)||0;
+    var typeFlag = hdr[156];
+    var prefix = dec.decode(hdr.slice(345,500)).replace(/\0/g,'').trim();
+    var name = paxName||(prefix?prefix+'/'+nameRaw:nameRaw);
+    paxName = null; off += 512;
+    if (typeFlag===120||typeFlag===76) {
+      var content = dec.decode(buf.slice(off,off+size)).replace(/\0/g,'').trim();
+      if (typeFlag===120) { var pm=content.match(/path=([^\n]+)/); if(pm) paxName=pm[1].trim(); }
+      else paxName = content;
+    } else if (typeFlag===48||typeFlag===0) {
+      files[name] = buf.slice(off,off+size);
+    }
+    off += Math.ceil(size/512)*512;
+  }
+  return files;
+}
+
+/* ---- rf: read file from TAR by path suffix ---- */
+var _dec = new TextDecoder('utf-8',{fatal:false});
+function rf(files) {
+  var parts = Array.prototype.slice.call(arguments,1);
+  var suffix = parts.join('/');
+  var keys = Object.keys(files);
+  for (var i=0;i<keys.length;i++) {
+    var k = keys[i];
+    if (k===suffix||k.endsWith('/'+suffix)) return _dec.decode(files[k]);
+  }
+  return '';
+}
+/* rf with multiple fallback paths */
+function rfAny(files, candidates) {
+  for (var i=0;i<candidates.length;i++) {
+    var v = rf.apply(null,[files].concat(candidates[i]));
+    if (v) return v;
+  }
+  return '';
+}
+
+/* ---- resource analysis (RHEL deep) ---- */
+function analyzeResources(files) {
+  var r = {};
+  /* ---- identity ---- */
+  r.hostname = rf(files,'hostname').trim()||rf(files,'etc','hostname').trim()||'unknown';
+  r.os_info = '';
+  var osr = rf(files,'etc','os-release').split('\n');
+  for (var i=0;i<osr.length;i++) { if(osr[i].indexOf('PRETTY_NAME=')=== 0){r.os_info=osr[i].split('=')[1].replace(/"/g,'');break;} }
+  if(!r.os_info) r.os_info=rf(files,'etc','redhat-release').trim()||rf(files,'etc','system-release').trim()||'unknown';
+  r.kernel=rf(files,'uname').trim()||rf(files,'sos_commands','kernel','uname_-a').trim()||'';
+  r.uptime=rf(files,'uptime').trim()||rf(files,'sos_commands','general','uptime').trim()||'';
+  r.arch=rf(files,'proc','version').trim();
+  /* RHEL-specific: subscription, insights */
+  r.rh_release=rf(files,'etc','redhat-release').trim()||rf(files,'etc','system-release').trim();
+  r.rh_sub=rfAny(files,[['etc','yum','vars','releasever'],['etc','dnf','vars','releasever']]);
+  r.sos_version=rfAny(files,[['version.txt'],['sos_commands','general','sos_header']]);
+  r.tuned=rfAny(files,[['etc','tuned','active_profile'],['sos_commands','tuned','cat_etc_tuned_active_profile']]).trim();
+  r.selinux_status=rfAny(files,[['sos_commands','selinux','sestatus'],['sos_commands','security','sestatus']]);
+  r.selinux_mode=r.selinux_status.match(/SELinux status:\s*(\S+)/i)?r.selinux_status.match(/SELinux status:\s*(\S+)/i)[1]:'unknown';
+  var seMode=r.selinux_status.match(/Current mode:\s*(\S+)/i);
+  r.selinux_current=seMode?seMode[1]:'unknown';
+  r.fips=rf(files,'proc','sys','crypto','fips_enabled').trim();
+
+  /* ---- CPU ---- */
+  var cpuinfo=rf(files,'proc','cpuinfo');
+  r.cpu_model='';
+  var cpulines=cpuinfo.split('\n');
+  for(var i=0;i<cpulines.length;i++){if(cpulines[i].toLowerCase().indexOf('model name')>=0){r.cpu_model=cpulines[i].split(':')[1].trim();break;}}
+  var cpuCount=0;
+  for(var i=0;i<cpulines.length;i++){if(cpulines[i].toLowerCase().indexOf('processor')===0)cpuCount++;}
+  r.cpu_count=cpuCount?String(cpuCount):'?';
+  /* CPU flags */
+  var flags='';
+  for(var i=0;i<cpulines.length;i++){if(cpulines[i].toLowerCase().indexOf('flags')===0){flags=cpulines[i].split(':')[1]||'';break;}}
+  r.cpu_flags_vmx=flags.indexOf('vmx')>=0||flags.indexOf('svm')>=0;
+  r.cpu_flags_aes=flags.indexOf('aes')>=0;
+  /* load avg */
+  var lavg=rf(files,'proc','loadavg').trim();
+  if(lavg){r.load_avg=lavg.split(' ').slice(0,3).join(' ');}
+  else{var lm=r.uptime.match(/load average[s]?:\s*([\d., ]+)/i);r.load_avg=lm?lm[1].trim():'';}
+  /* interrupts */
+  r.interrupts_total=0;
+  var intr=rf(files,'proc','interrupts').split('\n');
+  for(var i=1;i<intr.length;i++){var nums=intr[i].match(/\d+/g);if(nums)for(var j=0;j<nums.length;j++)r.interrupts_total+=parseInt(nums[j]);}
+
+  /* ---- Memory ---- */
+  var meminfo=rf(files,'proc','meminfo'); var mem={};
+  meminfo.split('\n').forEach(function(l){var p=l.split(/\s+/);if(p.length>=2){var v=parseInt(p[1]);if(!isNaN(v))mem[p[0].replace(':','')]=v;}});
+  r.mem_total_mb=(mem.MemTotal||0)/1024;
+  r.mem_free_mb=(mem.MemFree||0)/1024;
+  r.mem_avail_mb=(mem.MemAvailable||0)/1024;
+  r.mem_cached_mb=((mem.Cached||0)+(mem.Buffers||0))/1024;
+  r.mem_used_mb=r.mem_total_mb-r.mem_avail_mb;
+  r.swap_total_mb=(mem.SwapTotal||0)/1024;
+  r.swap_used_mb=r.swap_total_mb-(mem.SwapFree||0)/1024;
+  r.hugepages_total=mem.HugePages_Total||0;
+  r.hugepages_free=mem.HugePages_Free||0;
+  r.hugepage_size_kb=mem.Hugepagesize||0;
+  r.shmem_mb=(mem.Shmem||0)/1024;
+  r.dirty_mb=(mem.Dirty||0)/1024;
+
+  /* ---- Disk ---- */
+  var dfRaw=rfAny(files,[['df'],['sos_commands','filesys','df_-al'],['sos_commands','filesys','df_-alP']]);
+  r.disk_entries=[];
+  dfRaw.split('\n').slice(1).forEach(function(ln){
+    var c=ln.trim().split(/\s+/);
+    if(c.length>=6&&c[4]&&c[4].charAt(c[4].length-1)==='%'){
+      var pct=parseInt(c[4]);
+      if(!isNaN(pct)&&c[0].indexOf('tmpfs')<0)
+        r.disk_entries.push({fs:c[0],mount:c[5],size:c[1],used:c[2],avail:c[3],pct:pct});
+    }
+  });
+  /* lsblk for block device info */
+  var lsblk=rfAny(files,[['sos_commands','filesys','lsblk'],['sos_commands','filesys','lsblk_-a']]);
+  r.lsblk_lines=lsblk.split('\n').filter(function(l){return l.trim()&&l.indexOf('NAME')!==0;}).slice(0,20);
+  /* iostat */
+  var iostat=rfAny(files,[['sos_commands','filesys','iostat_-x'],['sos_commands','block','iostat_-x_-d_-m_1_10']]);
+  r.iostat_lines=iostat.split('\n').filter(function(l){return l.trim()&&l.indexOf('Device')!==0&&l.indexOf('Linux')!==0;}).slice(0,15);
+  /* LVM */
+  r.lvm_pvs=rfAny(files,[['sos_commands','lvm2','pvs'],['sos_commands','lvm2','pvs_--all_--units_m_-v']]);
+  r.lvm_vgs=rfAny(files,[['sos_commands','lvm2','vgs'],['sos_commands','lvm2','vgs_--units_m_-v']]);
+  r.lvm_lvs=rfAny(files,[['sos_commands','lvm2','lvs'],['sos_commands','lvm2','lvs_-a_--units_m_-v']]);
+
+  /* ---- Network ---- */
+  var ipRaw=rfAny(files,[['sos_commands','networking','ip_address'],['sos_commands','networking','ip_-o_addr']]);
+  r.ifaces=[]; var iface=null; var ipLines=ipRaw.split('\n');
+  for(var i=0;i<ipLines.length;i++){
+    var mm=ipLines[i].match(/^\d+:\s+(\S+):/);
+    if(mm) iface=mm[1];
+    if(ipLines[i].indexOf('inet ')>=0&&iface){
+      var mm2=ipLines[i].match(/inet\s+(\S+)/);
+      if(mm2){
+        var mtu=ipLines[i-1]?ipLines[i-1].match(/mtu\s+(\d+)/):null;
+        r.ifaces.push({iface:iface,addr:mm2[1],mtu:mtu?mtu[1]:''});
+      }
+    }
+  }
+  /* ip route */
+  r.routes=rfAny(files,[['sos_commands','networking','route_-n'],['sos_commands','networking','ip_route']]);
+  /* ss/netstat */
+  r.ss_summary=rfAny(files,[['sos_commands','networking','ss_-s'],['sos_commands','networking','netstat_-s']]);
+  /* network drops from /proc/net/dev */
+  r.netdev=rf(files,'proc','net','dev')||rfAny(files,[['sos_commands','networking','ip_-s_link']]);
+  var netDrops=[];
+  r.netdev.split('\n').forEach(function(l){
+    var c=l.trim().split(/\s+/);
+    if(c.length>10&&c[0].endsWith(':')&&c[0]!=='lo:'){
+      var drops=parseInt(c[4])||0; /* receive drops */
+      if(drops>0) netDrops.push({iface:c[0].replace(':',''),drops:drops});
+    }
+  });
+  r.net_drops=netDrops;
+  /* bonding */
+  r.bonding=rf(files,'proc','net','bonding');
+  /* ethtool sample */
+  r.ethtool=rfAny(files,[['sos_commands','networking','ethtool_eth0'],['sos_commands','networking','ethtool_-i_eth0']]);
+
+  /* ---- Processes ---- */
+  var psRaw=rfAny(files,[['ps'],['sos_commands','process','ps_auxwww'],['sos_commands','process','ps_aux']]);
+  var procs=[];
+  psRaw.split('\n').slice(1).forEach(function(ln){
+    var c=ln.trim().split(/\s+/);
+    if(c.length>=11){var cpu=parseFloat(c[2]),mem=parseFloat(c[3]);if(!isNaN(cpu)&&!isNaN(mem))procs.push({user:c[0],pid:c[1],cpu:cpu,mem:mem,vsz:c[4],rss:c[5],stat:c[7],cmd:c.slice(10).join(' ')});}
+  });
+  r.top_cpu=procs.slice().sort(function(a,b){return b.cpu-a.cpu;}).slice(0,15);
+  r.top_mem=procs.slice().sort(function(a,b){return b.mem-a.mem;}).slice(0,15);
+  r.proc_count=procs.length;
+  r.zombie_count=procs.filter(function(p){return p.stat&&p.stat.indexOf('Z')>=0;}).length;
+
+  /* ---- sysctl ---- */
+  var sysctl=rfAny(files,[['sos_commands','kernel','sysctl_-a'],['proc','sys']]);
+  r.vm_swappiness=sysctl.match(/vm\.swappiness\s*=\s*(\d+)/)?parseInt(sysctl.match(/vm\.swappiness\s*=\s*(\d+)/)[1]):-1;
+  r.vm_dirty_ratio=sysctl.match(/vm\.dirty_ratio\s*=\s*(\d+)/)?parseInt(sysctl.match(/vm\.dirty_ratio\s*=\s*(\d+)/)[1]):-1;
+  r.net_ipfwd=sysctl.match(/net\.ipv4\.ip_forward\s*=\s*(\d+)/)?sysctl.match(/net\.ipv4\.ip_forward\s*=\s*(\d+)/)[1]:'?';
+  r.kernel_panic=sysctl.match(/kernel\.panic\s*=\s*(\d+)/)?sysctl.match(/kernel\.panic\s*=\s*(\d+)/)[1]:'?';
+
+  /* ---- installed packages (RPM) ---- */
+  var rpmTxt=rfAny(files,[['sos_commands','rpm','rpm_-qa_--qf'],['sos_commands','rpm','package-data'],['installed-rpms']]);
+  r.rpm_count=rpmTxt.split('\n').filter(function(l){return l.trim();}).length;
+  /* kernel versions installed */
+  var kernelRpms=rpmTxt.split('\n').filter(function(l){return l.indexOf('kernel-')===0||l.indexOf('kernel ')===0;});
+  r.kernel_rpms=kernelRpms.slice(0,5);
+  return r;
+}
+
+/* ---- log analysis ---- */
+var RE_ERR  = /\b(error|crit|critical|emerg|alert|panic|fail|failed|failure|exception|traceback|segfault|kernel bug|oops|oom|out of memory|denied|refused|timeout|no space left|disk full|connection refused|authentication failure|i\/o error|hardware error|mce|nmi|rcu_sched)\b/i;
+var RE_OOM  = /Out of memory|oom.kill|oom_kill_process/i;
+var RE_SEGV = /segfault|segmentation fault/i;
+var RE_AVC  = /AVC.*denied|type=AVC/i;
+var RE_MCE  = /Machine check|mce|hardware error|EDAC/i;
+var RE_DISK = /I\/O error|blk_update_request|ata.*error|scsi.*error|Buffer I\/O/i;
+var RE_NET  = /link (is|becomes) down|carrier lost|dropped|NETDEV WATCHDOG/i;
+
+function analyzeLogs(files) {
+  var lg = {syslog_errors:[],kernel_errors:[],service_failures:[],oom_events:[],segfault_events:[],audit_denials:[],mce_events:[],disk_errors:[],net_events:[]};
+  var candidates = [
+    ['var','log','messages'],
+    ['var','log','syslog'],
+    ['sos_commands','logs','journalctl_--no-pager_--boot'],
+    ['sos_commands','logs','journalctl'],
+    ['sos_commands','logs','journalctl_--no-pager'],
+    ['sos_commands','logs','journalctl_-u_NetworkManager'],
+    ['var','log','secure'],
+    ['var','log','audit','audit.log']
+  ];
+  var allLines = [];
+  for(var i=0;i<candidates.length;i++){
+    var txt=rf.apply(null,[files].concat(candidates[i]));
+    if(txt){var ls=txt.split('\n');for(var j=0;j<ls.length;j++)allLines.push(ls[j]);}
+  }
+  for(var i=0;i<allLines.length;i++){
+    var ln=allLines[i].trim();
+    if(RE_OOM.test(ln))           lg.oom_events.push({line:ln});
+    else if(RE_SEGV.test(ln))     lg.segfault_events.push({line:ln});
+    else if(RE_AVC.test(ln))      lg.audit_denials.push({line:ln});
+    else if(RE_MCE.test(ln))      lg.mce_events.push({line:ln});
+    else if(RE_DISK.test(ln))     lg.disk_errors.push({line:ln});
+    else if(RE_NET.test(ln))      lg.net_events.push({line:ln});
+  }
+  var hits=[];
+  for(var i=0;i<allLines.length&&hits.length<400;i++){if(RE_ERR.test(allLines[i]))hits.push({line:allLines[i].trim()});}
+  lg.syslog_errors=hits;
+
+  var dmesgTxt=rf(files,'var','log','dmesg')||rfAny(files,[['sos_commands','kernel','dmesg']]);
+  var dLines=dmesgTxt.split('\n'); hits=[];
+  for(var i=0;i<dLines.length&&hits.length<150;i++){if(RE_ERR.test(dLines[i]))hits.push({line:dLines[i].trim()});}
+  lg.kernel_errors=hits;
+
+  var sysd=rfAny(files,[['sos_commands','systemd','systemctl_list-units_--all'],['sos_commands','systemd','systemctl_list-units']]);
+  sysd.split('\n').forEach(function(l){if(/failed/i.test(l))lg.service_failures.push({line:l.trim()});});
+
+  /* audit log */
+  var audit=rfAny(files,[['var','log','audit','audit.log'],['sos_commands','logs','audit_log']]);
+  var auditLines=audit.split('\n');
+  for(var i=0;i<auditLines.length&&lg.audit_denials.length<100;i++){
+    if(RE_AVC.test(auditLines[i]))lg.audit_denials.push({line:auditLines[i].trim()});
+  }
+  return lg;
+}
+
+/* ---- findings engine (RHEL-depth) ---- */
+function generateFindings(res, logs) {
+  var F = [];
+  function add(sev,cat,title,detail,res_steps,lines){F.push({sev:sev,cat:cat,title:title,detail:detail,resolution:res_steps,lines:lines||[]});}
+
+  /* CPU */
+  if(res.load_avg&&res.cpu_count!=='?'){
+    var l1=parseFloat(res.load_avg.split(/[, ]/)[0]),nc=parseInt(res.cpu_count);
+    if(!isNaN(l1)&&nc>0){
+      var ratio=l1/nc;
+      if(ratio>2.0) add('CRITICAL','CPU','Severe CPU saturation - load '+res.load_avg+' / '+nc+' cores ('+ratio.toFixed(1)+'x)','Run-queue saturation: the system has more runnable threads than CPU cores can service simultaneously.','1. ps -eo pid,ppid,user,%cpu,stat,cmd --sort=-%cpu | head -20\n2. perf top -g (requires perf-tools)\n3. sar -u 1 10 (check %iowait vs %usr vs %sys)\n4. ps aux | awk \'$8 ~ /D/\' (D-state processes indicate I/O blocking)\n5. systemd-cgtop (check cgroup CPU usage)\n6. tuned-adm recommend && tuned-adm profile throughput-performance');
+      else if(ratio>1.0) add('WARNING','CPU','CPU load elevated - '+res.load_avg+' / '+nc+' cores ('+ratio.toFixed(1)+'x)','Load average exceeds vCPU count; system is CPU-bound or experiencing I/O pressure.','1. vmstat 1 10 (check r column and wa column)\n2. sar -u ALL 1 5\n3. top -b -n1 | head -30\n4. Check /proc/sched_debug for scheduler state');
+    }
+  }
+  if(res.zombie_count>0) add('WARNING','Process',res.zombie_count+' zombie process(es) detected','Zombie processes indicate parent processes are not calling wait() to clean up children. Accumulation can exhaust PID namespace.','1. ps aux | awk \'$8 == "Z"\' (list zombies)\n2. Find parent: ps -o ppid= -p <zombie_pid> && ps -p <ppid>\n3. Kill parent to reclean: kill -SIGCHLD <parent_pid>\n4. If systemd service: systemctl status <service>');
+
+  /* Memory */
+  if(res.mem_total_mb>0){
+    var pct=(res.mem_used_mb/res.mem_total_mb)*100;
+    if(pct>90) add('CRITICAL','Memory','Critical RAM pressure - '+pct.toFixed(0)+'% used ('+Math.round(res.mem_used_mb)+' MB / '+Math.round(res.mem_total_mb)+' MB)','System RAM is critically exhausted. OOM killer is likely active or imminent.','1. ps aux --sort=-%mem | head -20\n2. cat /proc/meminfo | grep -E "MemAvail|MemFree|Cached|Dirty"\n3. slabtop -s c (kernel slab cache)\n4. echo 3 > /proc/sys/vm/drop_caches (safe cache flush)\n5. fallocate -l 4G /swapfile && mkswap /swapfile && swapon /swapfile\n6. sysctl vm.swappiness=10 (prefer RAM over swap)\n7. Check Java heaps: jmap -heap <pid>');
+    else if(pct>75) add('WARNING','Memory','High RAM usage - '+pct.toFixed(0)+'% used','Memory above 75%. System may experience performance degradation under burst load.','1. smem -t -k -p -s pss | tail -20\n2. Check huge pages: grep HugePages /proc/meminfo\n3. Review application memory limits (Java -Xmx, ulimit)\n4. Enable memory cgroups: systemctl set-property <svc> MemoryLimit=2G');
+  }
+  if(res.swap_total_mb>0&&(res.swap_used_mb/res.swap_total_mb)>0.5)
+    add('WARNING','Memory','Swap heavily used - '+Math.round(res.swap_used_mb)+' MB / '+Math.round(res.swap_total_mb)+' MB ('+(( res.swap_used_mb/res.swap_total_mb)*100).toFixed(0)+'%)','High swap usage degrades throughput significantly. Processes are being paged out.','1. sysctl -w vm.swappiness=10\n2. vmstat 1 5 (check si/so columns for swap I/O)\n3. Identify swapped processes: for p in /proc/[0-9]*/status; do awk \'/VmSwap/{if($2>0)print FILENAME, $2}\' $p; done\n4. Add RAM or reduce application memory footprint');
+  else if(res.swap_total_mb===0) add('INFO','Memory','No swap configured','Without swap, OOM killer activates immediately when RAM is exhausted with no recovery window.','fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo \'/swapfile none swap sw 0 0\' >> /etc/fstab');
+  if(res.vm_swappiness>=60&&res.vm_swappiness!==-1) add('WARNING','Kernel','vm.swappiness='+res.vm_swappiness+' is high','High swappiness causes kernel to swap aggressively even when RAM is available, degrading database and application performance.','sysctl -w vm.swappiness=10 && echo "vm.swappiness=10" >> /etc/sysctl.d/99-tuning.conf');
+  if(res.dirty_mb>512) add('WARNING','Memory','High dirty page count - '+Math.round(res.dirty_mb)+' MB','Large dirty page backlog can cause I/O latency spikes when kernel flushes to disk.','1. Check vm.dirty_ratio and vm.dirty_background_ratio\n2. sysctl vm.dirty_ratio=10\n3. iostat -x 1 5 (check %util and await)');
+
+  /* Disk */
+  for(var i=0;i<res.disk_entries.length;i++){
+    var d=res.disk_entries[i];
+    if(d.pct>=95) add('CRITICAL','Disk','Filesystem '+d.mount+' critically full - '+d.pct+'%','Disk at '+d.pct+'% on '+d.fs+': '+d.used+' used, '+d.avail+' available. Services writing to this path will fail.','1. du -sh '+d.mount+'/* 2>/dev/null | sort -rh | head -20\n2. find '+d.mount+' -type f -size +100M 2>/dev/null | sort -k5 -rn\n3. find /var/log -name "*.gz" -mtime +30 -delete\n4. journalctl --vacuum-size=500M\n5. lsof | grep deleted | awk \'$7>104857600\' (deleted-but-open files)\n6. lvextend -L +10G /dev/VG/LV && xfs_growfs '+d.mount+' (XFS) or resize2fs /dev/VG/LV (ext4)');
+    else if(d.pct>=80) add('WARNING','Disk','Filesystem '+d.mount+' high usage - '+d.pct+'%','Device '+d.fs+': '+d.used+' used, '+d.avail+' available. Plan for expansion.','1. du -sh '+d.mount+'/* | sort -rh | head -10\n2. Configure logrotate for log directories\n3. Plan LVM expansion if persistent growth trend');
+  }
+  if(logs.disk_errors.length>0) add('WARNING','Disk','I/O errors detected in logs - '+logs.disk_errors.length+' events','Block device I/O errors may indicate failing hardware, bad cables, or RAID degradation.','1. dmesg | grep -E "I/O error|ata.*error|scsi" | tail -30\n2. smartctl -a /dev/sda (check SMART health)\n3. mdadm --detail /dev/md* (check RAID status)\n4. pvs --all (check LVM PV health)\n5. lsblk -o name,size,rota,type,mountpoint', logs.disk_errors.slice(0,6));
+  if(logs.mce_events.length>0) add('CRITICAL','Hardware','Machine Check Exceptions (MCE) detected - '+logs.mce_events.length+' events','MCE events indicate hardware-level errors: CPU, memory (ECC), or chipset faults. Immediate investigation required.','1. mcelog --client (read MCE log)\n2. ras-mc-ctl --summary (EDAC memory errors)\n3. dmidecode -t memory (check memory DIMMs)\n4. Check vendor hardware health portal\n5. Consider kdump analysis if system crashed', logs.mce_events.slice(0,6));
+
+  /* Network */
+  if(res.net_drops&&res.net_drops.length>0){
+    var dropMsg=res.net_drops.map(function(d){return d.iface+'='+d.drops;}).join(', ');
+    add('WARNING','Network','Network packet drops detected: '+dropMsg,'Receive drops indicate NIC ring buffer overflow, CPU IRQ affinity problems, or insufficient network driver tuning.','1. ethtool -S <iface> | grep -i drop\n2. ip -s link show <iface>\n3. ethtool -g <iface> (check ring buffer size)\n4. ethtool -G <iface> rx 4096 (increase RX ring)\n5. cat /proc/interrupts | grep <iface> (check IRQ distribution)\n6. service irqbalance restart');
+  }
+  if(logs.net_events.length>0) add('WARNING','Network','Network link events in logs - '+logs.net_events.length+' events','Link-down or carrier-lost events indicate physical layer issues, switch port problems, or NIC instability.','1. ip link show (current link state)\n2. ethtool <iface> (check speed/duplex)\n3. journalctl -u NetworkManager (network manager events)\n4. Check physical cable/SFP connection\n5. ethtool -d <iface> (register dump for NIC diagnostics)', logs.net_events.slice(0,6));
+
+  /* SELinux */
+  if(logs.audit_denials.length>0) add('WARNING','SELinux','SELinux AVC denials - '+logs.audit_denials.length+' events','SELinux is blocking operations. May be causing application misbehavior.','1. ausearch -m avc -ts recent | audit2why\n2. sealert -a /var/log/audit/audit.log\n3. audit2allow -a -M mypol && semodule -i mypol.pp\n4. Check: getenforce && sestatus\n5. Restore contexts: restorecon -Rv /affected/path', logs.audit_denials.slice(0,8));
+  if(res.selinux_mode==='disabled') add('WARNING','SELinux','SELinux is disabled','SELinux is fully disabled. This reduces system security posture and may not meet compliance requirements.','setenforce 1\nSet SELINUX=enforcing in /etc/selinux/config and reboot');
+
+  /* OOM / crashes */
+  if(logs.oom_events.length>0) add('CRITICAL','Memory','OOM Killer activated - '+logs.oom_events.length+' events in logs','The kernel out-of-memory killer terminated process(es). System was in RAM exhaustion.','1. grep -E "oom|killed" /var/log/messages | tail -20\n2. Identify victim: dmesg | grep -A5 "oom_kill_process"\n3. Set per-process limits: systemctl set-property <svc> MemoryLimit=\n4. Configure oom_score_adj for critical processes\n5. Add swap as safety net\n6. Analyze with: systemd-cgtop, smem', logs.oom_events.slice(0,8));
+  if(logs.segfault_events.length>0) add('WARNING','Application','Segmentation faults - '+logs.segfault_events.length+' events','Application memory corruption or null-pointer dereferences detected.','1. ls /var/crash/ (kdump cores)\n2. abrt-cli list (ABRT crash reports)\n3. gdb /usr/bin/<app> /var/crash/<core>\n4. Check memory with: memtester 256 1\n5. yum/dnf update (patch known bugs)', logs.segfault_events.slice(0,8));
+
+  /* General log volume */
+  if(logs.syslog_errors.length>500) add('WARNING','Logs','High error volume in system logs - '+logs.syslog_errors.length+' entries','Sustained high error rate suggests a systemic issue requiring investigation.','1. journalctl -p err --since "1 hour ago"\n2. grep -c ERROR /var/log/messages\n3. sosreport --only-plugins=logs for focused collection', logs.syslog_errors.slice(0,5));
+
+  if(F.length===0) add('INFO','General','System health looks good','No critical bottlenecks or error patterns detected in this sosreport.','Continue regular monitoring. Consider setting up proactive alerting with Insights.');
+  return F;
+}
+
+/* ---- rendering helpers ---- */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function mbS(mb){return mb>=1024?(mb/1024).toFixed(1)+' GB':Math.round(mb)+' MB';}
+
+function secHdr(icon,title,cls) {
+  return '<div class="sec-header"><div class="sec-icon '+cls+'">'+icon+'</div><h2>'+title+'</h2></div>';
+}
+
+function gauge(label,pct,sub) {
+  var p=Math.min(Math.max(pct||0,0),100).toFixed(1);
+  var cls=pct<60?'g-ok':pct<85?'g-wa':'g-cr';
+  return '<div class="gauge">'
+    +'<div class="gl"><span>'+esc(label)+'</span><span style="color:'+(pct<60?'var(--ok)':pct<85?'var(--wa)':'var(--cr)')+'">'+( pct||0).toFixed(1)+'%</span></div>'
+    +'<div class="gt"><div class="gf '+cls+'" style="width:'+p+'%"></div></div>'
+    +(sub?'<div style="font-size:10px;color:var(--mu);margin-top:3px">'+esc(sub)+'</div>':'')
+    +'</div>';
+}
+
+function donut(val,total,label,color,unit) {
+  if(!total||total<=0){return '';}
+  var pct=Math.min(100,(val/total)*100);
+  var r=36,circ=2*Math.PI*r;
+  var dash=((pct/100)*circ).toFixed(1);
+  var valStr=unit?mbS(val):(val>=1024?(val/1024).toFixed(1)+'G':Math.round(val)+'M');
+  return '<div class="donut-wrap">'
+    +'<div class="donut-label">'+esc(label)+'</div>'
+    +'<svg width="100" height="100" viewBox="0 0 100 100">'
+    +'<circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>'
+    +'<circle cx="50" cy="50" r="36" fill="none" stroke="'+color+'" stroke-width="8" stroke-dasharray="'+dash+' '+circ+'" stroke-dashoffset="'+(-circ/4).toFixed(1)+'" stroke-linecap="round" style="filter:drop-shadow(0 0 6px '+color+')">'
+    +'<animate attributeName="stroke-dasharray" from="0 '+circ+'" to="'+dash+' '+circ+'" dur="1s" fill="freeze" calcMode="ease"/>'
+    +'</circle>'
+    +'<text x="50" y="46" text-anchor="middle" fill="'+color+'" font-size="13" font-weight="800" font-family="Segoe UI,sans-serif">'+pct.toFixed(0)+'%</text>'
+    +'<text x="50" y="60" text-anchor="middle" fill="#7ab3d4" font-size="8" font-family="Segoe UI,sans-serif">'+valStr+'</text>'
+    +'</svg>'
+    +'<div class="donut-sub">of '+mbS(total)+'</div>'
+    +'</div>';
+}
+
+function logBlock(items,lim,title) {
+  lim=lim||200;
+  var tbar=title?('<div class="log-topbar"><div class="log-dot" style="background:#ff5f56"></div><div class="log-dot" style="background:#ffbd2e"></div><div class="log-dot" style="background:#27c93f"></div><span style="font-size:11px;color:var(--mu);margin-left:6px">'+esc(title)+'</span></div>'):'<div class="log-topbar"><div class="log-dot" style="background:#ff5f56"></div><div class="log-dot" style="background:#ffbd2e"></div><div class="log-dot" style="background:#27c93f"></div></div>';
+  if(!items||!items.length) return '<div class="logb">'+tbar+'<div class="log-content"><span class="okmsg">No entries found</span></div></div>';
+  var html=''; var shown=Math.min(items.length,lim);
+  for(var i=0;i<shown;i++){
+    var ln=items[i].line||'';
+    var cls=RE_OOM.test(ln)?'lo':RE_MCE.test(ln)?'lo':RE_DISK.test(ln)?'lw':RE_ERR.test(ln)?'le':'ln';
+    html+='<div class="ll '+cls+'">'+esc(ln)+'</div>';
+  }
+  if(items.length>lim) html+='<div style="color:var(--mu);margin-top:8px;font-size:10px">... '+(items.length-lim)+' more entries not shown</div>';
+  return '<div class="logb">'+tbar+'<div class="log-content">'+html+'</div></div>';
+}
+
+function findingsHtml(findings) {
+  var html='';
+  for(var i=0;i<findings.length;i++){
+    var f=findings[i];
+    var sfx=f.sev==='CRITICAL'?'cr':f.sev==='WARNING'?'wa':'ok';
+    var resBlock=f.resolution
+      ?'<div class="f-re"><div class="rl">Red Hat Resolution Steps</div><div class="rb">'+esc(f.resolution)+'</div></div>'
+      :'';
+    /* ---- embed actual log lines ---- */
+    var linesBlock='';
+    if(f.lines&&f.lines.length>0){
+      var uid='fl-'+i;
+      var dotCol=f.sev==='CRITICAL'?'#f43f5e':f.sev==='WARNING'?'#f59e0b':'#10d98a';
+      var hdr='<div class="f-log-hdr" onclick="toggleFLog(this)" data-uid="'+uid+'">'
+        +'<span class="f-log-badge" style="background:rgba(0,0,0,.3);border:1px solid rgba(0,217,255,.25);color:#93c5fd;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px">'
+        +'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+dotCol+'"></span>'
+        +f.lines.length+' matching log event'+(f.lines.length>1?'s':'')+' &nbsp;&#9660;</span></div>';
+      var rows='';
+      for(var j=0;j<f.lines.length;j++){
+        var ln=f.lines[j].line||'';
+        var lc=RE_OOM.test(ln)?'#f43f5e':RE_MCE.test(ln)?'#f43f5e':RE_DISK.test(ln)?'#fbbf24':RE_AVC.test(ln)?'#a78bfa':'#f87171';
+        rows+='<div style="padding:3px 0;border-bottom:1px solid rgba(46,79,154,.2);word-break:break-all;color:'+lc+';font-size:10.5px">'+esc(ln)+'</div>';
+      }
+      linesBlock=hdr+'<div id="'+uid+'" style="display:none;margin-top:8px;background:rgba(5,12,30,.9);border:1px solid rgba(46,79,154,.5);border-radius:8px;padding:10px 13px;font-family:var(--mo);line-height:1.7">'+rows+'</div>';
+    }
+    html+='<div class="finding f-'+sfx+'" style="animation-delay:'+(i*.05)+'s">'
+      +'<div class="f-hd"><span class="pill p-'+f.sev+'">'+f.sev+'</span><span class="ctag">'+esc(f.cat)+'</span></div>'
+      +'<div class="f-ti">'+esc(f.title)+'</div>'
+      +'<div class="f-de">'+esc(f.detail)+'</div>'
+      +linesBlock
+      +resBlock+'</div>';
+  }
+  return html;
+}
+function toggleFLog(el){
+  var uid=el.closest('[data-uid]')?el.closest('[data-uid]').getAttribute('data-uid'):el.getAttribute('data-uid');
+  var panel=document.getElementById(uid);
+  if(panel){panel.style.display=panel.style.display==='none'?'block':'none';}
+}
+
+function diskCards(entries) {
+  if(!entries||!entries.length) return '<p style="color:var(--mu);padding:12px">No disk data found. Check if df output is present in sosreport.</p>';
+  var html='';
+  for(var i=0;i<entries.length;i++){
+    var d=entries[i];
+    var col=d.pct>=95?'var(--cr)':d.pct>=80?'var(--wa)':'var(--ok)';
+    var cls=d.pct>=95?'g-cr':d.pct>=80?'g-wa':'g-ok';
+    html+='<div class="disk-card">'
+      +'<div class="disk-top"><div><div class="disk-mount">'+esc(d.mount)+'</div><div class="disk-fs">'+esc(d.fs)+'</div></div>'
+      +'<div class="disk-pct" style="color:'+col+'">'+d.pct+'%</div></div>'
+      +'<div class="gt"><div class="gf '+cls+'" style="width:'+d.pct+'%"><animate attributeName="width" from="0%" to="'+d.pct+'%" dur=".8s" fill="freeze"/></div></div>'
+      +'<div class="disk-info"><span>Used: <strong>'+esc(d.used)+'</strong></span><span>Avail: <strong>'+esc(d.avail)+'</strong></span><span>Total: <strong>'+esc(d.size||'?')+'</strong></span></div>'
+      +'</div>';
+  }
+  return html;
+}
+
+function ifaceCards(ifaces) {
+  if(!ifaces||!ifaces.length) return '<p style="color:var(--mu);padding:12px">No network interface data. Check sos_commands/networking/ in report.</p>';
+  var html='';
+  for(var i=0;i<ifaces.length;i++){
+    var f=ifaces[i];
+    var isLo=f.iface==='lo';
+    var tag=isLo?'<span class="iface-tag itag-lo">loopback</span>':'<span class="iface-tag itag-up">UP</span>';
+    html+='<div class="iface-card">'
+      +'<div class="iface-led" style="'+(isLo?'background:var(--mu);box-shadow:none;animation:none':'')+'"></div>'
+      +'<div class="iface-name">'+esc(f.iface)+'</div>'
+      +'<div style="flex:1"><div class="iface-addr">'+esc(f.addr)+'</div>'
+      +(f.mtu?'<div class="iface-info">MTU: '+esc(f.mtu)+'</div>':'')+'</div>'
+      +tag+'</div>';
+  }
+  return html;
+}
+
+function procBars(procs,colorKey) {
+  if(!procs||!procs.length) return '<p style="color:var(--mu)">No process data.</p>';
+  var maxV=procs[0][colorKey]||1;
+  var html='';
+  for(var i=0;i<procs.length;i++){
+    var p=procs[i]; var v=p[colorKey]||0;
+    var pct=Math.min(100,(v/Math.max(maxV,1))*100);
+    var col=v>80?'var(--cr)':v>40?'var(--wa)':'var(--ac)';
+    html+='<div class="proc-row">'
+      +'<div class="proc-cmd" title="'+esc(p.cmd||'')+'">'+esc((p.cmd||'').substring(0,60))+'</div>'
+      +'<div class="proc-user">'+esc(p.user||'')+'</div>'
+      +'<div class="proc-pct" style="color:'+col+'">'+v+'%</div>'
+      +'<div class="proc-bar-wrap"><div class="proc-bar" style="width:'+pct+'%;background:'+col+';box-shadow:0 0 6px '+col+'"></div></div>'
+      +'</div>';
+  }
+  return '<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px 14px">'+html+'</div>';
+}
+
+function linesTable(raw,max) {
+  if(!raw) return '<p style="color:var(--mu)">No data available in this sosreport.</p>';
+  var lines=raw.split('\n').filter(function(l){return l.trim();}).slice(0,max||20);
+  var rows=lines.map(function(l){return '<tr><td style="font-family:var(--mo);font-size:11px;color:#a8d8ea">'+esc(l)+'</td></tr>';}).join('');
+  return '<div class="tw"><table>'+rows+'</table></div>';
+}
+
+/* ---- RENDER REPORT ---- */
+function renderReport(res,logs,findings,fname) {
+  var now=new Date().toLocaleString();
+  var cC=0,cW=0,cI=0;
+  for(var i=0;i<findings.length;i++){if(findings[i].sev==='CRITICAL')cC++;else if(findings[i].sev==='WARNING')cW++;else cI++;}
+  var kShort=(res.kernel||'').split(' ').slice(0,4).join(' ')||'unknown';
+  var memPct=res.mem_total_mb>0?(res.mem_used_mb/res.mem_total_mb)*100:0;
+  var swapPct=res.swap_total_mb>0?(res.swap_used_mb/res.swap_total_mb)*100:0;
+  var lgauge='';
+  if(res.load_avg&&res.cpu_count!=='?'){
+    var l1=parseFloat(res.load_avg.split(/[, ]/)[0]),nc=parseInt(res.cpu_count);
+    if(!isNaN(l1)&&nc>0) lgauge=gauge('1-min load vs CPU capacity',(l1/nc)*100,'Load '+l1.toFixed(2)+' across '+nc+' cores');
+  }
+
+  document.getElementById('report-body').innerHTML =
+
+  /* OVERVIEW */
+  '<section id="s-ov">'
+  +'<h1>SOS Report &mdash; <span>'+esc(res.hostname)+'</span></h1>'
+  +'<div class="meta">'
+  +'<strong>File:</strong> '+esc(fname)+' &nbsp;&middot;&nbsp; <strong>Analyzed:</strong> '+now+'<br>'
+  +'<strong>OS:</strong> '+esc(res.os_info)+' &nbsp;&middot;&nbsp; <strong>Kernel:</strong> '+esc(kShort)+'<br>'
+  +'<strong>Uptime:</strong> '+esc((res.uptime||'').substring(0,90))+' &nbsp;&middot;&nbsp; <strong>SELinux:</strong> '+esc(res.selinux_current||'unknown')
+  +(res.tuned?' &nbsp;&middot;&nbsp; <strong>Tuned:</strong> '+esc(res.tuned):'')
+  +(res.fips==='1'?' &nbsp;&middot;&nbsp; <strong style="color:var(--ok)">FIPS: ON</strong>':'')
+  +'</div>'
+  +'<div class="sumbar">'
+  +'<div class="sumc sumc-cr"><div class="sumn" style="color:var(--cr)">'+cC+'</div><div class="suml">Critical</div></div>'
+  +'<div class="sumc sumc-wa"><div class="sumn" style="color:var(--wa)">'+cW+'</div><div class="suml">Warnings</div></div>'
+  +'<div class="sumc sumc-ok"><div class="sumn" style="color:var(--ok)">'+cI+'</div><div class="suml">Info</div></div>'
+  +'<div class="sumc sumc-ac"><div class="sumn" style="color:var(--ac)">'+logs.syslog_errors.length+'</div><div class="suml">Log errors</div></div>'
+  +'<div class="sumc sumc-vi"><div class="sumn" style="color:var(--violet)">'+res.proc_count+'</div><div class="suml">Processes</div></div>'
+  +'</div>'
+  /* resource donut charts */
+  +'<div class="chart-row">'
+  +donut(res.mem_used_mb,res.mem_total_mb,'Memory','#00d4ff',true)
+  +donut(res.swap_used_mb,res.swap_total_mb,'Swap','#a855f7',true)
+  +(res.disk_entries[0]?donut(res.disk_entries[0].pct,100,res.disk_entries[0].mount+' Disk','#ff6b35',false):'')
+  +(res.disk_entries[1]?donut(res.disk_entries[1].pct,100,res.disk_entries[1].mount+' Disk','#ffcc00',false):'')
+  +'</div>'
+  +'</section>'
+
+  /* FINDINGS */
+  +'<section id="s-fi">'
+  +secHdr('&#128270;','Bottleneck Findings &amp; Resolutions','si-violet')
+  +'<div class="rh-badge rh-badge-info">Red Hat SOS Analysis Report</div>'
+  +findingsHtml(findings)
+  +'</section>'
+
+  /* CPU */
+  +'<section id="s-cpu">'
+  +secHdr('&#9881;','CPU &amp; Load','si-cyan')
+  +'<div class="cardg">'
+  +'<div class="card"><div class="cl">CPU Model</div><div class="cv" style="font-size:11px;line-height:1.4">'+esc(res.cpu_model||'unknown')+'</div></div>'
+  +'<div class="card"><div class="cl">vCPU Cores</div><div class="cv" style="color:var(--ac)">'+esc(res.cpu_count)+'</div></div>'
+  +'<div class="card"><div class="cl">Load Average</div><div class="cv" style="font-size:14px">'+esc(res.load_avg||'N/A')+'</div><div class="cs">1m / 5m / 15m</div></div>'
+  +'<div class="card"><div class="cl">Virtualization</div><div class="cv" style="font-size:13px">'+( res.cpu_flags_vmx?'VMX/SVM':'Bare Metal')+'</div></div>'
+  +'<div class="card"><div class="cl">AES-NI</div><div class="cv" style="font-size:13px;color:'+(res.cpu_flags_aes?'var(--ok)':'var(--mu)')+'">'+( res.cpu_flags_aes?'Supported':'Not found')+'</div></div>'
+  +'</div>'
+  +lgauge
+  +'</section>'
+
+  /* MEMORY */
+  +'<section id="s-mem">'
+  +secHdr('&#129504;','Memory','si-green')
+  +'<div class="cardg">'
+  +'<div class="card"><div class="cl">Total RAM</div><div class="cv" style="color:var(--ac)">'+mbS(res.mem_total_mb)+'</div></div>'
+  +'<div class="card"><div class="cl">Used (effective)</div><div class="cv" style="color:'+(memPct>85?'var(--cr)':memPct>70?'var(--wa)':'var(--ok)')+'">'+mbS(res.mem_used_mb)+'</div></div>'
+  +'<div class="card"><div class="cl">Available</div><div class="cv" style="color:var(--ok)">'+mbS(res.mem_avail_mb)+'</div></div>'
+  +'<div class="card"><div class="cl">Cached+Buffers</div><div class="cv">'+mbS(res.mem_cached_mb)+'</div></div>'
+  +'<div class="card"><div class="cl">Swap Total</div><div class="cv">'+mbS(res.swap_total_mb)+'</div></div>'
+  +'<div class="card"><div class="cl">Swap Used</div><div class="cv" style="color:'+(swapPct>50?'var(--wa)':'var(--tx)')+'">'+mbS(res.swap_used_mb)+'</div></div>'
+  +(res.hugepages_total>0?'<div class="card"><div class="cl">HugePages</div><div class="cv" style="font-size:13px">'+res.hugepages_total+' x '+res.hugepage_size_kb+'kB</div><div class="cs">'+res.hugepages_free+' free</div></div>':'')
+  +(res.shmem_mb>0?'<div class="card"><div class="cl">Shared Mem</div><div class="cv">'+mbS(res.shmem_mb)+'</div></div>':'')
+  +'</div>'
+  +gauge('RAM usage - '+Math.round(res.mem_used_mb)+' MB used / '+Math.round(res.mem_total_mb)+' MB total',memPct)
+  +(res.swap_total_mb>0?gauge('Swap usage - '+Math.round(res.swap_used_mb)+' MB / '+Math.round(res.swap_total_mb)+' MB',swapPct):'')
+  +(res.vm_swappiness>=0?'<div style="font-size:12px;color:var(--mu);margin-top:6px">vm.swappiness = <strong style="color:var(--wa)">'+res.vm_swappiness+'</strong>'+(res.vm_dirty_ratio>=0?' &nbsp;&middot;&nbsp; vm.dirty_ratio = <strong>'+res.vm_dirty_ratio+'</strong>':'')+'</div>':'')
+  +'</section>'
+
+  /* DISK */
+  +'<section id="s-dsk">'
+  +secHdr('&#128190;','Disk &amp; I/O','si-orange')
+  +diskCards(res.disk_entries)
+  +(res.lsblk_lines&&res.lsblk_lines.length?'<h3 style="margin:18px 0 8px">Block Devices (lsblk)</h3>'+linesTable(res.lsblk_lines.join('\n'),20):'')
+  +(res.lvm_pvs?'<h3 style="margin:18px 0 8px">LVM Physical Volumes</h3>'+linesTable(res.lvm_pvs,15):'')
+  +(res.lvm_vgs?'<h3 style="margin:16px 0 8px">LVM Volume Groups</h3>'+linesTable(res.lvm_vgs,10):'')
+  +(res.iostat_lines&&res.iostat_lines.length?'<h3 style="margin:18px 0 8px">I/O Statistics (iostat)</h3>'+linesTable(res.iostat_lines.join('\n'),20):'')
+  +(logs.disk_errors.length?'<h3 style="margin:18px 0 8px;color:var(--wa)">Disk I/O Errors in Logs ('+logs.disk_errors.length+')</h3>'+logBlock(logs.disk_errors,30,'disk-errors'):'')
+  +'</section>'
+
+  /* NETWORK */
+  +'<section id="s-net">'
+  +secHdr('&#127760;','Network','si-cyan')
+  +ifaceCards(res.ifaces)
+  +(res.net_drops&&res.net_drops.length?'<div style="background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.3);border-radius:9px;padding:12px 16px;margin:12px 0;font-size:12px;color:var(--wa)">Packet drops detected on: '+res.net_drops.map(function(d){return esc(d.iface)+'='+d.drops;}).join(', ')+'</div>':'')
+  +(res.routes?'<h3 style="margin:18px 0 8px">Routing Table</h3>'+linesTable(res.routes,15):'')
+  +(res.ss_summary?'<h3 style="margin:18px 0 8px">Socket Summary</h3>'+linesTable(res.ss_summary,15):'')
+  +(logs.net_events.length?'<h3 style="margin:18px 0 8px;color:var(--wa)">Network Events in Logs ('+logs.net_events.length+')</h3>'+logBlock(logs.net_events,20,'network-events'):'')
+  +'</section>'
+
+  /* PROCESSES */
+  +'<section id="s-ps">'
+  +secHdr('&#128202;','Processes','si-violet')
+  +'<div class="cardg" style="margin-bottom:18px">'
+  +'<div class="card"><div class="cl">Total Processes</div><div class="cv" style="color:var(--ac)">'+res.proc_count+'</div></div>'
+  +(res.zombie_count>0?'<div class="card"><div class="cl">Zombies</div><div class="cv" style="color:var(--cr)">'+res.zombie_count+'</div><div class="cs" style="color:var(--cr)">investigate</div></div>':'')
+  +'</div>'
+  +'<h3>Top 15 by CPU %</h3>'
+  +procBars(res.top_cpu,'cpu')
+  +'<h3 style="margin-top:18px">Top 15 by Memory %</h3>'
+  +procBars(res.top_mem,'mem')
+  +'</section>'
+
+  /* RED HAT INFO */
+  +'<section id="s-rh">'
+  +secHdr('&#128200;','Red Hat System Info','si-pink')
+  +'<div class="cardg">'
+  +'<div class="card"><div class="cl">RHEL Release</div><div class="cv" style="font-size:12px">'+esc(res.rh_release||'N/A')+'</div></div>'
+  +(res.tuned?'<div class="card"><div class="cl">Tuned Profile</div><div class="cv" style="font-size:13px;color:var(--ac)">'+esc(res.tuned)+'</div></div>':'')
+  +'<div class="card"><div class="cl">SELinux Mode</div><div class="cv" style="font-size:13px;color:'+(res.selinux_current==='enforcing'?'var(--ok)':res.selinux_current==='permissive'?'var(--wa)':'var(--cr)')+'">'+esc(res.selinux_current||'unknown')+'</div></div>'
+  +(res.fips?'<div class="card"><div class="cl">FIPS Mode</div><div class="cv" style="font-size:13px;color:'+(res.fips==='1'?'var(--ok)':'var(--mu)')+'">'+( res.fips==='1'?'Enabled':'Disabled')+'</div></div>':'')
+  +(res.rpm_count>0?'<div class="card"><div class="cl">RPM Packages</div><div class="cv" style="color:var(--ac)">'+res.rpm_count+'</div></div>':'')
+  +(res.vm_swappiness>=0?'<div class="card"><div class="cl">vm.swappiness</div><div class="cv" style="color:'+(res.vm_swappiness>30?'var(--wa)':'var(--ok)')+'">'+res.vm_swappiness+'</div></div>':'')
+  +(res.net_ipfwd!=='?'?'<div class="card"><div class="cl">IP Forwarding</div><div class="cv" style="font-size:13px">'+( res.net_ipfwd==='1'?'Enabled':'Disabled')+'</div></div>':'')
+  +(res.kernel_panic!=='?'?'<div class="card"><div class="cl">kernel.panic</div><div class="cv" style="font-size:13px">'+esc(res.kernel_panic)+' sec</div></div>':'')
+  +'</div>'
+  +(res.kernel_rpms&&res.kernel_rpms.length?'<h3 style="margin:14px 0 8px">Installed Kernel RPMs</h3>'+linesTable(res.kernel_rpms.join('\n'),10):'')
+  +(res.sos_version?'<h3 style="margin:14px 0 8px">SOS Report Header</h3>'+linesTable(res.sos_version,10):'')
+  +'</section>'
+
+  /* SYSLOG */
+  +'<section id="s-sl">'
+  +secHdr('&#128196;','Syslog / Journal Errors','si-red')
+  +'<p style="color:var(--mu);font-size:12px;margin-bottom:12px">Up to 400 error-level entries from /var/log/messages and journal.</p>'
+  +logBlock(logs.syslog_errors,400,'/var/log/messages')
+  +'</section>'
+
+  /* KERNEL */
+  +'<section id="s-dm">'
+  +secHdr('&#128039;','Kernel / dmesg Errors','si-red')
+  +logBlock(logs.kernel_errors,150,'dmesg')
+  +(logs.mce_events.length?'<h3 style="margin:18px 0 8px;color:var(--cr)">Machine Check Exceptions ('+logs.mce_events.length+')</h3>'+logBlock(logs.mce_events,30,'MCE'):'')
+  +'</section>'
+
+  /* SERVICES */
+  +'<section id="s-sv">'
+  +secHdr('&#128295;','Failed Services','si-orange')
+  +(logs.service_failures.length?logBlock(logs.service_failures,50,'systemctl'):'<div class="logb"><div class="log-topbar"><div class="log-dot" style="background:#27c93f"></div></div><div class="log-content"><span class="okmsg">No failed services detected</span></div></div>')
+  +'</section>'
+
+  /* SELINUX */
+  +'<section id="s-se">'
+  +secHdr('&#128272;','SELinux','si-violet')
+  +'<div class="cardg" style="margin-bottom:16px">'
+  +'<div class="card"><div class="cl">Status</div><div class="cv" style="font-size:13px;color:'+(res.selinux_mode==='enabled'||res.selinux_mode==='Enabled'?'var(--ok)':'var(--cr)')+'">'+esc(res.selinux_mode||'unknown')+'</div></div>'
+  +'<div class="card"><div class="cl">Current Mode</div><div class="cv" style="font-size:13px;color:'+(res.selinux_current==='enforcing'?'var(--ok)':res.selinux_current==='permissive'?'var(--wa)':'var(--cr)')+'">'+esc(res.selinux_current||'unknown')+'</div></div>'
+  +'<div class="card"><div class="cl">AVC Denials</div><div class="cv" style="color:'+(logs.audit_denials.length>0?'var(--cr)':'var(--ok)')+'">'+logs.audit_denials.length+'</div></div>'
+  +'</div>'
+  +(logs.audit_denials.length?logBlock(logs.audit_denials,50,'audit.log AVC denials'):'<div class="logb"><div class="log-topbar"><div class="log-dot" style="background:#27c93f"></div></div><div class="log-content"><span class="okmsg">No AVC denials found</span></div></div>')
+  +'</section>'
+
+  /* OOM */
+  +'<section id="s-oo">'
+  +secHdr('&#128165;','OOM &amp; Crash Events','si-red')
+  +'<h3>OOM Kill Events ('+logs.oom_events.length+')</h3>'
+  +logBlock(logs.oom_events,50,'OOM killer')
+  +'<h3 style="margin-top:18px">Segfaults ('+logs.segfault_events.length+')</h3>'
+  +logBlock(logs.segfault_events,50,'segfaults')
+  +'</section>'
+
+  +'<div class="footer">'
+  +'<span>SOSScan &middot; '+now+' &middot; Pure JS + inline WASM &middot; your data never leaves this browser</span>'
+  +'<span class="footer-badge">Red Hat SOS Analyzer v2</span>'
+  +'</div>';
+}
+
+</script>
+</body>
+</html>

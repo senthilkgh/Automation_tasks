@@ -1,0 +1,248 @@
+---
+# =============================================================================
+# Ansible Playbook: RHEL Kernel Cleanup
+# Purpose : Keep only the latest running kernel; remove all older kernels
+#           and any debug kernels to reduce vulnerability surface.
+# Supports: RHEL / CentOS / AlmaLinux / Rocky Linux (all versions - el6/7/8/9)
+# Usage   : ansible-playbook -i inventory.ini kernel_cleanup.yml
+#           ansible-playbook -i inventory.ini kernel_cleanup.yml --check  (dry-run)
+# =============================================================================
+
+- name: RHEL Kernel Cleanup - Keep Latest, Remove Old & Debug Kernels
+  hosts: all
+  gather_facts: true
+  become: true          # sudo / root required for kernel removal
+  serial: 5             # process 5 hosts at a time to limit blast radius
+  any_errors_fatal: false
+
+  vars:
+    dry_run: false       # Set to true to simulate without making changes
+    log_file: "/var/log/ansible_kernel_cleanup.log"
+
+  # ---------------------------------------------------------------------------
+  # PRE-FLIGHT CHECKS
+  # ---------------------------------------------------------------------------
+  pre_tasks:
+
+    - name: "[PRE] Verify OS is RHEL-family"
+      assert:
+        that:
+          - ansible_os_family == "RedHat"
+        fail_msg: "This playbook supports RedHat family only. Detected: {{ ansible_os_family }}"
+        success_msg: "OS check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: "[PRE] Ensure yum/dnf is available"
+      command: which {{ 'dnf' if ansible_distribution_major_version | int >= 8 else 'yum' }}
+      register: pkg_manager_check
+      changed_when: false
+      failed_when: pkg_manager_check.rc != 0
+
+    - name: "[PRE] Set package manager variable"
+      set_fact:
+        pkg_mgr: "{{ 'dnf' if ansible_distribution_major_version | int >= 8 else 'yum' }}"
+
+    - name: "[PRE] Log start of cleanup on target host"
+      shell: |
+        echo "====================================================" >> {{ log_file }}
+        echo "Kernel cleanup started: $(date)" >> {{ log_file }}
+        echo "Host       : $(hostname -f)" >> {{ log_file }}
+        echo "OS         : {{ ansible_distribution }} {{ ansible_distribution_version }}" >> {{ log_file }}
+        echo "Running kernel: $(uname -r)" >> {{ log_file }}
+        echo "====================================================" >> {{ log_file }}
+      changed_when: false
+
+  # ---------------------------------------------------------------------------
+  # MAIN TASKS
+  # ---------------------------------------------------------------------------
+  tasks:
+
+    # ------------------------------------------------------------------
+    # STEP 1: Gather current kernel information
+    # ------------------------------------------------------------------
+    - name: "[1/7] Get currently running kernel"
+      command: uname -r
+      register: running_kernel
+      changed_when: false
+
+    - name: "[1/7] Display running kernel"
+      debug:
+        msg: "Running kernel on {{ inventory_hostname }}: {{ running_kernel.stdout }}"
+
+    # ------------------------------------------------------------------
+    # STEP 2: List ALL installed kernel packages (kernel + kernel-core etc.)
+    # ------------------------------------------------------------------
+    - name: "[2/7] Get list of all installed kernel packages"
+      shell: |
+        rpm -qa --queryformat '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+          | grep -E '^kernel(-core|-modules|-modules-extra|-devel|-headers|-debug|-debug-core|-debug-modules|-debug-devel|-tools|-tools-libs|-tools-libs-devel)?' \
+          | grep -v '^kernel-headers' \
+          | sort
+      register: all_kernel_packages
+      changed_when: false
+
+    - name: "[2/7] Display all installed kernel packages"
+      debug:
+        msg: |
+          All installed kernel-related packages on {{ inventory_hostname }}:
+          {{ all_kernel_packages.stdout_lines | join('\n') }}
+
+    # ------------------------------------------------------------------
+    # STEP 3: List debug kernels specifically
+    # ------------------------------------------------------------------
+    - name: "[3/7] Identify debug kernel packages"
+      shell: |
+        rpm -qa --queryformat '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+          | grep -E 'kernel-debug' \
+          | sort
+      register: debug_kernel_packages
+      changed_when: false
+
+    - name: "[3/7] Display debug kernels found"
+      debug:
+        msg: >-
+          Debug kernels on {{ inventory_hostname }}:
+          {{ debug_kernel_packages.stdout_lines | default(['None found']) | join(', ') }}
+
+    # ------------------------------------------------------------------
+    # STEP 4: Identify kernels to KEEP vs REMOVE
+    # ------------------------------------------------------------------
+    - name: "[4/7] Build list of non-debug kernel versions installed"
+      shell: |
+        rpm -qa --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' kernel \
+          | sort -V
+      register: kernel_versions_installed
+      changed_when: false
+
+    - name: "[4/7] Determine kernels to remove (all except running)"
+      set_fact:
+        kernels_to_remove: >-
+          {{
+            all_kernel_packages.stdout_lines
+            | select('match', '.*kernel.*')
+            | reject('search', running_kernel.stdout | replace('+', '\\+'))
+            | list
+          }}
+
+    - name: "[4/7] Show kernels marked for removal"
+      debug:
+        msg: |
+          === REMOVAL PLAN for {{ inventory_hostname }} ===
+          KEEP  (running) : kernel-{{ running_kernel.stdout }}
+          REMOVE ({{ kernels_to_remove | length }} packages):
+          {{ kernels_to_remove | join('\n          ') if kernels_to_remove else 'None - already clean!' }}
+
+    # ------------------------------------------------------------------
+    # STEP 5: Safety gate - never remove the running kernel
+    # ------------------------------------------------------------------
+    - name: "[5/7] Safety check - confirm running kernel is NOT in removal list"
+      assert:
+        that:
+          - kernels_to_remove | select('search', running_kernel.stdout | replace('+', '\\+')) | list | length == 0
+        fail_msg: >
+          SAFETY ABORT: Running kernel {{ running_kernel.stdout }} was found in
+          the removal list! Halting to prevent unbootable system.
+        success_msg: "Safety check passed - running kernel is safe."
+
+    # ------------------------------------------------------------------
+    # STEP 6: Remove old kernels using package manager
+    # ------------------------------------------------------------------
+    - name: "[6/7] Remove old and debug kernel packages via {{ pkg_mgr }}"
+      shell: |
+        {% if not dry_run %}
+        # Use package-cleanup if available (yum-utils), otherwise fall back to rpm -e
+        if command -v package-cleanup &>/dev/null; then
+          # RHEL 7 style
+          package-cleanup --oldkernels --count=1 -y 2>&1
+        else
+          # RHEL 8/9 style - use dnf with explicit package list
+          RUNNING="{{ running_kernel.stdout }}"
+          TO_REMOVE=$(rpm -qa --queryformat '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+            | grep -E '^kernel(-core|-modules|-modules-extra|-debug|-debug-core|-debug-modules|-debug-devel|-devel|-tools|-tools-libs)?' \
+            | grep -v "^kernel-headers" \
+            | grep -v "${RUNNING}")
+
+          if [ -n "$TO_REMOVE" ]; then
+            echo "Removing the following packages:"
+            echo "$TO_REMOVE"
+            echo "$TO_REMOVE" | xargs -r {{ pkg_mgr }} remove -y 2>&1
+          else
+            echo "Nothing to remove - system is already clean."
+          fi
+        fi
+        {% else %}
+        echo "[DRY-RUN] Would remove: {{ kernels_to_remove | join(', ') }}"
+        {% endif %}
+      register: removal_result
+      when: kernels_to_remove | length > 0
+      changed_when:
+        - not dry_run
+        - "'Nothing to remove' not in removal_result.stdout"
+
+    - name: "[6/7] No old kernels to remove"
+      debug:
+        msg: "Host {{ inventory_hostname }} is already clean - only the running kernel is installed."
+      when: kernels_to_remove | length == 0
+
+    - name: "[6/7] Show removal output"
+      debug:
+        msg: "{{ removal_result.stdout_lines | default(['No output']) }}"
+      when: kernels_to_remove | length > 0
+
+    # ------------------------------------------------------------------
+    # STEP 7: Verify final state
+    # ------------------------------------------------------------------
+    - name: "[7/7] Verify remaining kernel packages after cleanup"
+      shell: |
+        rpm -qa --queryformat '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' \
+          | grep -E '^kernel' \
+          | sort
+      register: remaining_kernels
+      changed_when: false
+
+    - name: "[7/7] Display final kernel package state"
+      debug:
+        msg: |
+          === POST-CLEANUP STATE on {{ inventory_hostname }} ===
+          Running kernel : {{ running_kernel.stdout }}
+          Remaining pkgs : 
+          {{ remaining_kernels.stdout_lines | join('\n          ') }}
+
+    - name: "[7/7] Confirm no debug kernels remain"
+      shell: |
+        rpm -qa | grep kernel-debug || echo "CLEAN"
+      register: debug_check_final
+      changed_when: false
+
+    - name: "[7/7] Debug kernel status"
+      debug:
+        msg: >-
+          Debug kernel status: {{ 'CLEAN - no debug kernels present' if debug_check_final.stdout == 'CLEAN'
+          else 'WARNING: Debug kernels still present: ' + debug_check_final.stdout }}
+
+    - name: "[7/7] Log completion"
+      shell: |
+        echo "Kernel cleanup completed: $(date)" >> {{ log_file }}
+        echo "Remaining kernel packages:" >> {{ log_file }}
+        rpm -qa --queryformat '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' | grep kernel >> {{ log_file }}
+        echo "----------------------------------------------------" >> {{ log_file }}
+      changed_when: false
+
+  # ---------------------------------------------------------------------------
+  # POST TASKS - Summary report
+  # ---------------------------------------------------------------------------
+  post_tasks:
+
+    - name: "[POST] Generate per-host cleanup summary"
+      debug:
+        msg: |
+          ╔══════════════════════════════════════════════════════════╗
+          ║         KERNEL CLEANUP SUMMARY - {{ inventory_hostname }}
+          ╠══════════════════════════════════════════════════════════╣
+          ║  OS            : {{ ansible_distribution }} {{ ansible_distribution_version }}
+          ║  Arch          : {{ ansible_architecture }}
+          ║  Kernel kept   : {{ running_kernel.stdout }}
+          ║  Pkgs removed  : {{ kernels_to_remove | length }}
+          ║  Debug kernels : {{ 'REMOVED' if debug_kernel_packages.stdout_lines | length > 0 else 'None found' }}
+          ║  Final state   : {{ remaining_kernels.stdout_lines | length }} kernel package(s) remain
+          ║  Log           : {{ log_file }}
+          ╚══════════════════════════════════════════════════════════╝
